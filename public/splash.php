@@ -30,6 +30,10 @@ if (!defined('APP_NAME'))  define('APP_NAME', 'Gestion Invitations');
 if (!defined('APP_URL')) {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    // ✅ FIX : Coolify envoie plusieurs hosts séparés par des virgules
+    // On ne garde que le premier (le domaine principal)
+    $host = explode(',', $host)[0];
+    $host = trim($host);
     define('APP_URL', $protocol . '://' . $host . $projectFolder);
 }
 
