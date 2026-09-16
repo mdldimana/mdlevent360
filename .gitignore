@@ -1,0 +1,57 @@
+# ===== MdlEvent - .gitignore =====
+
+# Dépendances Composer (dans tous les dossiers)
+**/vendor/
+composer.lock
+
+# Uploads (photos)
+/uploads/*
+!/uploads/.gitkeep
+
+# Configuration sensible
+/config/database.php
+.env
+.env.local
+.env.*
+
+# WhatsApp Bot - très important !
+/whatsapp-bot/
+**/whatsapp-bot/
+.wwebjs_auth/
+.wwebjs_cache/
+whatsapp-bot/node_modules/
+
+# DomPDF vendor
+/includes/dompdf/vendor/
+
+# Logs
+*.log
+/logs/
+
+# Système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporaires
+*.tmp
+*.bak
+*.swp
+*~
+
+# Cache
+/cache/
+/tmp/
+
+# Node modules partout
+node_modules/
+
+# ===== Fichiers de test (à ignorer) =====
+/test_*.php
+/debug.php
+/echo.php
