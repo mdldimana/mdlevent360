@@ -55,3 +55,7 @@ node_modules/
 /test_*.php
 /debug.php
 /echo.php
+
+# Logs (garder le dossier mais ignorer son contenu)
+/logs/*
+!/logs/.gitkeep
