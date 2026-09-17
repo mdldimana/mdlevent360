@@ -142,10 +142,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $whatsapp_service     = $_POST['whatsapp_service']           ?? 'meta';
         $configStatus         = $_POST['config_status']             ?? 'active';
 
-        // ⭐ Si le token est vide, on garde l'ancien
+        // ⭐ Si le token est vide, on garde l'ancien (rechargé depuis la BDD)
         $tokenModifie = !empty($whatsapp_token);
-        if (!$tokenModifie && $tokenDejaConfigure) {
-            $whatsapp_token = $config['access_token'] ?? '';
+        if (!$tokenModifie) {
+            // Recharger le token actuel depuis la BDD (plus fiable que $config)
+            try {
+                $stmtTk = $pdo->query("SELECT access_token FROM whatsapp_config WHERE status = 'active' ORDER BY id DESC LIMIT 1");
+                $rowTk = $stmtTk->fetch(PDO::FETCH_ASSOC);
+                $whatsapp_token = $rowTk['access_token'] ?? '';
+            } catch (PDOException $e) {
+                $whatsapp_token = '';
+            }
         }
 
         // Validation
@@ -189,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
 
                 $message = '✅ Configuration WhatsApp enregistrée avec succès !';
-                if (!$tokenModifie && $tokenDejaConfigure) {
+                if (!$tokenModifie) {
                     $message .= ' (token inchangé)';
                 }
                 $messageType = 'success';
@@ -210,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (PDOException $e) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
                 error_log('Erreur sauvegarde config WhatsApp : ' . $e->getMessage());
-                $message = '❌ Erreur lors de l\'enregistrement. Veuillez réessayer.';
+                $message = '❌ Erreur lors de l\'enregistrement : ' . htmlspecialchars($e->getMessage());
                 $messageType = 'danger';
             }
         } else {
@@ -224,13 +231,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $phoneId = trim($_POST['whatsapp_phone_id'] ?? '');
         $token   = trim($_POST['whatsapp_token']    ?? '');
 
-        // Si le token est vide, on utilise celui de la config existante
-        if (empty($token) && $tokenDejaConfigure) {
-            $token = $config['access_token'] ?? '';
+        // ⭐ FIX : Si le token est vide, on le recharge TOUJOURS depuis la BDD
+        if (empty($token)) {
+            try {
+                $stmtTk = $pdo->query("SELECT access_token FROM whatsapp_config WHERE status = 'active' ORDER BY id DESC LIMIT 1");
+                $rowTk = $stmtTk->fetch(PDO::FETCH_ASSOC);
+                $token = $rowTk['access_token'] ?? '';
+            } catch (PDOException $e) {
+                $token = '';
+            }
         }
 
         if (empty($token)) {
-            $message = '❌ Aucun token disponible pour le test.';
+            $message = '❌ Aucun token disponible. Enregistrez d\'abord un token d\'accès.';
             $messageType = 'danger';
         } else {
             $result = testWhatsAppConfig($phoneId, $token);
@@ -674,7 +687,7 @@ $roles_user = $user['roles'] ?? [];
                     </ul>
                 </div>
 
-                <form method="POST" action="">
+                <form method="POST" action="" id="whatsappForm">
                     <input type="hidden" name="action" value="save">
 
                     <div class="mb-3">
@@ -719,6 +732,7 @@ $roles_user = $user['roles'] ?? [];
                         <input type="password"
                                class="form-control"
                                name="whatsapp_token"
+                               id="whatsapp_token"
                                value=""
                                placeholder="<?php echo $tokenDejaConfigure ? '••••••••••• Laisser vide pour conserver' : 'EAAB...'; ?>"
                                autocomplete="new-password"
@@ -776,9 +790,10 @@ $roles_user = $user['roles'] ?? [];
                     <h6 class="fw-bold mb-3" style="font-size:14px">
                         <i class="bi bi-bug-fill" style="color:#25D366"></i> Tester la connexion
                     </h6>
-                    <form method="POST" action="">
+                    <form method="POST" action="" id="testForm">
                         <input type="hidden" name="action" value="test">
                         <input type="hidden" name="whatsapp_phone_id" value="<?php echo htmlspecialchars($whatsapp_phone_id); ?>">
+                        <input type="hidden" name="whatsapp_token" value="">
                         <button type="submit" class="btn-test">
                             <i class="bi bi-plug-fill"></i> Tester la connexion
                         </button>
