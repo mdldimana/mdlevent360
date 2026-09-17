@@ -39,17 +39,16 @@ $whatsapp_token       = '';
 $whatsapp_business_id = '';
 $whatsapp_webhook     = '';
 $whatsapp_service     = 'meta';
-$configStatus         = 'active';
+$configStatus         = 'ACTIF';
 
-// ⭐ Pour éviter de ré-afficher le token après enregistrement
 $tokenDejaConfigure = false;
 
 // ============================================
-// CHARGER LA CONFIGURATION ACTUELLE DEPUIS LA BASE
+// CHARGER LA CONFIGURATION ACTUELLE
 // ============================================
 
 try {
-    $stmt = $pdo->query("SELECT * FROM whatsapp_config WHERE status = 'active' ORDER BY id DESC LIMIT 1");
+    $stmt = $pdo->query("SELECT * FROM whatsapp_config WHERE status = 'ACTIF' ORDER BY id DESC LIMIT 1");
     $config = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($config) {
@@ -59,7 +58,7 @@ try {
         $whatsapp_business_id = $config['business_account_id'] ?? '';
         $whatsapp_webhook     = $config['webhook_url']         ?? '';
         $whatsapp_service     = $config['service']             ?? 'meta';
-        $configStatus         = $config['status']              ?? 'active';
+        $configStatus         = $config['status']              ?? 'ACTIF';
 
         $tokenDejaConfigure = !empty($whatsapp_token);
     }
@@ -79,50 +78,99 @@ $services = [
 ];
 
 // ============================================
-// FONCTION DE TEST
+// FONCTION DE TEST (MULTI-SERVICE)
 // ============================================
 
-function testWhatsAppConfig(string $phoneId, string $token): array {
-    if (empty($phoneId) || empty($token)) {
-        return ['success' => false, 'message' => 'ID téléphone et Token requis pour le test'];
+function testWhatsAppConfig(string $service, array $config): array {
+    if (empty($config['phone_number_id']) || empty($config['access_token'])) {
+        return ['success' => false, 'message' => 'Configuration incomplète (ID téléphone et Token requis)'];
     }
 
-    $url = 'https://graph.facebook.com/v18.0/' . urlencode($phoneId);
+    switch ($service) {
 
-    // ---- cURL ----
-    if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $token],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 15,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
-            CURLOPT_USERAGENT      => APP_NAME . '/1.0',
-        ]);
+        // ==========================================
+        // TWILIO
+        // ==========================================
+        case 'twilio':
+            $accountSid = $config['business_account_id'] ?? '';
+            if (empty($accountSid)) {
+                return ['success' => false, 'message' => 'Account SID Twilio manquant'];
+            }
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+            $url = 'https://api.twilio.com/2010-04-01/Accounts/' . urlencode($accountSid) . '.json';
 
-        if (!empty($curlError)) {
-            return ['success' => false, 'message' => 'Erreur cURL : ' . $curlError];
-        }
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_USERPWD        => $accountSid . ':' . $config['access_token'],
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+                CURLOPT_USERAGENT      => (defined('APP_NAME') ? APP_NAME : 'MdlEvent') . '/1.0',
+            ]);
 
-        if ($httpCode === 200 && $response !== false) {
-            return ['success' => true, 'message' => 'Connexion à l\'API WhatsApp réussie !'];
-        }
+            $response  = curl_exec($ch);
+            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
 
-        $result = json_decode((string)$response, true);
-        $error  = $result['error']['message'] ?? 'Erreur inconnue (HTTP ' . $httpCode . ')';
-        return ['success' => false, 'message' => 'Erreur de connexion : ' . $error];
+            if (!empty($curlError)) {
+                return ['success' => false, 'message' => 'Erreur cURL : ' . $curlError];
+            }
+
+            if ($httpCode === 200) {
+                $data = json_decode((string)$response, true);
+                $name = $data['friendly_name'] ?? 'compte Twilio';
+                return ['success' => true, 'message' => 'Connexion Twilio réussie ! Compte : ' . $name];
+            }
+
+            $result = json_decode((string)$response, true);
+            $error  = $result['message'] ?? 'Erreur inconnue (HTTP ' . $httpCode . ')';
+            return ['success' => false, 'message' => 'Erreur Twilio : ' . $error];
+
+        // ==========================================
+        // META WHATSAPP CLOUD API
+        // ==========================================
+        case 'meta':
+            $url = 'https://graph.facebook.com/v18.0/' . urlencode($config['phone_number_id']);
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $config['access_token']],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+                CURLOPT_USERAGENT      => (defined('APP_NAME') ? APP_NAME : 'MdlEvent') . '/1.0',
+            ]);
+
+            $response  = curl_exec($ch);
+            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if (!empty($curlError)) {
+                return ['success' => false, 'message' => 'Erreur cURL : ' . $curlError];
+            }
+
+            if ($httpCode === 200) {
+                return ['success' => true, 'message' => 'Connexion Meta WhatsApp réussie !'];
+            }
+
+            $result = json_decode((string)$response, true);
+            $error  = $result['error']['message'] ?? 'Erreur inconnue (HTTP ' . $httpCode . ')';
+            return ['success' => false, 'message' => 'Erreur Meta : ' . $error];
+
+        // ==========================================
+        // AUTRES / SIMULATION
+        // ==========================================
+        default:
+            return ['success' => true, 'message' => 'Mode simulation — aucune connexion requise'];
     }
-
-    return ['success' => false, 'message' => 'cURL n\'est pas disponible sur ce serveur.'];
 }
 
 // ============================================
@@ -140,14 +188,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $whatsapp_business_id = trim($_POST['whatsapp_business_id'] ?? '');
         $whatsapp_webhook     = trim($_POST['whatsapp_webhook']     ?? '');
         $whatsapp_service     = $_POST['whatsapp_service']           ?? 'meta';
-        $configStatus         = $_POST['config_status']             ?? 'active';
+        $configStatus         = $_POST['config_status']             ?? 'ACTIF';
 
-        // ⭐ Si le token est vide, on garde l'ancien (rechargé depuis la BDD)
+        // Si le token est vide, on garde l'ancien
         $tokenModifie = !empty($whatsapp_token);
         if (!$tokenModifie) {
-            // Recharger le token actuel depuis la BDD (plus fiable que $config)
             try {
-                $stmtTk = $pdo->query("SELECT access_token FROM whatsapp_config WHERE status = 'active' ORDER BY id DESC LIMIT 1");
+                $stmtTk = $pdo->query("SELECT access_token FROM whatsapp_config WHERE status = 'ACTIF' ORDER BY id DESC LIMIT 1");
                 $rowTk = $stmtTk->fetch(PDO::FETCH_ASSOC);
                 $whatsapp_token = $rowTk['access_token'] ?? '';
             } catch (PDOException $e) {
@@ -164,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!in_array($whatsapp_service, array_keys($services), true)) {
             $errors[] = 'Service invalide.';
         }
-        if (!in_array($configStatus, ['active', 'inactive'], true)) {
+        if (!in_array($configStatus, ['ACTIF', 'INACTIF'], true)) {
             $errors[] = 'Statut invalide.';
         }
 
@@ -172,11 +219,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $pdo->beginTransaction();
 
-                // Désactiver les anciennes configurations
-                $stmt = $pdo->prepare("UPDATE whatsapp_config SET status = 'inactive' WHERE status = 'active'");
+                $stmt = $pdo->prepare("UPDATE whatsapp_config SET status = 'INACTIF' WHERE status = 'ACTIF'");
                 $stmt->execute();
 
-                // Insérer la nouvelle configuration
                 $stmt = $pdo->prepare("
                     INSERT INTO whatsapp_config 
                     (api_key, phone_number_id, business_account_id, access_token, webhook_url, service, status, created_at, updated_at)
@@ -210,7 +255,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                 }
 
-                // Après enregistrement, on ne réaffiche jamais le token
                 $whatsapp_token     = '';
                 $tokenDejaConfigure = true;
 
@@ -228,13 +272,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ---------- TESTER ----------
     elseif ($action === 'test') {
-        $phoneId = trim($_POST['whatsapp_phone_id'] ?? '');
-        $token   = trim($_POST['whatsapp_token']    ?? '');
+        $phoneId   = trim($_POST['whatsapp_phone_id']    ?? '');
+        $businessId = trim($_POST['whatsapp_business_id'] ?? '');
+        $token     = trim($_POST['whatsapp_token']       ?? '');
+        $service   = $_POST['whatsapp_service']          ?? 'meta';
 
-        // ⭐ FIX : Si le token est vide, on le recharge TOUJOURS depuis la BDD
+        // Si le token est vide, on le recharge depuis la BDD
         if (empty($token)) {
             try {
-                $stmtTk = $pdo->query("SELECT access_token FROM whatsapp_config WHERE status = 'active' ORDER BY id DESC LIMIT 1");
+                $stmtTk = $pdo->query("SELECT access_token FROM whatsapp_config WHERE status = 'ACTIF' ORDER BY id DESC LIMIT 1");
                 $rowTk = $stmtTk->fetch(PDO::FETCH_ASSOC);
                 $token = $rowTk['access_token'] ?? '';
             } catch (PDOException $e) {
@@ -246,7 +292,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = '❌ Aucun token disponible. Enregistrez d\'abord un token d\'accès.';
             $messageType = 'danger';
         } else {
-            $result = testWhatsAppConfig($phoneId, $token);
+            $result = testWhatsAppConfig($service, [
+                'phone_number_id'     => $phoneId,
+                'access_token'        => $token,
+                'business_account_id' => $businessId,
+            ]);
 
             if (!empty($result['success'])) {
                 $message = '✅ ' . $result['message'];
@@ -283,8 +333,6 @@ $roles_user = $user['roles'] ?? [];
         color: #1a1a1a;
         -webkit-font-smoothing: antialiased;
     }
-
-    /* ========== LAYOUT ========== */
     .app-wrapper { display: flex; min-height: 100vh; width: 100%; }
     .sidebar-wrapper { flex-shrink: 0; width: 260px; min-height: 100vh; position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 100; }
     .main-content { flex: 1; min-height: 100vh; overflow-y: auto; padding: 0; min-width: 0; }
@@ -292,7 +340,6 @@ $roles_user = $user['roles'] ?? [];
     .main-content::-webkit-scrollbar-track { background: #f8f5f2; }
     .main-content::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #25D366, #128C7E); border-radius: 10px; }
 
-    /* ========== TOP BAR ========== */
     .top-bar {
         background: rgba(255, 255, 255, 0.95);
         padding: 15px 30px;
@@ -326,7 +373,6 @@ $roles_user = $user['roles'] ?? [];
         font-size: 10px; font-weight: 700; white-space: nowrap;
     }
 
-    /* ========== SIDEBAR TOGGLE ========== */
     .sidebar-toggle-btn {
         display: none;
         position: fixed;
@@ -342,7 +388,7 @@ $roles_user = $user['roles'] ?? [];
         color: white;
         transition: all 0.3s ease;
     }
-    .sidebar-toggle-btn:hover { transform: scale(1.05); box-shadow: 0 8px 30px rgba(37, 211, 102, 0.45); }
+    .sidebar-toggle-btn:hover { transform: scale(1.05); }
     .sidebar-overlay {
         display: none;
         position: fixed;
@@ -353,11 +399,9 @@ $roles_user = $user['roles'] ?? [];
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-    .sidebar-overlay.active { display: block; opacity: 1; }
+    .sidebar-overlay.ACTIF { display: block; opacity: 1; }
 
-    /* ========== CONTENT ========== */
     .content-section { padding: 25px 30px; }
-
     .card-custom {
         background: rgba(255, 255, 255, 0.95);
         border: 1px solid rgba(255, 255, 255, 0.4);
@@ -368,183 +412,112 @@ $roles_user = $user['roles'] ?? [];
         margin: 0 auto;
     }
     .card-custom .card-title {
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 22px;
-        padding-bottom: 14px;
+        font-weight: 700; color: #1a1a1a;
+        margin-bottom: 22px; padding-bottom: 14px;
         border-bottom: 2px dashed rgba(37, 211, 102, 0.15);
-        font-size: 17px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        font-size: 17px; display: flex; align-items: center; gap: 10px;
     }
     .card-custom .card-title i { color: #25D366; }
 
-    /* ========== FORM ========== */
     .form-label {
-        font-weight: 700;
-        color: #6a5a4a;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 6px;
-        display: block;
+        font-weight: 700; color: #6a5a4a;
+        font-size: 12px; text-transform: uppercase;
+        letter-spacing: 0.05em; margin-bottom: 6px; display: block;
     }
     .form-label i { color: #25D366; margin-right: 4px; }
     .form-control, .form-select {
-        border-radius: 10px;
-        padding: 10px 14px;
+        border-radius: 10px; padding: 10px 14px;
         border: 1.5px solid rgba(234, 227, 220, 0.6);
         transition: all 0.3s ease;
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        background: rgba(255, 255, 255, 0.9);
-        color: #1a1a1a;
+        font-family: 'Inter', sans-serif; font-size: 13px;
+        background: rgba(255, 255, 255, 0.9); color: #1a1a1a;
     }
     .form-control:focus, .form-select:focus {
         border-color: #25D366;
         box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.08);
-        outline: none;
-        background: white;
+        outline: none; background: white;
     }
     .form-text { font-size: 11px; color: #9a8a7f; margin-top: 4px; }
     .form-text i { color: #25D366; }
     .form-text code {
         background: rgba(37, 211, 102, 0.1);
         border: 1px solid rgba(37, 211, 102, 0.2);
-        color: #128C7E;
-        padding: 1px 6px;
-        border-radius: 5px;
-        font-size: 11px;
+        color: #128C7E; padding: 1px 6px;
+        border-radius: 5px; font-size: 11px;
     }
 
-    /* ========== BOUTONS ========== */
     .btn-save {
         background: linear-gradient(135deg, #25D366, #128C7E);
-        color: white;
-        border: none;
-        font-weight: 700;
-        padding: 11px 26px;
-        border-radius: 10px;
-        transition: all 0.3s ease;
+        color: white; border: none;
+        font-weight: 700; padding: 11px 26px;
+        border-radius: 10px; transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(37, 211, 102, 0.25);
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
+        font-size: 13px; display: inline-flex;
+        align-items: center; gap: 8px; cursor: pointer;
     }
-    .btn-save:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(37, 211, 102, 0.35);
-        color: white;
-    }
+    .btn-save:hover { transform: translateY(-2px); color: white; }
     .btn-test {
         background: linear-gradient(135deg, #3b82f6, #60a5fa);
-        color: white;
-        border: none;
-        font-weight: 600;
-        padding: 11px 22px;
-        border-radius: 10px;
-        transition: all 0.3s ease;
+        color: white; border: none;
+        font-weight: 600; padding: 11px 22px;
+        border-radius: 10px; transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
+        font-size: 13px; display: inline-flex;
+        align-items: center; gap: 8px; cursor: pointer;
     }
-    .btn-test:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
-        color: white;
-    }
+    .btn-test:hover { transform: translateY(-2px); color: white; }
     .btn-cancel {
         background: rgba(255, 255, 255, 0.9);
         color: #6a5a4a;
         border: 1.5px solid rgba(234, 227, 220, 0.6);
-        font-weight: 600;
-        padding: 11px 20px;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        font-size: 13px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+        font-weight: 600; padding: 11px 20px;
+        border-radius: 10px; transition: all 0.3s ease;
+        text-decoration: none; font-size: 13px;
+        display: inline-flex; align-items: center; gap: 8px;
     }
-    .btn-cancel:hover {
-        background: white;
-        color: #25D366;
-        border-color: #25D366;
-    }
+    .btn-cancel:hover { background: white; color: #25D366; border-color: #25D366; }
 
-    /* ========== ALERTES ========== */
     .alert-custom {
-        border-radius: 12px;
-        padding: 14px 18px;
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        font-size: 13px;
-        margin-bottom: 16px;
+        border-radius: 12px; padding: 14px 18px;
+        display: flex; align-items: flex-start; gap: 10px;
+        font-size: 13px; margin-bottom: 16px;
     }
     .alert-custom i { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
 
-    /* ========== INFO BOX ========== */
     .info-box {
         background: linear-gradient(135deg, rgba(37, 211, 102, 0.05), rgba(18, 140, 126, 0.05));
         border-left: 4px solid #25D366;
-        border-radius: 12px;
-        padding: 16px 20px;
-        margin-bottom: 20px;
+        border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
     }
     .info-box strong {
-        font-size: 13px;
-        color: #1a1a1a;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
+        font-size: 13px; color: #1a1a1a;
+        display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
     }
     .info-box strong i { color: #25D366; }
     .info-box ul {
-        font-size: 12px;
-        color: #6a5a4a;
-        padding-left: 20px;
-        margin: 0;
-        line-height: 1.7;
+        font-size: 12px; color: #6a5a4a;
+        padding-left: 20px; margin: 0; line-height: 1.7;
     }
     .info-box a { color: #25D366; text-decoration: none; font-weight: 700; }
     .info-box a:hover { text-decoration: underline; }
 
-    /* ========== BADGE CONFIGURÉ ========== */
     .badge-configure {
         background: rgba(16, 185, 129, 0.15);
-        color: #065f46;
-        font-size: 9px;
-        padding: 2px 8px;
-        border-radius: 10px;
-        margin-left: 6px;
-        font-weight: 700;
-        text-transform: none;
-        letter-spacing: 0;
+        color: #065f46; font-size: 9px;
+        padding: 2px 8px; border-radius: 10px;
+        margin-left: 6px; font-weight: 700;
+        text-transform: none; letter-spacing: 0;
     }
 
-    /* ========== STATUS BADGE ========== */
     .status-badge {
-        display: inline-block;
-        padding: 3px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
+        display: inline-block; padding: 3px 12px;
+        border-radius: 20px; font-size: 11px;
+        font-weight: 700; text-transform: uppercase;
         letter-spacing: 0.05em;
     }
-    .status-badge.active   { background: rgba(16, 185, 129, 0.15); color: #065f46; }
-    .status-badge.inactive { background: rgba(239, 68, 68, 0.12); color: #991b1b; }
+    .status-badge.ACTIF   { background: rgba(16, 185, 129, 0.15); color: #065f46; }
+    .status-badge.INACTIF { background: rgba(239, 68, 68, 0.12); color: #991b1b; }
 
-    /* ========== ANIMATIONS ========== */
     .fade-in { animation: fadeInUp 0.6s ease forwards; opacity: 0; }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -552,16 +525,12 @@ $roles_user = $user['roles'] ?? [];
         .fade-in { animation: none !important; opacity: 1 !important; transform: none !important; }
     }
 
-    /* ========== FOOTER ========== */
     .app-footer {
-        text-align: center;
-        padding: 30px 0 20px;
-        color: #b8a99c;
-        font-size: 13px;
+        text-align: center; padding: 30px 0 20px;
+        color: #b8a99c; font-size: 13px;
     }
     .app-footer i.bi-heart-fill { color: #25D366; }
 
-    /* ========== RESPONSIVE ========== */
     @media (max-width: 992px) {
         .sidebar-toggle-btn { display: flex !important; align-items: center; justify-content: center; }
         .app-wrapper { display: block; width: 100%; }
@@ -585,7 +554,7 @@ $roles_user = $user['roles'] ?? [];
             transition: opacity 0.28s ease, visibility 0.28s ease;
             z-index: 1900 !important;
         }
-        .sidebar-overlay.active { visibility: visible; opacity: 1; pointer-events: auto; }
+        .sidebar-overlay.ACTIF { visibility: visible; opacity: 1; pointer-events: auto; }
         .top-bar { padding: 12px 15px 12px 70px; flex-direction: row; flex-wrap: wrap; }
         body.sidebar-open { overflow-x: hidden !important; overflow-y: auto !important; }
         .content-section { padding: 15px; }
@@ -659,11 +628,11 @@ $roles_user = $user['roles'] ?? [];
                     </div>
                 <?php endif; ?>
 
-                <?php if ($configStatus === 'active'): ?>
+                <?php if ($configStatus === 'ACTIF'): ?>
                     <div class="alert-custom alert-success" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);color:#065f46">
                         <i class="bi bi-check-circle-fill"></i>
                         <div>
-                            Configuration <span class="status-badge active">Active</span>
+                            Configuration <span class="status-badge ACTIF">ACTIF</span>
                             <span style="font-size:12px;margin-left:8px;opacity:0.8">
                                 Service : <?php echo htmlspecialchars($services[$whatsapp_service] ?? $whatsapp_service); ?>
                             </span>
@@ -673,7 +642,7 @@ $roles_user = $user['roles'] ?? [];
                     <div class="alert-custom alert-warning" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:#92400e">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <div>
-                            Configuration <span class="status-badge inactive">Inactive</span>
+                            Configuration <span class="status-badge INACTIF">INACTIF</span>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -681,9 +650,9 @@ $roles_user = $user['roles'] ?? [];
                 <div class="info-box">
                     <strong><i class="bi bi-info-circle-fill"></i> WhatsApp Business API</strong>
                     <ul>
-                        <li>Créez un compte sur <a href="https://business.facebook.com/" target="_blank" rel="noopener">Meta Business</a></li>
+                        <li>Créez un compte sur <a href="https://business.facebook.com/" target="_blank" rel="noopener">Meta Business</a> ou <a href="https://www.twilio.com/" target="_blank" rel="noopener">Twilio</a></li>
                         <li>Obtenez un <strong>Numéro de téléphone business</strong> et un <strong>Token d'accès</strong></li>
-                        <li>Les messages sont envoyés via l'API officielle Meta</li>
+                        <li>Les messages sont envoyés via l'API officielle</li>
                     </ul>
                 </div>
 
@@ -714,8 +683,8 @@ $roles_user = $user['roles'] ?? [];
                         <label class="form-label"><i class="bi bi-phone-fill"></i> ID du téléphone <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="whatsapp_phone_id"
                                value="<?php echo htmlspecialchars($whatsapp_phone_id); ?>"
-                               placeholder="Ex: 123456789012345" required>
-                        <div class="form-text">ID du numéro de téléphone WhatsApp Business</div>
+                               placeholder="Ex: 123456789012345 ou +14155238886" required>
+                        <div class="form-text">ID du numéro (Meta : Phone Number ID / Twilio : numéro WhatsApp)</div>
                     </div>
 
                     <div class="mb-3">
@@ -745,17 +714,17 @@ $roles_user = $user['roles'] ?? [];
                         <?php else: ?>
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Token d'accès permanent de l'API WhatsApp Business
+                                Token d'accès (Meta : Bearer Token / Twilio : Auth Token)
                             </div>
                         <?php endif; ?>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-building"></i> Business ID</label>
+                        <label class="form-label"><i class="bi bi-building"></i> Business ID / Account SID</label>
                         <input type="text" class="form-control" name="whatsapp_business_id"
                                value="<?php echo htmlspecialchars($whatsapp_business_id); ?>"
-                               placeholder="ID de l'entreprise Meta">
-                        <div class="form-text">ID de votre entreprise Meta Business</div>
+                               placeholder="Meta : Business ID / Twilio : Account SID (ACxxx)">
+                        <div class="form-text">Meta : Business Account ID / Twilio : Account SID</div>
                     </div>
 
                     <div class="mb-3">
@@ -769,8 +738,8 @@ $roles_user = $user['roles'] ?? [];
                     <div class="mb-3">
                         <label class="form-label"><i class="bi bi-toggle-on"></i> Statut</label>
                         <select class="form-select" name="config_status">
-                            <option value="active"   <?php echo $configStatus === 'active'   ? 'selected' : ''; ?>>Actif</option>
-                            <option value="inactive" <?php echo $configStatus === 'inactive' ? 'selected' : ''; ?>>Inactif</option>
+                            <option value="ACTIF"   <?php echo $configStatus === 'ACTIF'   ? 'selected' : ''; ?>>Actif</option>
+                            <option value="INACTIF" <?php echo $configStatus === 'INACTIF' ? 'selected' : ''; ?>>Inactif</option>
                         </select>
                         <div class="form-text">Activez ou désactivez la configuration</div>
                     </div>
@@ -793,6 +762,8 @@ $roles_user = $user['roles'] ?? [];
                     <form method="POST" action="" id="testForm">
                         <input type="hidden" name="action" value="test">
                         <input type="hidden" name="whatsapp_phone_id" value="<?php echo htmlspecialchars($whatsapp_phone_id); ?>">
+                        <input type="hidden" name="whatsapp_business_id" value="<?php echo htmlspecialchars($whatsapp_business_id); ?>">
+                        <input type="hidden" name="whatsapp_service" value="<?php echo htmlspecialchars($whatsapp_service); ?>">
                         <input type="hidden" name="whatsapp_token" value="">
                         <button type="submit" class="btn-test">
                             <i class="bi bi-plug-fill"></i> Tester la connexion
@@ -806,10 +777,10 @@ $roles_user = $user['roles'] ?? [];
                         <i class="bi bi-question-circle-fill" style="color:#25D366"></i> Comment obtenir vos identifiants
                     </h6>
                     <ol class="small" style="color:#9a8a7f;padding-left:20px;line-height:1.8">
-                        <li>Créez un compte <a href="https://business.facebook.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Meta Business</a></li>
+                        <li>Créez un compte <a href="https://business.facebook.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Meta Business</a> ou <a href="https://www.twilio.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Twilio</a></li>
                         <li>Configurez un <strong>Numéro de téléphone WhatsApp Business</strong></li>
-                        <li>Générez un <strong>Token d'accès</strong> dans le portail développeur Meta</li>
-                        <li>L'<strong>ID du téléphone</strong> est disponible dans l'URL de votre compte</li>
+                        <li>Générez un <strong>Token d'accès</strong> dans le portail développeur</li>
+                        <li><strong>Meta</strong> : Phone Number ID + Business ID<br><strong>Twilio</strong> : Numéro WhatsApp (+1415...) + Account SID (ACxxx)</li>
                     </ol>
                 </div>
 
@@ -825,19 +796,18 @@ $roles_user = $user['roles'] ?? [];
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ========== SIDEBAR MOBILE ==========
 const sidebarToggle  = document.getElementById('sidebarToggle');
 const sidebarWrapper = document.getElementById('sidebarWrapper');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 
 function openSidebar() {
     sidebarWrapper.classList.add('open');
-    sidebarOverlay.classList.add('active');
+    sidebarOverlay.classList.add('ACTIF');
     document.body.classList.add('sidebar-open');
 }
 function closeSidebar() {
     sidebarWrapper.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
+    sidebarOverlay.classList.remove('ACTIF');
     document.body.classList.remove('sidebar-open');
 }
 
