@@ -3,9 +3,25 @@
  * Helper WhatsApp
  * Fonctions pour l'envoi de notifications WhatsApp
  * Utilise les tables whatsapp_config et whatsapp_messages
+ * 
+ * ⚠️ VERSION CORRIGÉE : Support des templates Meta (obligatoire pour WhatsApp Cloud API)
  */
 
 require_once __DIR__ . '/../config/whatsapp.php';
+
+// ============================================
+// CONFIGURATION DES TEMPLATES META
+// ============================================
+// ⚠️ IMPORTANT : Ces templates DOIVENT exister dans Meta Business
+// Pour tester rapidement, gardez 'hello_world'
+// Pour la production, créez 'invitation_event' dans Meta
+
+if (!defined('META_TEMPLATE_INVITATION'))  define('META_TEMPLATE_INVITATION', 'hello_world');
+if (!defined('META_TEMPLATE_CONFIRMATION')) define('META_TEMPLATE_CONFIRMATION', 'hello_world');
+if (!defined('META_TEMPLATE_RAPPEL'))       define('META_TEMPLATE_RAPPEL', 'hello_world');
+if (!defined('META_TEMPLATE_PRESENCE'))     define('META_TEMPLATE_PRESENCE', 'hello_world');
+if (!defined('META_TEMPLATE_ANNULATION'))   define('META_TEMPLATE_ANNULATION', 'hello_world');
+if (!defined('META_TEMPLATE_LANGUAGE'))     define('META_TEMPLATE_LANGUAGE', 'en_US');
 
 // ============================================
 // FONCTIONS PRINCIPALES
@@ -17,7 +33,7 @@ require_once __DIR__ . '/../config/whatsapp.php';
 function getWhatsAppConfig() {
     try {
         $pdo = getDbConnection();
-        $stmt = $pdo->query("SELECT * FROM whatsapp_config WHERE status = 'active' ORDER BY id DESC LIMIT 1");
+        $stmt = $pdo->query("SELECT * FROM whatsapp_config WHERE status IN ('ACTIF', 'active') ORDER BY id DESC LIMIT 1");
         return $stmt->fetch();
     } catch (PDOException $e) {
         error_log('Erreur récupération config WhatsApp: ' . $e->getMessage());
@@ -26,12 +42,27 @@ function getWhatsAppConfig() {
 }
 
 /**
+ * Récupère le nom du template Meta à utiliser selon le type
+ */
+function getMetaTemplateName($type) {
+    $templates = [
+        'invitation'   => META_TEMPLATE_INVITATION,
+        'confirmation' => META_TEMPLATE_CONFIRMATION,
+        'rappel'       => META_TEMPLATE_RAPPEL,
+        'present'      => META_TEMPLATE_PRESENCE,
+        'presence'     => META_TEMPLATE_PRESENCE,
+        'annulation'   => META_TEMPLATE_ANNULATION,
+    ];
+    return $templates[$type] ?? META_TEMPLATE_INVITATION;
+}
+
+/**
  * Envoie un message WhatsApp
  * 
  * @param string $to Numéro de téléphone du destinataire (format international)
- * @param string $message Contenu du message
+ * @param string $message Contenu du message (pour simulation/autres services)
  * @param int|null $invitationId ID de l'invitation associée
- * @param string $templateName Nom du template utilisé
+ * @param string|null $templateName Type de template (invitation, confirmation, etc.)
  * @return array ['success' => bool, 'message' => string, 'data' => array]
  */
 function sendWhatsAppMessage($to, $message, $invitationId = null, $templateName = null) {
@@ -51,7 +82,7 @@ function sendWhatsAppMessage($to, $message, $invitationId = null, $templateName 
     // Envoyer selon le service configuré
     switch (WHATSAPP_SERVICE) {
         case 'meta':
-            $result = sendWhatsAppMeta($to, $message, $config);
+            $result = sendWhatsAppMeta($to, $message, $config, $templateName);
             break;
         case 'twilio':
             $result = sendWhatsAppTwilio($to, $message, $config);
@@ -72,25 +103,48 @@ function sendWhatsAppMessage($to, $message, $invitationId = null, $templateName 
 
 /**
  * Envoi via Meta WhatsApp Cloud API
+ * 
+ * ⚠️ IMPORTANT : WhatsApp Business API exige des TEMPLATES pré-approuvés
+ * pour initier une conversation. Les messages texte libres ne fonctionnent
+ * que si l'utilisateur a écrit dans les 24 dernières heures.
  */
-function sendWhatsAppMeta($to, $message, $config) {
+function sendWhatsAppMeta($to, $message, $config, $type = null) {
     $url = 'https://graph.facebook.com/v18.0/' . $config['phone_number_id'] . '/messages';
     
+    // Récupérer le nom du template Meta
+    $metaTemplateName = getMetaTemplateName($type ?? 'invitation');
+    
+    // Construire le payload avec TEMPLATE (obligatoire pour WhatsApp Business)
     $data = [
         'messaging_product' => 'whatsapp',
-        'to' => $to,
-        'type' => 'text',
-        'text' => ['body' => $message]
+        'to'                => $to,
+        'type'              => 'template',
+        'template'          => [
+            'name'     => $metaTemplateName,
+            'language' => [
+                'code' => META_TEMPLATE_LANGUAGE,
+            ],
+        ],
     ];
     
-    // Ajouter un aperçu de lien si présent dans le message
-    if (strpos($message, 'http') !== false) {
-        $data['text']['preview_url'] = true;
+    // Ajouter les paramètres du template si ce n'est pas hello_world
+    // (hello_world n'accepte pas de paramètres)
+    if ($metaTemplateName !== 'hello_world') {
+        $data['template']['components'] = [
+            [
+                'type'       => 'body',
+                'parameters' => [
+                    // Paramètres génériques - à adapter selon votre template
+                    ['type' => 'text', 'text' => 'Invité'],
+                    ['type' => 'text', 'text' => 'Événement'],
+                ],
+            ],
+        ];
     }
     
     $headers = [
         'Content-Type: application/json',
-        'Authorization: Bearer ' . $config['access_token']
+        'Authorization: Bearer ' . $config['access_token'],
     ];
     
     $ch = curl_init($url);
@@ -98,27 +152,40 @@ function sendWhatsAppMeta($to, $message, $config) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
+    
+    if (!empty($curlError)) {
+        return [
+            'success'       => false,
+            'message'       => 'Erreur cURL : ' . $curlError,
+            'error_message' => $curlError,
+        ];
+    }
     
     $result = json_decode($response, true);
     
     if ($httpCode >= 200 && $httpCode < 300) {
         return [
-            'success' => true, 
-            'message' => 'Message envoyé avec succès', 
-            'data' => $result,
-            'message_id' => $result['messages'][0]['id'] ?? null
+            'success'    => true,
+            'message'    => 'Message envoyé avec succès',
+            'data'       => $result,
+            'message_id' => $result['messages'][0]['id'] ?? null,
         ];
     } else {
+        $errorMsg = $result['error']['message'] ?? 'Erreur inconnue (HTTP ' . $httpCode . ')';
         return [
-            'success' => false, 
-            'message' => $result['error']['message'] ?? 'Erreur d\'envoi', 
-            'data' => $result,
-            'error_message' => $result['error']['message'] ?? null
+            'success'       => false,
+            'message'       => 'Erreur Meta : ' . $errorMsg,
+            'data'          => $result,
+            'error_message' => $errorMsg,
         ];
     }
 }
@@ -130,9 +197,9 @@ function sendWhatsAppTwilio($to, $message, $config) {
     $url = 'https://api.twilio.com/2010-04-01/Accounts/' . $config['api_key'] . '/Messages.json';
     
     $data = [
-        'To' => 'whatsapp:' . $to,
+        'To'   => 'whatsapp:' . $to,
         'From' => 'whatsapp:' . $config['phone_number_id'],
-        'Body' => $message
+        'Body' => $message,
     ];
     
     $ch = curl_init($url);
@@ -150,17 +217,17 @@ function sendWhatsAppTwilio($to, $message, $config) {
     
     if ($httpCode >= 200 && $httpCode < 300) {
         return [
-            'success' => true, 
-            'message' => 'Message envoyé avec succès', 
-            'data' => $result,
-            'message_id' => $result['sid'] ?? null
+            'success'    => true,
+            'message'    => 'Message envoyé avec succès',
+            'data'       => $result,
+            'message_id' => $result['sid'] ?? null,
         ];
     } else {
         return [
-            'success' => false, 
-            'message' => $result['error']['message'] ?? 'Erreur d\'envoi', 
-            'data' => $result,
-            'error_message' => $result['error']['message'] ?? null
+            'success'       => false,
+            'message'       => $result['error']['message'] ?? 'Erreur d\'envoi',
+            'data'          => $result,
+            'error_message' => $result['error']['message'] ?? null,
         ];
     }
 }
@@ -172,10 +239,10 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
     $url = 'https://api.ultramsg.com/' . $config['api_key'] . '/messages/chat';
     
     $data = [
-        'token' => $config['access_token'],
-        'to' => $to,
-        'body' => $message,
-        'priority' => '1'
+        'token'    => $config['access_token'],
+        'to'       => $to,
+        'body'     => $message,
+        'priority' => '1',
     ];
     
     $ch = curl_init($url);
@@ -192,17 +259,17 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
     
     if (isset($result['sent']) && $result['sent'] === true) {
         return [
-            'success' => true, 
-            'message' => 'Message envoyé avec succès', 
-            'data' => $result,
-            'message_id' => $result['message_id'] ?? null
+            'success'    => true,
+            'message'    => 'Message envoyé avec succès',
+            'data'       => $result,
+            'message_id' => $result['message_id'] ?? null,
         ];
     } else {
         return [
-            'success' => false, 
-            'message' => $result['error'] ?? 'Erreur d\'envoi', 
-            'data' => $result,
-            'error_message' => $result['error'] ?? null
+            'success'       => false,
+            'message'       => $result['error'] ?? 'Erreur d\'envoi',
+            'data'          => $result,
+            'error_message' => $result['error'] ?? null,
         ];
     }
 }
@@ -211,15 +278,18 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
  * Simulation d'envoi (pour développement)
  */
 function sendWhatsAppSimulation($to, $message, $config) {
-    // Journaliser en simulation
     $logMessage = "[SIMULATION] WhatsApp à $to : " . substr($message, 0, 100) . '...';
-    logMessage($logMessage, 'INFO');
+    if (function_exists('logMessage')) {
+        logMessage($logMessage, 'INFO');
+    } else {
+        error_log($logMessage);
+    }
     
     return [
-        'success' => true, 
-        'message' => 'Message envoyé en simulation', 
-        'data' => ['simulated' => true, 'to' => $to],
-        'message_id' => 'sim_' . uniqid()
+        'success'    => true,
+        'message'    => 'Message envoyé en simulation',
+        'data'       => ['simulated' => true, 'to' => $to],
+        'message_id' => 'sim_' . uniqid(),
     ];
 }
 
@@ -248,10 +318,10 @@ function saveWhatsAppMessage($to, $message, $result, $invitationId = null, $temp
             $invitationId,
             $to,
             $templateName,
-            substr($message, 0, 5000), // Limiter la taille du message
+            substr($message, 0, 5000),
             $status,
             $messageId,
-            $errorMessage
+            $errorMessage,
         ]);
         
         return $pdo->lastInsertId();
@@ -388,22 +458,18 @@ function getWhatsAppTotalCount($filters = []) {
  * Nettoie un numéro de téléphone
  */
 function cleanPhoneNumber($phone) {
-    // Supprimer tous les caractères non numériques
     $phone = preg_replace('/[^0-9+]/', '', $phone);
     
-    // Si le numéro commence par 0, le remplacer par +243 (RDC)
     if (strpos($phone, '0') === 0) {
         $phone = '+243' . substr($phone, 1);
     }
     
-    // Si le numéro ne commence pas par +, ajouter +243 (par défaut RDC)
     if (strpos($phone, '+') !== 0) {
         if (strlen($phone) === 9 || strlen($phone) === 10) {
             $phone = '+243' . $phone;
         }
     }
     
-    // Vérifier que le numéro est valide (au moins 10 chiffres)
     $digits = preg_replace('/[^0-9]/', '', $phone);
     if (strlen($digits) < 9) {
         return '';
@@ -413,7 +479,7 @@ function cleanPhoneNumber($phone) {
 }
 
 /**
- * Récupère un template WhatsApp
+ * Récupère un template WhatsApp (pour le corps du message en BDD)
  */
 function getWhatsAppTemplate($type, $data = []) {
     global $whatsappTemplates;
@@ -424,7 +490,6 @@ function getWhatsAppTemplate($type, $data = []) {
     
     $template = $whatsappTemplates[$type]['template'];
     
-    // Remplacer les variables
     foreach ($data as $key => $value) {
         $template = str_replace('{' . $key . '}', $value, $template);
     }
@@ -439,7 +504,6 @@ function sendWhatsAppToInvite($inviteId, $type = 'invitation', $data = [], $invi
     try {
         $pdo = getDbConnection();
         
-        // Récupérer les infos de l'invité
         $stmt = $pdo->prepare("
             SELECT 
                 inv.id,
@@ -466,47 +530,45 @@ function sendWhatsAppToInvite($inviteId, $type = 'invitation', $data = [], $invi
             return ['success' => false, 'message' => 'Invité non trouvé'];
         }
         
-        // Vérifier la préférence de contact
-        if ($invite['contact_preference'] !== 'WHATSAPP' && $invite['contact_preference'] !== 'SMS') {
-            return ['success' => false, 'message' => 'L\'invité ne souhaite pas être contacté par WhatsApp'];
-        }
+        // ⚠️ Vérifier la préférence de contact (optionnel - à adapter selon votre logique)
+        // Si vous voulez forcer WhatsApp, commentez cette condition
+        // if ($invite['contact_preference'] !== 'WHATSAPP' && $invite['contact_preference'] !== 'SMS') {
+        //     return ['success' => false, 'message' => 'L\'invité ne souhaite pas être contacté par WhatsApp'];
+        // }
         
-        // Vérifier le numéro de téléphone
         if (empty($invite['telephone'])) {
             return ['success' => false, 'message' => 'Numéro de téléphone manquant'];
         }
         
         // Préparer les données du template
         $templateData = [
-            'nom' => $invite['nom'],
-            'prenom' => $invite['prenom'],
-            'evenement' => $invite['evenement_nom'] ?? 'Événement',
-            'date' => $invite['date_evenement'] ? date('d/m/Y', strtotime($invite['date_evenement'])) : 'À confirmer',
-            'heure' => $invite['heure_evenement'] ?? 'À confirmer',
-            'lieu' => $invite['lieu'] ?? 'À confirmer',
-            'code_unique' => $invite['code_unique'] ?? '',
-            'url_validation' => APP_URL . '/public/validation.php?code=' . ($invite['code_unique'] ?? ''),
-            'nb_personnes' => $data['nombre_personnes'] ?? $invite['nb_presents'] ?? 1,
+            'nom'            => $invite['nom'],
+            'prenom'         => $invite['prenom'],
+            'evenement'      => $invite['evenement_nom'] ?? 'Événement',
+            'date'           => $invite['date_evenement'] ? date('d/m/Y', strtotime($invite['date_evenement'])) : 'À confirmer',
+            'heure'          => $invite['heure_evenement'] ?? 'À confirmer',
+            'lieu'           => $invite['lieu'] ?? 'À confirmer',
+            'code_unique'    => $invite['code_unique'] ?? '',
+            'url_validation' => (defined('APP_URL') ? APP_URL : '') . '/public/validation.php?code=' . ($invite['code_unique'] ?? ''),
+            'nb_personnes'   => $data['nombre_personnes'] ?? $invite['nb_presents'] ?? 1,
         ];
         
-        // Fusionner avec les données supplémentaires
         $templateData = array_merge($templateData, $data);
         
-        // Récupérer le template
+        // Récupérer le message (utilisé pour BDD/simulation)
         $message = getWhatsAppTemplate($type, $templateData);
         
         if (!$message) {
             return ['success' => false, 'message' => 'Template non trouvé'];
         }
         
-        // Utiliser l'ID d'invitation fourni ou celui récupéré
         $invitationId = $invitationId ?: $invite['invitation_id'];
         
         // Envoyer le message
         $result = sendWhatsAppMessage($invite['telephone'], $message, $invitationId, $type);
         
         // Journaliser dans l'application
-        if ($result['success']) {
+        if ($result['success'] && function_exists('logAction')) {
             logAction(
                 $_SESSION['user_id'] ?? 1,
                 'WHATSAPP_SEND',
@@ -534,8 +596,8 @@ function sendWhatsAppBulk($inviteIds, $type = 'invitation', $data = [], $invitat
         $result = sendWhatsAppToInvite($inviteId, $type, $data, $invitationId);
         $results[] = [
             'invite_id' => $inviteId,
-            'success' => $result['success'],
-            'message' => $result['message']
+            'success'   => $result['success'],
+            'message'   => $result['message'],
         ];
         
         if ($result['success']) {
@@ -545,15 +607,15 @@ function sendWhatsAppBulk($inviteIds, $type = 'invitation', $data = [], $invitat
         }
         
         // Pause pour éviter le rate limiting
-        usleep(200000); // 0.2 seconde entre chaque envoi
+        usleep(500000); // 0.5 seconde entre chaque envoi
     }
     
     return [
-        'success' => $successCount > 0,
-        'total' => count($inviteIds),
+        'success'       => $successCount > 0,
+        'total'         => count($inviteIds),
         'success_count' => $successCount,
-        'fail_count' => $failCount,
-        'results' => $results
+        'fail_count'    => $failCount,
+        'results'       => $results,
     ];
 }
 
@@ -566,23 +628,18 @@ function getWhatsAppStats() {
         
         $stats = [];
         
-        // Total messages
         $stmt = $pdo->query("SELECT COUNT(*) as total FROM whatsapp_messages");
         $stats['total'] = $stmt->fetch()['total'] ?? 0;
         
-        // Messages envoyés
         $stmt = $pdo->query("SELECT COUNT(*) as total FROM whatsapp_messages WHERE status = 'sent'");
         $stats['sent'] = $stmt->fetch()['total'] ?? 0;
         
-        // Messages échoués
         $stmt = $pdo->query("SELECT COUNT(*) as total FROM whatsapp_messages WHERE status = 'failed'");
         $stats['failed'] = $stmt->fetch()['total'] ?? 0;
         
-        // Délivrés
         $stmt = $pdo->query("SELECT COUNT(*) as total FROM whatsapp_messages WHERE delivered_at IS NOT NULL");
         $stats['delivered'] = $stmt->fetch()['total'] ?? 0;
         
-        // Lus
         $stmt = $pdo->query("SELECT COUNT(*) as total FROM whatsapp_messages WHERE read_at IS NOT NULL");
         $stats['read'] = $stmt->fetch()['total'] ?? 0;
         
