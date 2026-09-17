@@ -82,6 +82,7 @@ $remarque = $invite['remarque'] ?? '';
 $contact_preference = $invite['contact_preference'] ?? 'EMAIL';
 $photo = $invite['photo'] ?? '';
 $id_evenement = (int)($invite['id_evenement'] ?? 0);
+$telegram_chat_id = $invite['telegram_chat_id'] ?? '';
 
 /*
 |--------------------------------------------------------------------------
@@ -139,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remarque = trim((string)($_POST['remarque'] ?? ''));
     $contact_preference = $_POST['contact_preference'] ?? 'EMAIL';
     $id_evenement = (int)($_POST['id_evenement'] ?? 0);
+    $telegram_chat_id = trim((string)($_POST['telegram_chat_id'] ?? ''));
 
     $supprimer_photo = isset($_POST['supprimer_photo']) && $_POST['supprimer_photo'] == '1';
 
@@ -157,6 +159,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "L'email n'est pas valide.";
     if ($nombre_personnes < 1) $errors[] = 'Le nombre de personnes doit être au moins 1.';
     if ($nombre_personnes > 100) $errors[] = 'Le nombre de personnes ne peut pas dépasser 100.';
+    
+    // Validation telegram_chat_id (optionnel mais si rempli, doit être numérique)
+    if ($telegram_chat_id !== '' && !preg_match('/^-?\d+$/', $telegram_chat_id)) {
+        $errors[] = 'L\'ID Telegram doit être un nombre entier (ex: 123456789 ou -1001234567890).';
+    }
 
     // Unicité email dans le même événement
     if (!empty($email) && $email !== $invite['email'] && empty($errors)) {
@@ -227,14 +234,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 UPDATE invites SET
                     id_evenement = ?, nom = ?, prenom = ?, telephone = ?, email = ?,
                     adresse = ?, id_categorie = ?, entreprise = ?, nombre_personnes = ?,
-                    remarque = ?, contact_preference = ?, photo = ?
+                    remarque = ?, contact_preference = ?, photo = ?, telegram_chat_id = ?
                 WHERE id = ?
             ');
 
             $stmt->execute([
                 $id_evenement, $nom, $prenom, $telephone, $email, $adresse,
                 $id_categorie ?: null, $entreprise, $nombre_personnes,
-                $remarque, $contact_preference, $photoPath, $id
+                $remarque, $contact_preference, $photoPath,
+                $telegram_chat_id !== '' ? $telegram_chat_id : null,
+                $id
             ]);
 
             if (function_exists('logAction')) {
@@ -255,6 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $invite = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $photo = $invite['photo'] ?? '';
+    $telegram_chat_id = $invite['telegram_chat_id'] ?? '';
 }
 
 // URL photo actuelle
@@ -368,6 +378,51 @@ if (!empty($photo) && is_file($uploadDir . $photo)) {
             color: #1a1a1a;
             font-size: 15px;
             margin-bottom: 10px;
+        }
+
+        /* SECTION TELEGRAM */
+        .telegram-container {
+            background: linear-gradient(135deg, rgba(0, 136, 204, 0.05), rgba(0, 136, 204, 0.02));
+            border: 1.5px solid rgba(0, 136, 204, 0.2);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .telegram-container:focus-within {
+            border-color: #0088cc;
+            box-shadow: 0 0 0 4px rgba(0, 136, 204, 0.08);
+        }
+        .telegram-container .form-label {
+            color: #0088cc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .telegram-container .form-control {
+            border-color: rgba(0, 136, 204, 0.3);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
+        .telegram-container .form-control:focus {
+            border-color: #0088cc;
+            box-shadow: 0 0 0 4px rgba(0, 136, 204, 0.08);
+        }
+        .telegram-container .form-text {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .telegram-badge-optional {
+            background: rgba(0, 136, 204, 0.15);
+            color: #0088cc;
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* PRÉFÉRENCES DE CONTACT */
@@ -533,6 +588,31 @@ if (!empty($photo) && is_file($uploadDir . $photo)) {
                         </div>
                     </div>
 
+                    <!-- TELEGRAM CHAT ID (optionnel) -->
+                    <div class="telegram-container">
+                        <label class="form-label" for="telegram_chat_id">
+                            <i class="bi bi-telegram"></i> ID Telegram (Chat ID)
+                            <span class="telegram-badge-optional">Optionnel</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            name="telegram_chat_id" 
+                            id="telegram_chat_id"
+                            value="<?php echo htmlspecialchars($telegram_chat_id); ?>" 
+                            placeholder="Ex: 123456789 ou -1001234567890"
+                            pattern="^-?\d*$"
+                            inputmode="numeric"
+                        >
+                        <div class="form-text mt-2">
+                            <i class="bi bi-info-circle"></i>
+                            Utilisé pour envoyer les invitations via Telegram. Laissez vide si non applicable.
+                            <br>
+                            <i class="bi bi-lightbulb"></i>
+                            Astuce : l'ID se récupère via <code>@userinfobot</code> sur Telegram.
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label"><i class="bi bi-tags"></i> Catégorie</label>
@@ -689,6 +769,24 @@ document.addEventListener('DOMContentLoaded', function() {
             photoPreview.classList.remove('has-photo');
             btnRemove.style.display = 'none';
             photoInput.value = '';
+        });
+    }
+});
+
+// ===== VALIDATION TELEGRAM CHAT ID (uniquement chiffres et -) =====
+document.addEventListener('DOMContentLoaded', function() {
+    const telegramInput = document.getElementById('telegram_chat_id');
+    if (telegramInput) {
+        telegramInput.addEventListener('input', function() {
+            // Autorise uniquement : chiffres et un seul tiret au début
+            let val = this.value.replace(/[^\d-]/g, '');
+            // Un seul tiret, et uniquement au début
+            if (val.startsWith('-')) {
+                val = '-' + val.substring(1).replace(/-/g, '');
+            } else {
+                val = val.replace(/-/g, '');
+            }
+            this.value = val;
         });
     }
 });
