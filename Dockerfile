@@ -1,12 +1,14 @@
 FROM php:8.2-apache
 
-# Installer les dépendances système pour GD
+# Installer les dépendances système pour GD + Composer
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
     zlib1g-dev \
+    git \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Configurer et installer GD
@@ -20,7 +22,22 @@ RUN a2enmod rewrite
 RUN sed -ri -e 's!/var/www/html!/app!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!/app!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Créer les dossiers
+# ==========================================
+# INSTALLER COMPOSER + DÉPENDANCES
+# ==========================================
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Copier composer.json et composer.lock
+COPY composer.json composer.lock ./
+
+# Installer les dépendances SANS scripts pour éviter les erreurs
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+
+# ==========================================
+# CRÉER LES DOSSIERS
+# ==========================================
 RUN mkdir -p /app/logs \
              /app/uploads/photos \
              /app/uploads/photos_host \
@@ -31,11 +48,17 @@ RUN mkdir -p /app/logs \
 RUN chown -R www-data:www-data /app/uploads /app/logs && \
     chmod -R 755 /app/uploads /app/logs
 
-# Copier le code
+# ==========================================
+# COPIER LE CODE
+# ==========================================
 COPY . /app/
+
+# Permissions finales
 RUN chown -R www-data:www-data /app
 
-# Script de démarrage : corrige les permissions du volume à chaque démarrage
+# ==========================================
+# SCRIPT D'ENTRÉE (permissions automatiques)
+# ==========================================
 RUN printf '#!/bin/bash\n\
 set -e\n\
 \n\
