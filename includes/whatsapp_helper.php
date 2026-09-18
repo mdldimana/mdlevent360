@@ -293,7 +293,7 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
     
     $result = json_decode($response, true);
     
-    if (isset($result['sent']) && $result['sent'] === true) {
+ if (isset($result['sent']) && ($result['sent'] === true || $result['sent'] === 'true' || $result['sent'] === 1 || $result['sent'] === '1')) {
         return [
             'success'    => true,
             'message'    => 'Message envoyé avec succès via UltraMsg',
