@@ -249,7 +249,18 @@ function sendWhatsAppTwilio($to, $message, $config) {
  * Envoi via UltraMsg API
  */
 function sendWhatsAppUltraMsg($to, $message, $config) {
-    $url = 'https://api.ultramsg.com/' . $config['api_key'] . '/messages/chat';
+    // UltraMsg : utilise phone_number_id (instance ID)
+    $instanceId = $config['phone_number_id'] ?? '';
+    
+    if (empty($instanceId)) {
+        return [
+            'success'       => false,
+            'message'       => 'Instance ID UltraMsg manquant',
+            'error_message' => 'phone_number_id est vide',
+        ];
+    }
+    
+    $url = 'https://api.ultramsg.com/' . urlencode($instanceId) . '/messages/chat';
     
     $data = [
         'token'    => $config['access_token'],
@@ -262,27 +273,40 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
+    
+    if (!empty($curlError)) {
+        return [
+            'success'       => false,
+            'message'       => 'Erreur cURL : ' . $curlError,
+            'error_message' => $curlError,
+        ];
+    }
     
     $result = json_decode($response, true);
     
     if (isset($result['sent']) && $result['sent'] === true) {
         return [
             'success'    => true,
-            'message'    => 'Message envoyé avec succès',
+            'message'    => 'Message envoyé avec succès via UltraMsg',
             'data'       => $result,
-            'message_id' => $result['message_id'] ?? null,
+            'message_id' => $result['id'] ?? null,
         ];
     } else {
+        $errorMsg = $result['error'] ?? ($result['message'] ?? 'Erreur d\'envoi UltraMsg');
         return [
             'success'       => false,
-            'message'       => $result['error'] ?? 'Erreur d\'envoi',
+            'message'       => 'Erreur UltraMsg : ' . $errorMsg,
             'data'          => $result,
-            'error_message' => $result['error'] ?? null,
+            'error_message' => $errorMsg,
         ];
     }
 }

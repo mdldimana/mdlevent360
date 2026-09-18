@@ -13,7 +13,7 @@
 
 // Service utilisé: 'meta', 'twilio', 'ultramsg', 'simulation'
 if (!defined('WHATSAPP_SERVICE')) {
-    define('WHATSAPP_SERVICE', 'twilio');
+    define('WHATSAPP_SERVICE', 'ultramsg');
 }
 
 // ============================================
