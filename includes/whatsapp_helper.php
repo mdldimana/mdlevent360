@@ -7,7 +7,44 @@
  *    + Mise à jour automatique des statuts d'invitation
  */
 
-require_once __DIR__ . '/../config/whatsapp.php';
+$whatsappConfigFile = __DIR__ . '/../config/whatsapp.php';
+if (file_exists($whatsappConfigFile)) {
+    require_once $whatsappConfigFile;
+} else {
+    // Fallback : définir les valeurs par défaut
+    if (!defined('WHATSAPP_SERVICE')) {
+        define('WHATSAPP_SERVICE', 'ultramsg');
+    }
+    if (!isset($whatsappTemplates)) {
+        $whatsappTemplates = [
+            'invitation' => [
+                'name'     => 'invitation_event',
+                'subject'  => 'Invitation à l\'événement',
+                'template' => "Bonjour {nom} {prenom},\n\nNous avons le plaisir de vous inviter à l'événement \"{evenement}\" qui aura lieu le {date} à {heure}.\n\nLieu : {lieu}\nNombre de personnes : {nb_personnes}\nCode d'accès : {code_unique}\n\nVeuillez confirmer votre présence via le lien ci-dessous :\n{url_validation}\n\nNous avons hâte de vous accueillir !",
+            ],
+            'confirmation' => [
+                'name'     => 'confirmation_event',
+                'subject'  => 'Invitation confirmée',
+                'template' => "Bonjour {nom} {prenom},\n\nNous confirmons votre participation à l'événement \"{evenement}\" du {date}.\n\nLieu : {lieu}\nNombre de personnes : {nb_personnes}\n\nN'oubliez pas de scanner votre QR code à l'entrée.\n\nÀ très bientôt !",
+            ],
+            'rappel' => [
+                'name'     => 'rappel_event',
+                'subject'  => 'Rappel - Événement',
+                'template' => "Bonjour {nom} {prenom},\n\nCe message pour vous rappeler l'événement \"{evenement}\" qui aura lieu demain le {date} à {heure}.\n\nLieu : {lieu}\n\nN'oubliez pas votre QR code pour l'entrée.\n\nÀ demain !",
+            ],
+            'present' => [
+                'name'     => 'present_event',
+                'subject'  => 'Présence enregistrée',
+                'template' => "Bonjour {nom} {prenom},\n\nVotre présence à l'événement \"{evenement}\" a été enregistrée avec succès !\n\nBonne journée et profitez bien de l'événement.",
+            ],
+            'annulation' => [
+                'name'     => 'annulation_event',
+                'subject'  => 'Annulation d\'invitation',
+                'template' => "Bonjour {nom} {prenom},\n\nNous accusons réception de votre annulation pour l'événement \"{evenement}\".\n\nNous espérons vous revoir à une prochaine occasion.\n\nCordialement.",
+            ],
+        ];
+    }
+}
 
 // ============================================
 // CONFIGURATION DES TEMPLATES META
