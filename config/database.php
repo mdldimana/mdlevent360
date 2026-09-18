@@ -36,9 +36,8 @@ define('APP_NAME', getenv('APP_NAME') ?: 'MdlEvent');
 
 // URL dynamique selon l'environnement
 if ($isProduction) {
-    // En production, Coolify fournit COOLIFY_URL
-    $appUrl = getenv('COOLIFY_URL') ?: 'http://187.124.213.124:8000';
-    define('APP_URL', $appUrl);
+    // URL fixe de production
+    define('APP_URL', 'https://mdlevent360.com');
 } else {
     define('APP_URL', 'http://localhost/gestion_invitations');
 }

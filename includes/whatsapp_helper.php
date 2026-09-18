@@ -537,7 +537,7 @@ function sendWhatsAppToInvite($inviteId, $type = 'invitation', $data = [], $invi
             'heure'          => $invite['heure_evenement'] ?? 'À confirmer',
             'lieu'           => $invite['lieu'] ?? 'À confirmer',
             'code_unique'    => $invite['code_unique'] ?? '',
-            'url_validation' => (defined('APP_URL') ? APP_URL : '') . '/public/validation.php?code=' . ($invite['code_unique'] ?? ''),
+            'url_validation' => (defined('APP_URL') ? APP_URL : '') . '/public/invitation.php?code=' . ($invite['code_unique'] ?? ''),
             'nb_personnes'   => $data['nombre_personnes'] ?? $invite['nb_presents'] ?? 1,
         ];
         
