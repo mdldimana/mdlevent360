@@ -59,3 +59,14 @@ node_modules/
 # Logs (garder le dossier mais ignorer son contenu)
 /logs/*
 !/logs/.gitkeep
+
+# Configuration Telegram (contient le token)
+/config/telegram.php
+# Backups
+*.backup
+*.bak
+
+# Fichiers sensibles (tokens)
+config/email.php
+config/telegram.php
+config/whatsapp.php
