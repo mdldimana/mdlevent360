@@ -78,6 +78,100 @@ $services = [
 ];
 
 // ============================================
+// RÉGÉNÉRATION DU FICHIER config/whatsapp.php
+// ============================================
+
+/**
+ * Régénère le fichier de configuration WhatsApp
+ * pour que les constantes soient à jour dans le code.
+ */
+function regenerateWhatsAppConfigFile(string $serviceKey): bool {
+    $targetFile = __DIR__ . '/../../../config/whatsapp.php';
+
+    // Sécurité : service valide
+    $validServices = ['meta', 'twilio', 'ultramsg', 'simulation'];
+    if (!in_array($serviceKey, $validServices, true)) {
+        $serviceKey = 'meta';
+    }
+
+    // Génération du contenu
+    $content  = "<?php\n";
+    $content .= "/**\n";
+    $content .= " * Configuration WhatsApp\n";
+    $content .= " * ⚠️ Généré automatiquement - Ne pas modifier manuellement\n";
+    $content .= " * Dernière mise à jour : " . date('d/m/Y à H:i:s') . "\n";
+    $content .= " */\n\n";
+    $content .= "// ============================================\n";
+    $content .= "// SERVICE WHATSAPP ACTIF\n";
+    $content .= "// ============================================\n";
+    $content .= "if (!defined('WHATSAPP_SERVICE')) {\n";
+    $content .= "    define('WHATSAPP_SERVICE', '" . addslashes($serviceKey) . "');\n";
+    $content .= "}\n\n";
+    $content .= "// ============================================\n";
+    $content .= "// TEMPLATES DE MESSAGES\n";
+    $content .= "// ============================================\n";
+    $content .= "\$whatsappTemplates = [\n";
+
+    // Templates
+    $templates = [
+        'invitation' => [
+            'name'     => 'invitation_event',
+            'subject'  => "Invitation à l'événement",
+            'template' => "Bonjour {nom} {prenom},\n\nNous avons le plaisir de vous inviter à l'événement \"{evenement}\" qui aura lieu le {date} à {heure}.\n\nLieu : {lieu}\nNombre de personnes : {nb_personnes}\nCode d'accès : {code_unique}\n\nVeuillez confirmer votre présence via le lien ci-dessous :\n{url_validation}\n\nNous avons hâte de vous accueillir !",
+        ],
+        'confirmation' => [
+            'name'     => 'confirmation_event',
+            'subject'  => 'Invitation confirmée',
+            'template' => "Bonjour {nom} {prenom},\n\nNous confirmons votre participation à l'événement \"{evenement}\" du {date}.\n\nLieu : {lieu}\nNombre de personnes : {nb_personnes}\n\nN'oubliez pas de scanner votre QR code à l'entrée.\n\nÀ très bientôt !",
+        ],
+        'rappel' => [
+            'name'     => 'rappel_event',
+            'subject'  => 'Rappel - Événement',
+            'template' => "Bonjour {nom} {prenom},\n\nCe message pour vous rappeler l'événement \"{evenement}\" qui aura lieu demain le {date} à {heure}.\n\nLieu : {lieu}\n\nN'oubliez pas votre QR code pour l'entrée.\n\nÀ demain !",
+        ],
+        'present' => [
+            'name'     => 'presence_confirmee',
+            'subject'  => 'Présence enregistrée',
+            'template' => "Bonjour {nom} {prenom},\n\nVotre présence à l'événement \"{evenement}\" a été enregistrée avec succès !\n\nBonne journée et profitez bien de l'événement.",
+        ],
+        'annulation' => [
+            'name'     => 'annulation_event',
+            'subject'  => "Annulation d'invitation",
+            'template' => "Bonjour {nom} {prenom},\n\nNous accusons réception de votre annulation pour l'événement \"{evenement}\".\n\nNous espérons vous revoir à une prochaine occasion.\n\nCordialement.",
+        ],
+    ];
+
+    $first = true;
+    foreach ($templates as $key => $tpl) {
+        if (!$first) $content .= ",\n";
+        $first = false;
+
+        $content .= "    '" . $key . "' => [\n";
+        $content .= "        'name'     => '" . addslashes($tpl['name']) . "',\n";
+        $content .= "        'subject'  => '" . addslashes($tpl['subject']) . "',\n";
+        $content .= "        'template' => \"" . addcslashes($tpl['template'], '"$') . "\"\n";
+        $content .= "    ]";
+    }
+
+    $content .= "\n];\n";
+
+    // Écriture
+    $dir = dirname($targetFile);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0775, true);
+    }
+
+    $written = @file_put_contents($targetFile, $content, LOCK_EX);
+
+    // Invalider opcache
+    if ($written !== false && function_exists('opcache_invalidate')) {
+        @opcache_invalidate($targetFile, true);
+    }
+
+    return $written !== false;
+}
+
+// ============================================
 // FONCTION DE TEST (MULTI-SERVICE)
 // ============================================
 
@@ -129,6 +223,48 @@ function testWhatsAppConfig(string $service, array $config): array {
             $result = json_decode((string)$response, true);
             $error  = $result['message'] ?? 'Erreur inconnue (HTTP ' . $httpCode . ')';
             return ['success' => false, 'message' => 'Erreur Twilio : ' . $error];
+
+        // ==========================================
+        // ULTRAMSG
+        // ==========================================
+        case 'ultramsg':
+            $instanceId = $config['phone_number_id'] ?? '';
+            $token      = $config['access_token']    ?? '';
+
+            if (empty($instanceId) || empty($token)) {
+                return ['success' => false, 'message' => 'Instance ID ou Token UltraMsg manquant'];
+            }
+
+            $url = 'https://api.ultramsg.com/' . urlencode($instanceId) . '/instance/status?token=' . urlencode($token);
+
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+
+            $response  = curl_exec($ch);
+            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if (!empty($curlError)) {
+                return ['success' => false, 'message' => 'Erreur cURL : ' . $curlError];
+            }
+
+            if ($httpCode === 200) {
+                $data = json_decode((string)$response, true);
+                $status = $data['status'] ?? 'unknown';
+                if ($status === 'authenticated' || $status === 'connected') {
+                    return ['success' => true, 'message' => 'Connexion UltraMsg réussie ! Status : ' . $status];
+                }
+                return ['success' => false, 'message' => 'UltraMsg non connecté (status: ' . $status . ')'];
+            }
+
+            return ['success' => false, 'message' => 'Erreur UltraMsg (HTTP ' . $httpCode . ')'];
 
         // ==========================================
         // META WHATSAPP CLOUD API
@@ -240,9 +376,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $pdo->commit();
 
+                // ⭐ RÉGÉNÉRER config/whatsapp.php
+                $regenerated = regenerateWhatsAppConfigFile($whatsapp_service);
+
                 $message = '✅ Configuration WhatsApp enregistrée avec succès !';
                 if (!$tokenModifie) {
                     $message .= ' (token inchangé)';
+                }
+                if ($regenerated) {
+                    $message .= '<br><small>Fichier de configuration régénéré ✅</small>';
+                } else {
+                    $message .= '<br><small style="color:#dc3545">⚠️ Impossible de régénérer config/whatsapp.php (permissions)</small>';
                 }
                 $messageType = 'success';
 
@@ -272,10 +416,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ---------- TESTER ----------
     elseif ($action === 'test') {
-        $phoneId   = trim($_POST['whatsapp_phone_id']    ?? '');
+        $phoneId    = trim($_POST['whatsapp_phone_id']    ?? '');
         $businessId = trim($_POST['whatsapp_business_id'] ?? '');
-        $token     = trim($_POST['whatsapp_token']       ?? '');
-        $service   = $_POST['whatsapp_service']          ?? 'meta';
+        $token      = trim($_POST['whatsapp_token']       ?? '');
+        $service    = $_POST['whatsapp_service']          ?? 'meta';
 
         // Si le token est vide, on le recharge depuis la BDD
         if (empty($token)) {
@@ -650,7 +794,7 @@ $roles_user = $user['roles'] ?? [];
                 <div class="info-box">
                     <strong><i class="bi bi-info-circle-fill"></i> WhatsApp Business API</strong>
                     <ul>
-                        <li>Créez un compte sur <a href="https://business.facebook.com/" target="_blank" rel="noopener">Meta Business</a> ou <a href="https://www.twilio.com/" target="_blank" rel="noopener">Twilio</a></li>
+                        <li>Créez un compte sur <a href="https://business.facebook.com/" target="_blank" rel="noopener">Meta Business</a>, <a href="https://www.twilio.com/" target="_blank" rel="noopener">Twilio</a> ou <a href="https://ultramsg.com/" target="_blank" rel="noopener">UltraMsg</a></li>
                         <li>Obtenez un <strong>Numéro de téléphone business</strong> et un <strong>Token d'accès</strong></li>
                         <li>Les messages sont envoyés via l'API officielle</li>
                     </ul>
@@ -684,7 +828,7 @@ $roles_user = $user['roles'] ?? [];
                         <input type="text" class="form-control" name="whatsapp_phone_id"
                                value="<?php echo htmlspecialchars($whatsapp_phone_id); ?>"
                                placeholder="Ex: 123456789012345 ou +14155238886" required>
-                        <div class="form-text">ID du numéro (Meta : Phone Number ID / Twilio : numéro WhatsApp)</div>
+                        <div class="form-text">ID du numéro (Meta : Phone Number ID / Twilio : numéro WhatsApp / UltraMsg : instance ID)</div>
                     </div>
 
                     <div class="mb-3">
@@ -714,7 +858,7 @@ $roles_user = $user['roles'] ?? [];
                         <?php else: ?>
                             <div class="form-text">
                                 <i class="bi bi-info-circle"></i>
-                                Token d'accès (Meta : Bearer Token / Twilio : Auth Token)
+                                Token d'accès (Meta : Bearer Token / Twilio : Auth Token / UltraMsg : Token)
                             </div>
                         <?php endif; ?>
                     </div>
@@ -724,7 +868,7 @@ $roles_user = $user['roles'] ?? [];
                         <input type="text" class="form-control" name="whatsapp_business_id"
                                value="<?php echo htmlspecialchars($whatsapp_business_id); ?>"
                                placeholder="Meta : Business ID / Twilio : Account SID (ACxxx)">
-                        <div class="form-text">Meta : Business Account ID / Twilio : Account SID</div>
+                        <div class="form-text">Meta : Business Account ID / Twilio : Account SID / UltraMsg : (vide)</div>
                     </div>
 
                     <div class="mb-3">
@@ -777,10 +921,9 @@ $roles_user = $user['roles'] ?? [];
                         <i class="bi bi-question-circle-fill" style="color:#25D366"></i> Comment obtenir vos identifiants
                     </h6>
                     <ol class="small" style="color:#9a8a7f;padding-left:20px;line-height:1.8">
-                        <li>Créez un compte <a href="https://business.facebook.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Meta Business</a> ou <a href="https://www.twilio.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Twilio</a></li>
-                        <li>Configurez un <strong>Numéro de téléphone WhatsApp Business</strong></li>
-                        <li>Générez un <strong>Token d'accès</strong> dans le portail développeur</li>
-                        <li><strong>Meta</strong> : Phone Number ID + Business ID<br><strong>Twilio</strong> : Numéro WhatsApp (+1415...) + Account SID (ACxxx)</li>
+                        <li><strong>Meta</strong> : <a href="https://business.facebook.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Meta Business</a> → Phone Number ID + Business ID + Token</li>
+                        <li><strong>Twilio</strong> : <a href="https://www.twilio.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">Twilio Console</a> → Numéro WhatsApp (+1415...) + Account SID (ACxxx) + Auth Token</li>
+                        <li><strong>UltraMsg</strong> : <a href="https://ultramsg.com/" target="_blank" rel="noopener" style="color:#25D366;font-weight:700">UltraMsg</a> → Instance ID (instanceXXXXX) + Token</li>
                     </ol>
                 </div>
 
