@@ -65,7 +65,7 @@ $rolesDisponibles = function_exists('getRolesSpecifiquesDisponibles') ? getRoles
 $stmt = $pdo->query('SELECT id, nom, prenom, username, email FROM utilisateurs WHERE actif = 1 ORDER BY nom, prenom');
 $tousUtilisateurs = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-// ========== MODELES D'INVITATION - FIX AFFICHAGE PHOTOS ==========
+// ========== MODELES D'INVITATION ==========
 $modelesInvitation = [];
 $templateDir = __DIR__ . '/templates/invitations/';
 $templatesDisponibles = [];
@@ -81,7 +81,7 @@ foreach ($templatesDisponibles as $code) {
     $modelesInvitation[] = $dbInfo ?: ['code'=>$code,'nom'=>ucfirst(str_replace('_',' ',$code)),'description'=>'','apercu'=>''];
 }
 
-// Si toujours vide, scan direct uploads/modeles_invitation/ (c'est ton cas)
+// Si toujours vide, scan direct uploads/modeles_invitation/
 if (empty($modelesInvitation) && is_dir($uploadModeleDir)) {
     $files = array_merge(glob($uploadModeleDir.'*.png')?:[], glob($uploadModeleDir.'*.jpg')?:[], glob($uploadModeleDir.'*.jpeg')?:[]);
     foreach ($files as $file) {
@@ -110,7 +110,6 @@ foreach ($modelesInvitation as &$modele) {
         }
     }
     $modele['_apercu_url'] = $apercuUrl;
-    // Debug pour XAMPP localhost
     $modele['_debug_exists'] = file_exists($uploadModeleDir.($modele['apercu']??''));
 }
 unset($modele);
@@ -177,14 +176,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try { $pdo->beginTransaction(); $insert=$pdo->prepare('INSERT INTO photo_host (id_evenement, photo, titre, description, ordre, actif) VALUES (?, ?, ?, ?, ?, 1)'); $insert->execute([$id,$newFileName,$titre,$descriptionPhoto,$ordre]); $pdo->commit(); $photoMessages[]='✅ Ajoutée : '.$originalName; } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); if (file_exists($destination)) @unlink($destination); $photoMessages[]='❌ SQL '.$originalName.' : '.$e->getMessage(); }
         }
     }
+
+    // ========== SUPPRESSION DES PHOTOS EXISTANTES ==========
     if (isset($_POST['delete_photo']) && is_array($_POST['delete_photo'])) {
         foreach ($_POST['delete_photo'] as $photoId) {
-            $photoId=(int)$photoId; if ($photoId<=0) continue;
-            $stmt=$pdo->prepare('SELECT photo FROM photo_host WHERE id = ? AND id_evenement = ?'); $stmt->execute([$photoId,$id]); $photo=$stmt->fetch(PDO::FETCH_ASSOC); if (!$photo) continue;
-            $filePath=$uploadDir.basename($photo['photo']); if (file_exists($filePath)) @unlink($filePath);
-            $pdo->prepare('DELETE FROM photo_host WHERE id = ? AND id_evenement = ?')->execute([$photoId,$id]); $photoMessages[]='🗑 Supprimée ID: '.$photoId;
+            $photoId = (int)$photoId;
+            if ($photoId <= 0) continue;
+            $stmt = $pdo->prepare('SELECT photo FROM photo_host WHERE id = ? AND id_evenement = ?');
+            $stmt->execute([$photoId, $id]);
+            $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$photo) continue;
+            $filePath = $uploadDir . basename($photo['photo']);
+            if (file_exists($filePath)) @unlink($filePath);
+            $pdo->prepare('DELETE FROM photo_host WHERE id = ? AND id_evenement = ?')->execute([$photoId, $id]);
+            $photoMessages[] = '🗑 Supprimée ID: ' . $photoId;
         }
     }
+
     if (isset($_POST['photo_order']) && is_array($_POST['photo_order'])) { foreach ($_POST['photo_order'] as $photoId=>$ordre) { $pdo->prepare('UPDATE photo_host SET ordre = ? WHERE id = ? AND id_evenement = ?')->execute([(int)$ordre,(int)$photoId,$id]); } }
     if (isset($_POST['photo_actif']) && is_array($_POST['photo_actif'])) { foreach ($_POST['photo_actif'] as $photoId=>$actif) { $pdo->prepare('UPDATE photo_host SET actif = ? WHERE id = ? AND id_evenement = ?')->execute([(int)$actif,(int)$photoId,$id]); } }
 
@@ -329,9 +337,71 @@ $apercuUrl = $modele['_apercu_url'] ?? '';
 <?php if (empty($tousUtilisateurs)): ?><div class="no-users-message">Aucun utilisateur actif</div>
 <?php else: ?><input type="hidden" name="utilisateurs_associes_submit" value="1"><div class="row g-3"><?php foreach ($tousUtilisateurs as $u): $isChecked=in_array($u['id'],$idsUtilisateursAssocies); $roleActuel=$rolesSpecifiques[$u['id']] ?? ''; ?><div class="col-md-6"><div class="user-checkbox-item <?php echo $isChecked?'checked':''; ?>" data-user-id="<?php echo $u['id']; ?>"><label class="user-header" for="user_<?php echo $u['id']; ?>"><input type="checkbox" name="utilisateurs_associes[]" value="<?php echo $u['id']; ?>" id="user_<?php echo $u['id']; ?>" class="user-checkbox" <?php echo $isChecked?'checked':''; ?>><div style="flex:1;min-width:0;"><div class="user-name"><?php echo htmlspecialchars($u['prenom'].' '.$u['nom']); ?></div><div class="user-username">@<?php echo htmlspecialchars($u['username']); ?></div></div></label><div class="role-select-container"><label>Rôle spécifique</label><select class="form-select form-select-sm" name="role_specifique[<?php echo $u['id']; ?>]"><option value="">— Aucun —</option><?php foreach ($rolesDisponibles as $rv=>$rl): ?><option value="<?php echo $rv; ?>" <?php echo $roleActuel===$rv?'selected':''; ?>><?php echo $rl; ?></option><?php endforeach; ?></select></div></div></div><?php endforeach; ?></div><?php endif; ?></div>
 
-<div class="photos-section"><h6><i class="bi bi-images"></i> Photos des mariés <?php if($photosHost) echo '<span class="badge ms-2" style="background:linear-gradient(135deg,#c17c60,#d4a574);color:white;font-size:11px;padding:4px 10px;border-radius:20px;">'.count($photosHost).'</span>'; ?></h6>
-<?php if (!empty($photosHost)): ?><div class="photo-grid"><?php foreach ($photosHost as $index=>$photo): $filename=basename((string)$photo['photo']); $physicalPath=$uploadDir.$filename; $imageUrl=$photoUrl.rawurlencode($filename); $fileExists=file_exists($physicalPath); ?><div class="photo-item" id="photo_<?php echo $photo['id']; ?>"><?php if ($fileExists): ?><img src="<?php echo htmlspecialchars($imageUrl); ?>" alt="" onerror="this.style.display='none';"><?php else: ?><div style="display:flex;width:100%;height:100%;background:rgba(239,68,68,0.1);color:#dc2626;align-items:center;justify-content:center;flex-direction:column;"><span style="font-size:24px;">❌</span><small style="font-size:10px;word-break:break-all;padding:5px;"><?php echo htmlspecialchars($filename); ?></small></div><?php endif; ?><div class="photo-badge"><?php echo $index+1; ?></div><div class="photo-status-badge <?php echo $photo['actif']?'active':'inactive'; ?>"><?php echo $photo['actif']?'Actif':'Inactif'; ?></div><input type="number" class="photo-order-input" name="photo_order[<?php echo $photo['id']; ?>]" value="<?php echo $photo['ordre']; ?>"><div class="photo-controls" style="position:absolute;bottom:0;left:0;right:0;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,0.7));display:flex;justify-content:space-between;opacity:0;transition:all 0.3s ease;"><button type="button" class="btn btn-sm btn-light" onclick="togglePhoto(<?php echo $photo['id']; ?>, <?php echo $photo['actif']?0:1; ?>)"><i class="bi <?php echo $photo['actif']?'bi-eye-slash':'bi-eye'; ?>"></i></button><button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete(<?php echo $photo['id']; ?>)"><i class="bi bi-trash"></i></button></div><input type="hidden" name="delete_photo[]" id="delete_photo_<?php echo $photo['id']; ?>" value=""><input type="hidden" name="photo_actif[<?php echo $photo['id']; ?>]" id="photo_actif_<?php echo $photo['id']; ?>" value="<?php echo $photo['actif']; ?>"></div><?php endforeach; ?></div><?php endif; ?>
-<div class="upload-area" id="uploadArea"><i class="bi bi-cloud-upload" style="color:#c17c60;font-size:40px;"></i><p id="uploadText"><strong>Sélectionnez vos photos</strong></p><div class="form-text">JPG, PNG, GIF, WEBP - max 10Mo</div><div style="margin-top:15px;"><input type="file" id="photoInput" name="photos_host[]" multiple accept=".jpg,.jpeg,.png,.gif,.webp,image/*" style="display:none"><button type="button" class="btn-outline-primary" id="btnChoose"><i class="bi bi-plus-circle"></i> Choisir des photos</button><span id="fileCount" class="ms-2" style="color:#9a8a7f;"></span></div></div><div id="photoPreview" class="photo-grid mt-3" style="display:none;"></div><div id="photoFields" style="display:none;" class="mt-2"></div></div>
+<!-- ========== SECTION PHOTOS DES HÔTES (CORRIGÉE) ========== -->
+<div class="photos-section">
+  <h6>
+    <i class="bi bi-images"></i> Photos des mariés 
+    <?php if($photosHost) echo '<span class="badge ms-2" style="background:linear-gradient(135deg,#c17c60,#d4a574);color:white;font-size:11px;padding:4px 10px;border-radius:20px;">'.count($photosHost).'</span>'; ?>
+  </h6>
+  
+  <?php if (!empty($photosHost)): ?>
+  <div class="photo-grid">
+    <?php foreach ($photosHost as $index => $photo): 
+      $filename = basename((string)$photo['photo']); 
+      $physicalPath = $uploadDir . $filename; 
+      $imageUrl = $photoUrl . rawurlencode($filename); 
+      $fileExists = file_exists($physicalPath); 
+    ?>
+    <div class="photo-item" id="photo_<?php echo $photo['id']; ?>">
+      <?php if ($fileExists): ?>
+        <img src="<?php echo htmlspecialchars($imageUrl); ?>" alt="" onerror="this.style.display='none';">
+      <?php else: ?>
+        <div style="display:flex;width:100%;height:100%;background:rgba(239,68,68,0.1);color:#dc2626;align-items:center;justify-content:center;flex-direction:column;">
+          <span style="font-size:24px;">❌</span>
+          <small style="font-size:10px;word-break:break-all;padding:5px;"><?php echo htmlspecialchars($filename); ?></small>
+        </div>
+      <?php endif; ?>
+      
+      <div class="photo-badge"><?php echo $index + 1; ?></div>
+      <div class="photo-status-badge <?php echo $photo['actif'] ? 'active' : 'inactive'; ?>">
+        <?php echo $photo['actif'] ? 'Actif' : 'Inactif'; ?>
+      </div>
+      
+      <input type="number" class="photo-order-input" name="photo_order[<?php echo $photo['id']; ?>]" value="<?php echo $photo['ordre']; ?>">
+      
+      <div class="photo-controls" style="position:absolute;bottom:0;left:0;right:0;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,0.7));display:flex;justify-content:space-between;opacity:0;transition:all 0.3s ease;">
+        <button type="button" class="btn btn-sm btn-light" onclick="togglePhoto(<?php echo $photo['id']; ?>, <?php echo $photo['actif'] ? 0 : 1; ?>)">
+          <i class="bi <?php echo $photo['actif'] ? 'bi-eye-slash' : 'bi-eye'; ?>"></i>
+        </button>
+        <!-- CORRECTION : bouton supprimer avec type="button" pour ne pas soumettre -->
+        <button type="button" class="btn btn-sm btn-danger btn-delete-photo" data-photo-id="<?php echo $photo['id']; ?>" onclick="confirmDeletePhoto(<?php echo $photo['id']; ?>)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+      
+      <!-- CORRECTION : champ delete_photo est un simple input qui sera rempli au submit -->
+      <input type="hidden" name="delete_photo[]" id="delete_photo_<?php echo $photo['id']; ?>" value="" disabled>
+      <input type="hidden" name="photo_actif[<?php echo $photo['id']; ?>]" id="photo_actif_<?php echo $photo['id']; ?>" value="<?php echo $photo['actif']; ?>">
+    </div>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+  
+  <div class="upload-area" id="uploadArea">
+    <i class="bi bi-cloud-upload" style="color:#c17c60;font-size:40px;"></i>
+    <p id="uploadText"><strong>Sélectionnez vos photos</strong></p>
+    <div class="form-text">JPG, PNG, GIF, WEBP - max 10Mo</div>
+    <div style="margin-top:15px;">
+      <input type="file" id="photoInput" name="photos_host[]" multiple accept=".jpg,.jpeg,.png,.gif,.webp,image/*" style="display:none">
+      <button type="button" class="btn-outline-primary" id="btnChoose">
+        <i class="bi bi-plus-circle"></i> Choisir des photos
+      </button>
+      <span id="fileCount" class="ms-2" style="color:#9a8a7f;"></span>
+    </div>
+  </div>
+  <div id="photoPreview" class="photo-grid mt-3" style="display:none;"></div>
+  <div id="photoFields" style="display:none;" class="mt-2"></div>
+</div>
 
 <div class="form-actions"><button type="submit" class="btn-save"><i class="bi bi-save"></i> Enregistrer</button><a href="index.php" class="btn-cancel"><i class="bi bi-arrow-left"></i> Annuler</a><a href="voir.php?id=<?php echo $id; ?>" class="btn-cancel"><i class="bi bi-eye"></i> Voir</a></div>
 </form>
@@ -361,7 +431,41 @@ radio.addEventListener('change',function(){if(this.checked){document.querySelect
 });
 
 function togglePhoto(id,actif){document.getElementById('photo_actif_'+id).value=actif;const item=document.getElementById('photo_'+id);const badge=item.querySelector('.photo-status-badge');badge.className='photo-status-badge '+(actif?'active':'inactive');badge.textContent=actif?'Actif':'Inactif';}
-function confirmDelete(id){if(confirm('Supprimer cette photo ?')){document.getElementById('delete_photo_'+id).value=id;const item=document.getElementById('photo_'+id);item.style.opacity='0.4';item.style.filter='grayscale(1)';}}
+
+// ========== CORRECTION : SUPPRESSION DES PHOTOS EXISTANTES ==========
+function confirmDeletePhoto(photoId) {
+    if (confirm('⚠️ Supprimer définitivement cette photo ?\n\nCette action est irréversible.')) {
+        // Activer le champ delete_photo correspondant
+        const hiddenInput = document.getElementById('delete_photo_' + photoId);
+        if (hiddenInput) {
+            hiddenInput.disabled = false;  // Activer pour que la valeur soit soumise
+            hiddenInput.value = photoId;   // Remplir avec l'ID de la photo
+        }
+        // Masquer visuellement la photo
+        const item = document.getElementById('photo_' + photoId);
+        if (item) {
+            item.style.opacity = '0.3';
+            item.style.filter = 'grayscale(1)';
+            item.style.position = 'relative';
+            // Ajouter un badge de suppression
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(220,38,38,0.7);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;text-align:center;padding:10px;border-radius:16px;z-index:100;';
+            overlay.innerHTML = '<div>🗑 À SUPPRIMER<br><small style="font-size:11px;font-weight:400;opacity:0.9;">Cliquez sur Enregistrer</small></div>';
+            item.appendChild(overlay);
+        }
+        // Message de confirmation
+        const uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) {
+            const msg = document.createElement('div');
+            msg.style.cssText = 'margin-top:15px;padding:12px;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:8px;color:#dc2626;font-size:13px;';
+            msg.innerHTML = '<i class="bi bi-info-circle"></i> La photo sera supprimée après avoir cliqué sur <strong>Enregistrer</strong>.';
+            uploadArea.parentNode.insertBefore(msg, uploadArea);
+            setTimeout(() => msg.remove(), 5000);
+        }
+    }
+}
+
+// Gestion du fond (inchangé)
 const fondInput=document.getElementById('fondInput'),fondPreviewContainer=document.getElementById('fondPreviewContainer'),fondPreview=document.getElementById('fondPreview'),fondCurrentContainer=document.getElementById('fondCurrentContainer');
 function removeFond(){if(confirm('Supprimer la photo de fond actuelle ?')){document.getElementById('delete_fond').value='1';if(fondCurrentContainer) fondCurrentContainer.style.display='none';}}
 function removeNewFond(){fondInput.value='';fondPreviewContainer.style.display='none';fondPreview.src='';}

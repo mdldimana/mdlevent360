@@ -2,9 +2,9 @@
 /**
  * Helper WhatsApp
  * Fonctions pour l'envoi de notifications WhatsApp
- * Utilise les tables whatsapp_config et whatsapp_messages
  * 
- * ⚠️ VERSION CORRIGÉE : Support Meta + Twilio
+ * ⚠️ VERSION CORRIGÉE : Support Meta + Twilio + UltraMsg
+ *    + Mise à jour automatique des statuts d'invitation
  */
 
 require_once __DIR__ . '/../config/whatsapp.php';
@@ -75,9 +75,43 @@ function sendWhatsAppMessage($to, $message, $invitationId = null, $templateName 
             $result = sendWhatsAppSimulation($to, $message, $config);
     }
     
+    // Sauvegarder l'historique
     saveWhatsAppMessage($to, $message, $result, $invitationId, $templateName);
     
+    // ⭐ Mettre à jour le statut de l'invitation si envoi réussi
+    if (!empty($result['success']) && !empty($invitationId)) {
+        updateInvitationWhatsAppStatus($invitationId, $templateName);
+    }
+    
     return $result;
+}
+
+/**
+ * ⭐ Met à jour le statut WhatsApp de l'invitation
+ */
+function updateInvitationWhatsAppStatus($invitationId, $templateName = null) {
+    if (empty($invitationId)) {
+        return false;
+    }
+    
+    try {
+        $pdo = getDbConnection();
+        
+        // Vérifier si la colonne existe (au cas où)
+        $stmt = $pdo->prepare("
+            UPDATE invitations 
+            SET whatsapp_sent = 1,
+                whatsapp_sent_at = NOW()
+            WHERE id = ?
+        ");
+        
+        $stmt->execute([$invitationId]);
+        return $stmt->rowCount() > 0;
+        
+    } catch (PDOException $e) {
+        error_log('Erreur mise à jour WhatsApp invitation: ' . $e->getMessage());
+        return false;
+    }
 }
 
 /**
@@ -162,14 +196,10 @@ function sendWhatsAppMeta($to, $message, $config, $type = null) {
 
 /**
  * Envoi via Twilio WhatsApp API
- * 
- * ⚠️ FIX : Utilise business_account_id (Account SID) au lieu de api_key (URL)
  */
 function sendWhatsAppTwilio($to, $message, $config) {
-    // ⭐ FIX : Account SID se trouve dans business_account_id
     $accountSid = $config['business_account_id'] ?? '';
     
-    // Fallback : si vide, essayer api_key
     if (empty($accountSid) && !empty($config['api_key']) && strpos($config['api_key'], 'AC') === 0) {
         $accountSid = $config['api_key'];
     }
@@ -184,13 +214,11 @@ function sendWhatsAppTwilio($to, $message, $config) {
     
     $url = 'https://api.twilio.com/2010-04-01/Accounts/' . urlencode($accountSid) . '/Messages.json';
     
-    // Numéro From : doit être au format whatsapp:+14155238886
     $fromNumber = $config['phone_number_id'] ?? '';
     if (strpos($fromNumber, 'whatsapp:') !== 0) {
         $fromNumber = 'whatsapp:' . $fromNumber;
     }
     
-    // Numéro To
     $toNumber = $to;
     if (strpos($toNumber, 'whatsapp:') !== 0) {
         $toNumber = 'whatsapp:' . $toNumber;
@@ -249,7 +277,6 @@ function sendWhatsAppTwilio($to, $message, $config) {
  * Envoi via UltraMsg API
  */
 function sendWhatsAppUltraMsg($to, $message, $config) {
-    // UltraMsg : utilise phone_number_id (instance ID)
     $instanceId = $config['phone_number_id'] ?? '';
     
     if (empty($instanceId)) {
@@ -293,7 +320,10 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
     
     $result = json_decode($response, true);
     
- if (isset($result['sent']) && ($result['sent'] === true || $result['sent'] === 'true' || $result['sent'] === 1 || $result['sent'] === '1')) {
+    if (isset($result['sent']) && ($result['sent'] === true 
+        || $result['sent'] === 'true' 
+        || $result['sent'] === 1 
+        || $result['sent'] === '1')) {
         return [
             'success'    => true,
             'message'    => 'Message envoyé avec succès via UltraMsg',
