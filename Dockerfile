@@ -58,49 +58,12 @@ COPY . /app/
 RUN chown -R www-data:www-data /app
 
 # ==========================================
-# CREER config/whatsapp.php S'IL N'EXISTE PAS
+# CREER config/whatsapp.php SI ABSENT
 # ==========================================
 # Ce fichier est dans .gitignore, donc absent du repo.
 # On le cree automatiquement pour eviter les fatal errors.
 RUN if [ ! -f /app/config/whatsapp.php ]; then \
-        printf '%s' '<?php
-/**
- * Configuration WhatsApp
- * Fichier genere automatiquement - Ne pas modifier manuellement
- */
-
-if (!defined("WHATSAPP_SERVICE")) {
-    define("WHATSAPP_SERVICE", "ultramsg");
-}
-
-$whatsappTemplates = [
-    "invitation" => [
-        "name"     => "invitation_event",
-        "subject"  => "Invitation a l evenement",
-        "template" => "Bonjour {nom} {prenom},\n\nNous avons le plaisir de vous inviter a l evenement \"{evenement}\" qui aura lieu le {date} a {heure}.\n\nLieu : {lieu}\nNombre de personnes : {nb_personnes}\nCode d acces : {code_unique}\n\nVeuillez confirmer votre presence via le lien ci-dessous :\n{url_validation}\n\nNous avons hate de vous accueillir !",
-    ],
-    "confirmation" => [
-        "name"     => "confirmation_event",
-        "subject"  => "Invitation confirmee",
-        "template" => "Bonjour {nom} {prenom},\n\nNous confirmons votre participation a l evenement \"{evenement}\" du {date}.\n\nLieu : {lieu}\nNombre de personnes : {nb_personnes}\n\nA tres bientot !",
-    ],
-    "rappel" => [
-        "name"     => "rappel_event",
-        "subject"  => "Rappel",
-        "template" => "Bonjour {nom} {prenom},\n\nRappel : {evenement} demain le {date} a {heure}.\n\nLieu : {lieu}\n\nA demain !",
-    ],
-    "present" => [
-        "name"     => "present_event",
-        "subject"  => "Presence",
-        "template" => "Bonjour {nom} {prenom},\n\nVotre presence a {evenement} est enregistree avec succes !",
-    ],
-    "annulation" => [
-        "name"     => "annulation_event",
-        "subject"  => "Annulation",
-        "template" => "Bonjour {nom} {prenom},\n\nNous avons recu votre annulation pour {evenement}.\n\nCordialement.",
-    ],
-];
-' > /app/config/whatsapp.php; \
+        printf '<?php\nif (!defined("WHATSAPP_SERVICE")) { define("WHATSAPP_SERVICE", "ultramsg"); }\n$whatsappTemplates = ["invitation" => ["name" => "invitation_event", "subject" => "Invitation", "template" => "Bonjour {nom} {prenom},\\n\\nNous avons le plaisir de vous inviter a l evenement \\"{evenement}\\" qui aura lieu le {date} a {heure}.\\n\\nLieu : {lieu}\\nNombre de personnes : {nb_personnes}\\nCode d acces : {code_unique}\\n\\nVeuillez confirmer votre presence via le lien ci-dessous :\\n{url_validation}\\n\\nNous avons hate de vous accueillir !"], "confirmation" => ["name" => "confirmation_event", "subject" => "Invitation confirmee", "template" => "Bonjour {nom} {prenom},\\n\\nNous confirmons votre participation a l evenement \\"{evenement}\\" du {date}.\\n\\nLieu : {lieu}\\nNombre de personnes : {nb_personnes}\\n\\nA tres bientot !"], "rappel" => ["name" => "rappel_event", "subject" => "Rappel", "template" => "Bonjour {nom} {prenom},\\n\\nRappel : {evenement} demain le {date} a {heure}.\\n\\nLieu : {lieu}\\n\\nA demain !"], "present" => ["name" => "present_event", "subject" => "Presence", "template" => "Bonjour {nom} {prenom},\\n\\nVotre presence a {evenement} est enregistree avec succes !"], "annulation" => ["name" => "annulation_event", "subject" => "Annulation", "template" => "Bonjour {nom} {prenom},\\n\\nNous avons recu votre annulation pour {evenement}.\\n\\nCordialement."]];\n' > /app/config/whatsapp.php; \
         chown www-data:www-data /app/config/whatsapp.php; \
         chmod 644 /app/config/whatsapp.php; \
     fi
