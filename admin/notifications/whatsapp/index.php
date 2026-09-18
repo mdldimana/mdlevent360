@@ -190,32 +190,43 @@ try {
 }
 
 // ============================================
-// CONFIGURATION WHATSAPP
+// ⭐ CONFIGURATION WHATSAPP (FIX : utilise la bonne structure)
 // ============================================
 
 $configWhatsapp = [
+    'service'             => '',
     'api_key'             => '',
     'phone_number_id'     => '',
     'business_account_id' => '',
-    'webhook_verify_token'=> '',
-    'actif'               => 0,
+    'webhook_url'         => '',
+    'status'              => 'INACTIF',
 ];
 
 try {
-    $stmt = $pdo->query("SELECT * FROM whatsapp_config WHERE id = 1");
+    // Récupère la config active (ACTIF ou active)
+    $stmt = $pdo->query("
+        SELECT * FROM whatsapp_config 
+        WHERE status IN ('ACTIF', 'active') 
+        ORDER BY id DESC LIMIT 1
+    ");
     $config = $stmt->fetch(PDO::FETCH_ASSOC);
+    
     if ($config) {
         $configWhatsapp = [
+            'service'             => $config['service']             ?? 'meta',
             'api_key'             => $config['api_key']             ?? '',
             'phone_number_id'     => $config['phone_number_id']     ?? '',
             'business_account_id' => $config['business_account_id'] ?? '',
-            'webhook_verify_token'=> $config['webhook_verify_token']?? '',
-            'actif'               => (int)($config['actif'] ?? 0),
+            'webhook_url'         => $config['webhook_url']         ?? '',
+            'status'              => $config['status']              ?? 'INACTIF',
         ];
     }
 } catch (PDOException $e) {
     error_log('Erreur chargement config WhatsApp : ' . $e->getMessage());
 }
+
+// ⭐ Détection : la config est-elle active ?
+$configActive = in_array(strtoupper($configWhatsapp['status']), ['ACTIF', 'ACTIVE'], true);
 
 $userInitiales = strtoupper(
     substr($user['prenom'] ?? 'U', 0, 1) .
@@ -444,6 +455,29 @@ $roles_user = $user['roles'] ?? [];
         color: #128C7E;
     }
 
+    /* ⭐ BOUTON HISTORIQUE */
+    .btn-history {
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+        color: white;
+        border: none;
+        padding: 10px 22px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
+        cursor: pointer;
+    }
+    .btn-history:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        color: white;
+    }
+
     /* ========== BADGES ========== */
     .badge-whatsapp-sent {
         background: rgba(16, 185, 129, 0.15); color: #065f46;
@@ -623,6 +657,7 @@ $roles_user = $user['roles'] ?? [];
         .stat-mini .label { font-size: 10px; }
         .table-custom thead th { font-size: 9px; padding: 8px 6px; }
         .table-custom tbody td { font-size: 12px; padding: 8px 6px; }
+        .btn-whatsapp, .btn-history { padding: 8px 14px; font-size: 12px; }
     }
 </style>
 </head>
@@ -674,10 +709,18 @@ $roles_user = $user['roles'] ?? [];
                     <small style="color:#9a8a7f;font-size:12px">Paramètres d'envoi WhatsApp</small>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                    <span class="config-status <?php echo $configWhatsapp['actif'] === 1 ? 'active' : 'inactive'; ?>">
-                        <i class="bi bi-<?php echo $configWhatsapp['actif'] === 1 ? 'check-circle-fill' : 'x-circle-fill'; ?>"></i>
-                        <?php echo $configWhatsapp['actif'] === 1 ? 'API active' : 'API inactive'; ?>
+                    <!-- ⭐ BADGE STATUT API (FIX) -->
+                    <span class="config-status <?php echo $configActive ? 'active' : 'inactive'; ?>">
+                        <i class="bi bi-<?php echo $configActive ? 'check-circle-fill' : 'x-circle-fill'; ?>"></i>
+                        <?php echo $configActive ? 'API active' : 'API inactive'; ?>
                     </span>
+
+                    <!-- ⭐ BOUTON HISTORIQUE (NOUVEAU) -->
+                    <a href="historique.php" class="btn-history">
+                        <i class="bi bi-clock-history"></i> Historique
+                    </a>
+
+                    <!-- BOUTON CONFIGURATION -->
                     <a href="config.php" class="btn-whatsapp">
                         <i class="bi bi-sliders2"></i> Configuration
                     </a>
@@ -946,7 +989,7 @@ window.addEventListener('resize', function () {
 const selectEvenement = document.getElementById('evenement_id');
 if (selectEvenement) {
     selectEvenement.addEventListener('change', function() {
-        document.getElementById('formFiltres').submit();
+        document.getElementById('filtresFormulaire').submit();
     });
 }
 </script>
