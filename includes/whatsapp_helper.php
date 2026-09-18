@@ -331,7 +331,13 @@ function sendWhatsAppUltraMsg($to, $message, $config) {
             'message_id' => $result['id'] ?? null,
         ];
     } else {
-        $errorMsg = $result['error'] ?? ($result['message'] ?? 'Erreur d\'envoi UltraMsg');
+        // ⭐ Extraire l'erreur (peut être un tableau)
+$errorMsg = 'Erreur inconnue';
+if (isset($result['error'])) {
+    $errorMsg = is_array($result['error']) ? json_encode($result['error']) : (string)$result['error'];
+} elseif (isset($result['message'])) {
+    $errorMsg = is_array($result['message']) ? json_encode($result['message']) : (string)$result['message'];
+}
         return [
             'success'       => false,
             'message'       => 'Erreur UltraMsg : ' . $errorMsg,

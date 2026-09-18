@@ -254,17 +254,31 @@ function testWhatsAppConfig(string $service, array $config): array {
             if (!empty($curlError)) {
                 return ['success' => false, 'message' => 'Erreur cURL : ' . $curlError];
             }
-
             if ($httpCode === 200) {
-                $data = json_decode((string)$response, true);
-                $status = $data['status'] ?? 'unknown';
-                if ($status === 'authenticated' || $status === 'connected') {
-                    return ['success' => true, 'message' => 'Connexion UltraMsg réussie ! Status : ' . $status];
-                }
-                return ['success' => false, 'message' => 'UltraMsg non connecté (status: ' . $status . ')'];
-            }
-
-            return ['success' => false, 'message' => 'Erreur UltraMsg (HTTP ' . $httpCode . ')'];
+    $data = json_decode((string)$response, true);
+    
+    // ⭐ UltraMsg retourne une structure imbriquée :
+    // { "status": { "accountStatus": { "status": "authenticated", "substatus": "connected" } } }
+    $statusInner = $data['status']['accountStatus']['status'] ?? null;
+    $substatus   = $data['status']['accountStatus']['substatus'] ?? null;
+    
+    // Fallback : si c'est une string simple
+    if ($statusInner === null && isset($data['status']) && is_string($data['status'])) {
+        $statusInner = $data['status'];
+    }
+    
+    if ($statusInner === 'authenticated' && $substatus === 'connected') {
+        return ['success' => true, 'message' => 'Connexion UltraMsg réussie ! Compte : ' . $statusInner . ' / ' . $substatus];
+    }
+    
+    if ($statusInner === 'authenticated') {
+        return ['success' => true, 'message' => 'Connexion UltraMsg réussie ! (status: ' . $statusInner . ')'];
+    }
+    
+    $statusStr = is_string($statusInner) ? $statusInner : json_encode($data['status'] ?? 'unknown');
+    return ['success' => false, 'message' => 'UltraMsg non connecté (status: ' . $statusStr . ')'];
+}    
+            
 
         // ==========================================
         // META WHATSAPP CLOUD API
