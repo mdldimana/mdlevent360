@@ -929,7 +929,7 @@ try {
                                     </span>
                                 <?php endif; ?>
                             </h6>
-                            <a href="admin/evenements/index.php"><i class="bi bi-arrow-right"></i> Voir tout</a>
+                            <a href="evenements/index.php"><i class="bi bi-arrow-right"></i> Voir tout</a>
                         </div>
                         <?php if (!empty($evenementsRecents)): ?>
                             <?php foreach ($evenementsRecents as $event): 
@@ -982,7 +982,7 @@ try {
                                     </span>
                                 <?php endif; ?>
                             </h6>
-                            <a href="admin/invites/index.php"><i class="bi bi-arrow-right"></i> Voir tout</a>
+                            <a href="invites/index.php"><i class="bi bi-arrow-right"></i> Voir tout</a>
                         </div>
                         <?php if (!empty($derniersInvites)): ?>
                             <?php 

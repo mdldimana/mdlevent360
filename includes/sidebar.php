@@ -5,7 +5,6 @@ declare(strict_types=1);
 // CONFIGURATION DES URLs ABSOLUES - CORRIGÉE
 // ============================================
 
-// Détecter BASE_PATH si non défini
 if (!defined('BASE_PATH')) {
     $scriptPath = $_SERVER['SCRIPT_NAME'] ?? '';
 
@@ -18,7 +17,6 @@ if (!defined('BASE_PATH')) {
     }
 }
 
-// S'assurer que APP_NAME est défini
 if (!defined('APP_NAME')) {
     define('APP_NAME', 'MdlEvent');
 }
@@ -86,12 +84,10 @@ $stats = array_merge([
 try {
     $pdo = getDbConnection();
 
-    // ⭐ Déterminer si l'utilisateur est admin (voit tout)
     $isAdminUser = function_exists('isAdmin') ? isAdmin() : false;
     $currentUserId = function_exists('getCurrentUserId') ? (int)getCurrentUserId() : 0;
 
     if ($isAdminUser) {
-        // ===== ADMIN : Voit toutes les statistiques =====
         $stmt = $pdo->query("SELECT COUNT(*) AS count FROM evenements WHERE statut != 'ANNULE'");
         $stats['evenements'] = (int)($stmt->fetch()['count'] ?? 0);
 
@@ -104,18 +100,13 @@ try {
         $stmt = $pdo->query("SELECT COUNT(DISTINCT id_invitation) AS count FROM presences");
         $stats['present'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // STATISTIQUES TABLES
         $stmt = $pdo->query("SELECT COUNT(*) AS count FROM tables WHERE actif = 1");
         $stats['tables'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // Tables assignées (nombre de tables ayant au moins 1 invitation)
         $stmt = $pdo->query("SELECT COUNT(DISTINCT id_table) AS count FROM invitations_tables");
         $stats['tables_assignees'] = (int)($stmt->fetch()['count'] ?? 0);
 
     } else {
-        // ===== NON-ADMIN : Voit uniquement ses événements =====
-
-        // Nombre d'événements auxquels il est associé
         $stmt = $pdo->prepare("
             SELECT COUNT(DISTINCT e.id) AS count 
             FROM evenements e
@@ -125,7 +116,6 @@ try {
         $stmt->execute([$currentUserId]);
         $stats['evenements'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // Nombre d'invités
         $stmt = $pdo->prepare("
             SELECT COUNT(*) AS count 
             FROM invites 
@@ -136,7 +126,6 @@ try {
         $stmt->execute([$currentUserId]);
         $stats['invites'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // Nombre d'invitations
         $stmt = $pdo->prepare("
             SELECT COUNT(DISTINCT inv.id) AS count 
             FROM invitations inv
@@ -146,7 +135,6 @@ try {
         $stmt->execute([$currentUserId]);
         $stats['invitations'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // Nombre de présences dans ses événements
         $stmt = $pdo->prepare("
             SELECT COUNT(DISTINCT p.id_invitation) AS count 
             FROM presences p
@@ -157,7 +145,6 @@ try {
         $stmt->execute([$currentUserId]);
         $stats['present'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // STATISTIQUES TABLES (filtrées par événement)
         $stmt = $pdo->prepare("
             SELECT COUNT(*) AS count 
             FROM tables 
@@ -168,7 +155,6 @@ try {
         $stmt->execute([$currentUserId]);
         $stats['tables'] = (int)($stmt->fetch()['count'] ?? 0);
 
-        // Tables assignées (filtrées par événement)
         $stmt = $pdo->prepare("
             SELECT COUNT(DISTINCT it.id_table) AS count 
             FROM invitations_tables it
@@ -202,28 +188,43 @@ if (!function_exists('isMenuActive')) {
     }
 }
 
-// ⭐ Déterminer le rôle admin pour les menus
-$isAdminMenu = function_exists('isAdmin') ? isAdmin() : false;
-$userCanManageUsers    = function_exists('hasPermission') ? hasPermission('utilisateurs.voir') : $isAdminMenu;
-$userCanManageRoles    = function_exists('hasPermission') ? hasPermission('roles.voir')        : $isAdminMenu;
-$userCanViewJournal    = function_exists('hasPermission') ? hasPermission('journal.voir')      : $isAdminMenu;
-$userCanViewRapports   = function_exists('hasPermission') ? hasPermission('rapports.voir')     : true;
-$userCanViewParametres = function_exists('hasPermission') ? hasPermission('parametres.voir')   : $isAdminMenu;
-$userCanViewModeles = function_exists('hasPermission') ? hasPermission('modeles.voir')   : $isAdminMenu;
+// ⭐ Fonction wrapper pour éviter les erreurs si hasPermission n'existe pas
+if (!function_exists('can')) {
+    function can(string $permission): bool {
+        if (function_exists('hasPermission')) {
+            return hasPermission($permission);
+        }
+        // Fallback : admin voit tout
+        return function_exists('isAdmin') ? isAdmin() : true;
+    }
+}
+
+// ⭐ Raccourci pour les permissions
+$canUsers     = can('utilisateurs.voir');
+$canRoles     = can('roles.voir');
+$canJournal   = can('journal.voir');
+$canRapports  = can('rapports.voir');
+$canParams    = can('parametres.voir');
+$canModeles   = can('modeles.voir') || can('evenements.modifier');
+$canNotifs    = can('notifications.voir');
+$canDash      = can('dashboard.voir') || can('evenements.voir');
+$canEvents    = can('evenements.voir');
+$canTables    = can('tables.voir');
+$canInvites   = can('invites.voir');
+$canInvits    = can('invitations.voir');
+$canBoissons  = can('boissons.voir');
+$canPresences = can('presences.voir');
 
 // ============================================
 // ⭐ ÉVÉNEMENT PAR DÉFAUT POUR LE LIEN SPLASH
 // ============================================
-
 $defaultEventIdForSplash = 0;
 
-// 1) Priorité : événement en session
 if (isset($_SESSION['selected_evenement_id']) && (int)$_SESSION['selected_evenement_id'] > 0) {
     $defaultEventIdForSplash = (int)$_SESSION['selected_evenement_id'];
 } else {
-    // 2) Sinon : premier événement accessible
     try {
-        if ($isAdminMenu) {
+        if ($isAdminUser) {
             $stmt = $pdo->query("
                 SELECT id FROM evenements 
                 WHERE statut != 'ANNULE' 
@@ -250,7 +251,6 @@ if (isset($_SESSION['selected_evenement_id']) && (int)$_SESSION['selected_evenem
     }
 }
 
-// URL finale du lien splash
 $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?evenement=' . $defaultEventIdForSplash : ''));
 ?>
 <!-- SIDEBAR -->
@@ -284,48 +284,67 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         <!-- SECTION 1 : PRINCIPAL -->
         <li class="nav-section-title">Navigation</li>
 
+        
         <li class="nav-item">
             <a class="nav-link <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>" href="<?php echo adminUrl('dashboard.php'); ?>">
                 <i class="bi bi-speedometer2"></i> Tableau de bord
                 <span class="badge">Live</span>
             </a>
         </li>
+        
+        
+        <?php if ($canEvents): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('evenements') ? 'active' : ''; ?>" href="<?php echo adminUrl('evenements/index.php'); ?>">
                 <i class="bi bi-calendar-event"></i> Événements
                 <span class="badge"><?php echo $stats['evenements']; ?></span>
             </a>
         </li>
+        <?php endif; ?>
+
+        <?php if ($canTables): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('tables') ? 'active' : ''; ?>" href="<?php echo adminUrl('tables/index.php'); ?>">
                 <i class="bi bi-table"></i> Tables
                 <span class="badge"><?php echo $stats['tables']; ?></span>
             </a>
         </li>
+        <?php endif; ?>
 
+        <?php if ($canInvites): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('invites') ? 'active' : ''; ?>" href="<?php echo adminUrl('invites/index.php'); ?>">
                 <i class="bi bi-people"></i> Invités
                 <span class="badge"><?php echo $stats['invites']; ?></span>
             </a>
         </li>
+        <?php endif; ?>
+
+        <?php if ($canInvits): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('invitations') ? 'active' : ''; ?>" href="<?php echo adminUrl('invitations/index.php'); ?>">
                 <i class="bi bi-envelope"></i> Invitations
                 <span class="badge"><?php echo $stats['invitations']; ?></span>
             </a>
         </li>
+        <?php endif; ?>
+
+        <?php if ($canBoissons): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('boissons') ? 'active' : ''; ?>" href="<?php echo adminUrl('boissons/index.php'); ?>">
                 <i class="bi bi-cup"></i> Boissons
             </a>
         </li>
+        <?php endif; ?>
+
+        <?php if ($canPresences): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('presences') ? 'active' : ''; ?>" href="<?php echo adminUrl('presences/index.php'); ?>">
                 <i class="bi bi-qr-code"></i> Présences
                 <span class="badge"><?php echo $stats['present']; ?></span>
             </a>
         </li>
+        <?php endif; ?>
 
         <hr class="nav-divider">
 
@@ -333,6 +352,7 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         <li class="nav-section-title">Communication</li>
 
         <!-- NOTIFICATIONS -->
+        <?php if ($canNotifs): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('notifications') ? 'active' : ''; ?>" href="#notificationsSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="<?php echo isMenuActive('notifications') ? 'true' : 'false'; ?>">
                 <i class="bi bi-bell"></i> Notifications
@@ -345,36 +365,45 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
                         <i class="bi bi-grid"></i> Dashboard
                     </a>
                 </li>
+                <?php if (can('notifications.email')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isMenuActive('emails') ? 'active' : ''; ?>" href="<?php echo adminUrl('notifications/emails/index.php'); ?>" style="font-size: 12px; padding: 5px 14px;">
                         <i class="bi bi-envelope"></i> Emails
                     </a>
                 </li>
+                <?php endif; ?>
+                <?php if (can('notifications.whatsapp')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isMenuActive('whatsapp') ? 'active' : ''; ?>" href="<?php echo adminUrl('notifications/whatsapp/index.php'); ?>" style="font-size: 12px; padding: 5px 14px;">
                         <i class="bi bi-whatsapp"></i> WhatsApp
                     </a>
                 </li>
+                <?php endif; ?>
+                <?php if (can('notifications.telegram')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo isMenuActive('telegram') ? 'active' : ''; ?>" href="<?php echo adminUrl('notifications/telegram/index.php'); ?>" style="font-size: 12px; padding: 5px 14px;">
                         <i class="bi bi-telegram"></i> Telegram
                     </a>
                 </li>
+                <?php endif; ?>
             </ul>
         </li>
+        <?php endif; ?>
 
         <hr class="nav-divider">
 
         <!-- SECTION 3 : ADMINISTRATION -->
         <li class="nav-section-title">Administration</li>
-        <?php if ($userCanViewModeles): ?>
+
+        <?php if ($canModeles): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('modeles') ? 'active' : ''; ?>" href="<?php echo adminUrl('modeles/index.php'); ?>">
                 <i class="bi bi-gear"></i> Modèles d'invitation
             </a>
         </li>
         <?php endif; ?>
-        <?php if ($userCanViewRapports): ?>
+
+        <?php if ($canRapports): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('rapports') ? 'active' : ''; ?>" href="<?php echo adminUrl('rapports/index.php'); ?>">
                 <i class="bi bi-file-earmark"></i> Rapports
@@ -382,7 +411,7 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         </li>
         <?php endif; ?>
 
-        <?php if ($userCanManageUsers): ?>
+        <?php if ($canUsers): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('utilisateurs') ? 'active' : ''; ?>" href="<?php echo adminUrl('utilisateurs/index.php'); ?>">
                 <i class="bi bi-person-gear"></i> Utilisateurs
@@ -390,7 +419,7 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         </li>
         <?php endif; ?>
 
-        <?php if ($userCanManageRoles): ?>
+        <?php if ($canRoles): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('roles') ? 'active' : ''; ?>" href="<?php echo adminUrl('roles/index.php'); ?>">
                 <i class="bi bi-shield-lock"></i> Rôles & Permissions
@@ -398,7 +427,7 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         </li>
         <?php endif; ?>
 
-        <?php if ($userCanViewJournal): ?>
+        <?php if ($canJournal): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('journal') ? 'active' : ''; ?>" href="<?php echo adminUrl('journal/index.php'); ?>">
                 <i class="bi bi-clock-history"></i> Journal d'activité
@@ -406,7 +435,7 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         </li>
         <?php endif; ?>
 
-        <?php if ($userCanViewParametres): ?>
+        <?php if ($canParams): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo isMenuActive('parametres') ? 'active' : ''; ?>" href="<?php echo adminUrl('parametres/index.php'); ?>">
                 <i class="bi bi-gear"></i> Paramètres
@@ -428,7 +457,6 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
             </a>
         </li>
 
-        <!-- ⭐ LIEN SPLASH AVEC ÉVÉNEMENT PAR DÉFAUT -->
         <li class="nav-item">
             <a class="nav-link" href="<?php echo htmlspecialchars($splashUrl); ?>" target="_blank">
                 <i class="bi bi-play-circle"></i> Écran Splash
