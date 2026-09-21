@@ -1,9 +1,71 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : MODERNE v2 — Hologramme cyberpunk
+ * TEMPLATE : MODERNE — Design contemporain élégant
+ * ============================================================
+ * 
+ * Inspiré du design fourni :
+ * - Fond sombre dégradé (brun/noir)
+ * - Grande photo centrale avec forme arrondie
+ * - Typographie calligraphiée blanche (Great Vibes)
+ * - Noms en blanc avec sous-titres dorés
+ * - Transition d'apparition fluide
+ * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+
+// Détecter le premier prénom du nom complet (pour "Bénédicte & Henock")
+$hostParts = preg_split('/\s+(?:et|&)\s+/i', $host1);
+$hostName1 = trim($hostParts[0] ?? $host1);
+$hostName2 = trim($hostParts[1] ?? '');
+
+// Extraire les noms de famille (dernier mot après le prénom)
+// Pour "Bénédicte Mesu & Henock Moke" → "MESU" et "MOKE"
+$hostFull1 = $hostName1;
+$hostFull2 = $hostName2;
+$lastName1 = '';
+$lastName2 = '';
+$firstOnly1 = $hostName1;
+$firstOnly2 = $hostName2;
+
+// On prend le premier mot comme prénom, le reste comme nom
+$parts1 = explode(' ', $hostName1);
+if (count($parts1) > 1) {
+    $firstOnly1 = $parts1[0];
+    array_shift($parts1);
+    $lastName1 = implode(' ', $parts1);
+}
+$parts2 = explode(' ', $hostName2);
+if (count($parts2) > 1) {
+    $firstOnly2 = $parts2[0];
+    array_shift($parts2);
+    $lastName2 = implode(' ', $parts2);
+}
+
+// RSVP
+$rsvpLabel = 'En attente de confirmation';
+$rsvpClass = 'pending';
+if (($invitation['statut'] ?? '') === 'CONFIRMEE') {
+    $rsvpLabel = 'Confirmé';
+    $rsvpClass = 'confirmed';
+} elseif (($invitation['statut'] ?? '') === 'REFUSEE') {
+    $rsvpLabel = 'Refusé';
+    $rsvpClass = 'refused';
+}
+
+// Photo principale (première photo_host ou fond)
+$mainPhoto = '';
+if (!empty($photosHost)) {
+    $mainPhoto = getPhotoUrl($photosHost[0]['photo']);
+} elseif (!empty($pageBackground)) {
+    $mainPhoto = $pageBackground;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -12,1028 +74,1280 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invitation - <?php echo htmlspecialchars($invitation['evenement_nom']); ?></title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Great+Vibes&family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         :root {
-            --cyan: #00f0ff;
-            --cyan-dark: #00a8b8;
-            --magenta: #ff00e5;
-            --magenta-dark: #b8009d;
-            --black: #05050a;
-            --dark: #0a0a12;
-            --dark-2: #101018;
-            --grid: rgba(0, 240, 255, 0.08);
-            --text: #e8e8f0;
-            --text-muted: #6a6a80;
+            --gold: #c9a961;
+            --gold-light: #e8d5a0;
+            --gold-dark: #8b6f3f;
+            --cream: #f5efe3;
+            --dark-brown: #2a1f15;
+            --dark-brown-2: #3d2d1e;
+            --dark-bg: #1a120a;
+            --white-soft: rgba(255, 255, 255, 0.95);
+            --white-mid: rgba(255, 255, 255, 0.7);
+            --white-dim: rgba(255, 255, 255, 0.4);
         }
         
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Space Grotesk', system-ui, sans-serif;
-            background: var(--black);
-            color: var(--text);
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            background: var(--dark-bg);
+            color: white;
             min-height: 100vh;
-            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
-            position: relative;
+            overflow-x: hidden;
         }
         
         /* ============================================
-           GRILLE NÉON DE FOND
+           TRANSITION D'OUVERTURE
            ============================================ */
-        body::before {
-            content: '';
+        .moderne-loader {
             position: fixed;
             inset: 0;
-            background-image: 
-                linear-gradient(var(--grid) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
-            animation: gridScroll 20s linear infinite;
-        }
-        @keyframes gridScroll {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-        
-        /* ============================================
-           HOLOGRAMME D'INTRO
-           ============================================ */
-        .holo-intro {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: var(--black);
+            z-index: 99999;
+            background: linear-gradient(135deg, #1a120a 0%, #2a1f15 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: holoFadeOut 2.5s ease-in-out 2s forwards;
-        }
-        @keyframes holoFadeOut {
-            0% { opacity: 1; }
-            100% { opacity: 0; visibility: hidden; }
-        }
-        
-        .holo-lines {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-        }
-        .holo-lines span {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-            opacity: 0;
-            animation: holoScan 1s ease-in-out infinite;
-        }
-        .holo-lines span:nth-child(1) { top: 20%; animation-delay: 0s; }
-        .holo-lines span:nth-child(2) { top: 40%; animation-delay: 0.15s; }
-        .holo-lines span:nth-child(3) { top: 60%; animation-delay: 0.3s; }
-        .holo-lines span:nth-child(4) { top: 80%; animation-delay: 0.45s; }
-        @keyframes holoScan {
-            0%, 100% { opacity: 0; transform: scaleX(0); }
-            50% { opacity: 1; transform: scaleX(1); }
-        }
-        
-        .holo-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            color: var(--cyan);
-            letter-spacing: 0.3em;
-            opacity: 0;
-            animation: holoTextIn 1.5s ease-out 0.3s forwards;
-            text-shadow: 0 0 20px var(--cyan);
-        }
-        @keyframes holoTextIn {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-        
-        /* ============================================
-           NAVBAR CYBER
-           ============================================ */
-        .cyber-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 16px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(5, 5, 10, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--cyan);
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out 3s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .cyber-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: 0.2em;
-            color: var(--cyan);
-            text-shadow: 0 0 10px var(--cyan);
-        }
-        .cyber-brand .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--cyan);
-            box-shadow: 0 0 12px var(--cyan);
-            animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
-        }
-        
-        .cyber-status {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--text-muted);
-            letter-spacing: 0.15em;
-        }
-        .cyber-status .live {
-            color: var(--cyan);
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        /* ============================================
-           HERO CYBER
-           ============================================ */
-        .cyber-hero {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 100px 20px 60px;
-            z-index: 1;
+            animation: loaderFadeOut 1.2s ease-in-out 2s forwards;
         }
         
-        /* Cercles néon */
-        .cyber-rings {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-        .cyber-rings .ring {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            border: 1px solid var(--cyan);
-            opacity: 0.3;
-            animation: ringExpand 4s ease-out infinite;
-        }
-        .cyber-rings .ring:nth-child(1) { width: 300px; height: 300px; animation-delay: 0s; }
-        .cyber-rings .ring:nth-child(2) { width: 500px; height: 500px; animation-delay: 1.3s; }
-        .cyber-rings .ring:nth-child(3) { width: 700px; height: 700px; animation-delay: 2.6s; }
-        @keyframes ringExpand {
-            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.5); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        @keyframes loaderFadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; pointer-events: none; }
         }
         
-        .cyber-blason {
-            position: relative;
-            z-index: 3;
-            text-align: center;
-            max-width: 700px;
-            opacity: 0;
-            transform: translateY(40px);
-            animation: heroContentIn 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 3.3s forwards;
-        }
-        @keyframes heroContentIn {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .cyber-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border: 1px solid var(--cyan);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            color: var(--cyan);
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            box-shadow: 
-                0 0 20px rgba(0, 240, 255, 0.2),
-                inset 0 0 20px rgba(0, 240, 255, 0.05);
-        }
-        .cyber-tag::before {
-            content: '';
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--cyan);
-            box-shadow: 0 0 10px var(--cyan);
-        }
-        
-        .cyber-guest {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(28px, 5vw, 44px);
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: 0.05em;
-            margin-bottom: 40px;
-            text-shadow: 
-                0 0 20px rgba(0, 240, 255, 0.3),
-                0 0 40px rgba(255, 0, 229, 0.1);
-            position: relative;
-        }
-        .cyber-guest .glitch {
-            position: relative;
-        }
-        .cyber-guest .glitch::before,
-        .cyber-guest .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-        }
-        .cyber-guest .glitch::before {
-            color: var(--magenta);
-            animation: glitch1 3s infinite linear alternate-reverse;
-            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-        }
-        .cyber-guest .glitch::after {
-            color: var(--cyan);
-            animation: glitch2 2s infinite linear alternate-reverse;
-            clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
-        }
-        @keyframes glitch1 {
-            0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-2px, 1px); }
-            40% { transform: translate(-1px, -1px); }
-            60% { transform: translate(2px, 1px); }
-            80% { transform: translate(1px, -1px); }
-        }
-        @keyframes glitch2 {
-            0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(2px, -1px); }
-            40% { transform: translate(1px, 1px); }
-            60% { transform: translate(-2px, -1px); }
-            80% { transform: translate(-1px, 1px); }
-        }
-        
-        .cyber-divider {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            max-width: 400px;
-            margin: 0 auto 40px;
-        }
-        .cyber-divider .line {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-            box-shadow: 0 0 10px var(--cyan);
-        }
-        .cyber-divider .diamond {
-            width: 8px;
-            height: 8px;
-            background: var(--cyan);
-            transform: rotate(45deg);
-            box-shadow: 0 0 15px var(--cyan);
-        }
-        
-        .cyber-hosts-intro {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 0.3em;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 20px;
-        }
-        
-        .cyber-host-name {
-            font-family: 'Space Grotesk', sans-serif;
+        .loader-name {
+            font-family: 'Great Vibes', cursive;
             font-size: clamp(48px, 10vw, 96px);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, var(--cyan) 0%, var(--magenta) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 0.95;
-            margin-bottom: 16px;
-            filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.3));
-            animation: cyberGradient 6s ease-in-out infinite;
-            background-size: 200% auto;
-        }
-        @keyframes cyberGradient {
-            0%, 100% { background-position: 0% center; }
-            50% { background-position: 100% center; }
-        }
-        
-        .cyber-event-type {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            letter-spacing: 0.4em;
-            color: var(--cyan);
-            text-transform: uppercase;
-            text-shadow: 0 0 10px var(--cyan);
-        }
-        
-        /* ============================================
-           CARTE HOLOGRAMME (Détails)
-           ============================================ */
-        .cyber-card {
-            position: relative;
-            max-width: 800px;
-            margin: 60px auto;
-            padding: 50px 40px;
-            background: rgba(10, 10, 18, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--cyan);
-            box-shadow: 
-                0 0 0 1px rgba(0, 240, 255, 0.1),
-                0 0 60px rgba(0, 240, 255, 0.15),
-                inset 0 0 60px rgba(0, 240, 255, 0.03);
-            clip-path: polygon(30px 0, 100% 0, 100% calc(100% - 30px), calc(100% - 30px) 100%, 0 100%, 0 30px);
+            color: white;
+            margin-bottom: 20px;
             opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.9s ease;
-            z-index: 1;
-        }
-        .cyber-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        @media (max-width: 640px) {
-            .cyber-card { padding: 40px 22px; margin: 40px 15px; }
+            animation: loaderNameIn 1.5s ease-out 0.3s forwards;
+            text-shadow: 0 0 40px rgba(201, 169, 97, 0.4);
         }
         
-        /* Coins décoratifs */
-        .cyber-card::before, .cyber-card::after {
-            content: '';
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border-color: var(--magenta);
-            border-style: solid;
-        }
-        .cyber-card::before {
-            top: 8px; left: 8px;
-            border-width: 2px 0 0 2px;
-            box-shadow: 0 0 15px var(--magenta);
-        }
-        .cyber-card::after {
-            bottom: 8px; right: 8px;
-            border-width: 0 2px 2px 0;
-            box-shadow: 0 0 15px var(--magenta);
+        @keyframes loaderNameIn {
+            0% { opacity: 0; letter-spacing: 0.5em; filter: blur(20px); }
+            100% { opacity: 1; letter-spacing: 0; filter: blur(0); }
         }
         
-        .cyber-card-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 0.4em;
-            color: var(--cyan);
-            text-transform: uppercase;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+        .loader-divider {
             display: flex;
             align-items: center;
-            gap: 12px;
-        }
-        .cyber-card-title::before {
-            content: '>';
-            color: var(--magenta);
-            animation: blink 1s steps(1) infinite;
-        }
-        @keyframes blink {
-            50% { opacity: 0; }
+            gap: 16px;
+            opacity: 0;
+            animation: loaderDividerIn 0.8s ease-out 1.2s forwards;
         }
         
-        .cyber-info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-        @media (max-width: 640px) {
-            .cyber-info-grid { grid-template-columns: 1fr; }
+        @keyframes loaderDividerIn {
+            to { opacity: 1; }
         }
         
-        .cyber-info-item {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.4);
-            border-left: 2px solid var(--cyan);
-            transition: all 0.3s ease;
-        }
-        .cyber-info-item:hover {
-            background: rgba(0, 240, 255, 0.05);
-            border-left-color: var(--magenta);
-            transform: translateX(4px);
+        .loader-divider .line {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
         }
         
-        .cyber-info-item .label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            color: var(--cyan);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        .cyber-info-item .value {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text);
-            line-height: 1.4;
-        }
-        .cyber-info-item .value .sub {
-            display: block;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 4px;
-            font-weight: 400;
-        }
-        
-        /* Bouton itinéraire cyber */
-        .cyber-btn-itinerary {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 16px;
-            padding: 12px 24px;
-            background: transparent;
-            border: 1px solid var(--cyan);
-            color: var(--cyan);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .cyber-btn-itinerary::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: var(--cyan);
-            transition: left 0.4s ease;
-            z-index: -1;
-        }
-        .cyber-btn-itinerary:hover {
-            color: var(--black);
-            box-shadow: 0 0 30px var(--cyan);
-        }
-        .cyber-btn-itinerary:hover::before {
-            left: 0;
+        .loader-divider i {
+            color: var(--gold);
+            font-size: 18px;
         }
         
         /* ============================================
-           SECTIONS CYBER
+           FOND
            ============================================ */
-        .cyber-section {
-            position: relative;
-            max-width: 900px;
-            margin: 60px auto;
-            padding: 50px 40px;
-            background: rgba(10, 10, 18, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s ease;
-            z-index: 1;
-        }
-        .cyber-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        @media (max-width: 640px) {
-            .cyber-section { padding: 35px 22px; margin: 40px 15px; }
+        .moderne-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #1a120a 0%, #2a1f15 50%, #1a120a 100%);
         }
         
-        .cyber-section-title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            color: var(--text);
+        <?php if ($hasFond): ?>
+        .moderne-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            filter: blur(20px) saturate(0.8);
+        }
+        <?php endif; ?>
+        
+        .moderne-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 50% 30%, rgba(201, 169, 97, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 50% 80%, rgba(201, 169, 97, 0.05) 0%, transparent 60%);
+        }
+        
+        /* ============================================
+           WRAPPER
+           ============================================ */
+        .moderne-wrapper {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+            position: relative;
+            z-index: 1;
+            opacity: 0;
+            animation: wrapperIn 1.2s ease-out 2.5s forwards;
+        }
+        
+        @keyframes wrapperIn {
+            to { opacity: 1; }
+        }
+        
+        /* ============================================
+           CARTE PRINCIPALE
+           ============================================ */
+        .moderne-card {
+            position: relative;
+            background: rgba(20, 14, 8, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 4px;
+            border: 1px solid rgba(201, 169, 97, 0.15);
+            padding: 40px 30px 50px;
+            overflow: hidden;
+            box-shadow: 
+                0 40px 100px rgba(0, 0, 0, 0.6),
+                inset 0 0 60px rgba(201, 169, 97, 0.03);
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-card { padding: 30px 20px 40px; }
+        }
+        
+        /* Bordure décorative */
+        .moderne-card::before {
+            content: '';
+            position: absolute;
+            inset: 12px;
+            border: 1px solid rgba(201, 169, 97, 0.15);
+            pointer-events: none;
+            border-radius: 2px;
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-card::before { inset: 8px; }
+        }
+        
+        /* ============================================
+           EN-TÊTE : "Invitation"
+           ============================================ */
+        .moderne-header {
             text-align: center;
             margin-bottom: 30px;
-            text-transform: uppercase;
-        }
-        .cyber-section-title .accent {
-            color: var(--cyan);
-            text-shadow: 0 0 20px var(--cyan);
-        }
-        
-        /* Formulaires */
-        .cyber-form-group { margin-bottom: 24px; }
-        .cyber-form-group label {
-            display: block;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 0.3em;
-            color: var(--cyan);
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        .cyber-form-group label::before {
-            content: '$ ';
-            color: var(--magenta);
-        }
-        .cyber-form-group input,
-        .cyber-form-group textarea {
-            width: 100%;
-            padding: 14px 18px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            color: var(--text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        .cyber-form-group input:focus,
-        .cyber-form-group textarea:focus {
-            outline: none;
-            border-color: var(--cyan);
-            background: rgba(0, 240, 255, 0.05);
-            box-shadow: 
-                0 0 0 1px var(--cyan),
-                0 0 20px rgba(0, 240, 255, 0.3);
-        }
-        
-        .cyber-options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-        @media (max-width: 480px) {
-            .cyber-options-grid { grid-template-columns: 1fr; }
-        }
-        
-        .cyber-option-radio { display: none; }
-        .cyber-option-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 18px;
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            background: rgba(0, 0, 0, 0.4);
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-        .cyber-option-label:hover {
-            border-color: var(--cyan);
-            color: var(--cyan);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-        }
-        .cyber-option-radio:checked + .cyber-option-label {
-            border-color: var(--cyan);
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--cyan);
-            box-shadow: 
-                0 0 0 1px var(--cyan),
-                0 0 30px rgba(0, 240, 255, 0.3);
-            text-shadow: 0 0 10px var(--cyan);
-        }
-        
-        .cyber-btn-submit {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, var(--cyan), var(--magenta));
-            color: var(--black);
-            border: none;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-            margin-top: 10px;
-        }
-        .cyber-btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 
-                0 0 40px rgba(0, 240, 255, 0.6),
-                0 0 80px rgba(255, 0, 229, 0.3);
-        }
-        
-        /* Photos */
-        .cyber-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        .cyber-photo {
             position: relative;
-            aspect-ratio: 1/1;
+            z-index: 1;
+        }
+        
+        .moderne-header-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(48px, 9vw, 72px);
+            color: white;
+            line-height: 1;
+            margin-bottom: 16px;
+            text-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.5),
+                0 0 60px rgba(201, 169, 97, 0.2);
+        }
+        
+        .moderne-header-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            opacity: 0.9;
+        }
+        
+        .moderne-header-divider .line {
+            width: 80px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        
+        .moderne-header-divider .ornament {
+            color: var(--gold);
+            font-size: 16px;
+            letter-spacing: 4px;
+        }
+        
+        /* ============================================
+           PHOTO PRINCIPALE
+           ============================================ */
+        .moderne-photo-block {
+            position: relative;
+            margin: 30px 0 40px;
+            text-align: center;
+        }
+        
+        .moderne-photo-frame {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            max-width: 100%;
             overflow: hidden;
-            border: 1px solid var(--cyan);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-            transition: all 0.3s ease;
-            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            border-radius: 200px 200px 20px 20px;
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.6),
+                inset 0 0 60px rgba(0, 0, 0, 0.3);
+            aspect-ratio: 3/4;
         }
-        .cyber-photo:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 40px rgba(0, 240, 255, 0.4);
-        }
-        .cyber-photo img {
+        
+        .moderne-photo-frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: saturate(1.2) contrast(1.1);
+            display: block;
+            transition: transform 8s ease-in-out;
         }
         
-        /* Boissons */
-        .cyber-boisson-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .cyber-boisson-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            border: 1px solid rgba(0, 240, 255, 0.3);
-            background: rgba(0, 0, 0, 0.4);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-        .cyber-boisson-item.selected {
-            border-color: var(--cyan);
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--cyan);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-        }
-        .cyber-boisson-item .check { opacity: 0; transition: opacity 0.3s ease; }
-        .cyber-boisson-item.selected .check { opacity: 1; }
-        
-        .cyber-boisson-category { margin-bottom: 20px; }
-        .cyber-boisson-category-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 0.2em;
-            color: var(--magenta);
-            text-transform: uppercase;
-            margin-bottom: 12px;
+        .moderne-photo-frame:hover img {
+            transform: scale(1.05);
         }
         
-        /* QR */
-        .cyber-qr-wrapper {
-            text-align: center;
-        }
-        .cyber-qr-box {
-            display: inline-block;
-            padding: 20px;
-            background: var(--text);
-            border: 2px solid var(--cyan);
-            box-shadow: 
-                0 0 0 4px rgba(0, 240, 255, 0.2),
-                0 0 40px rgba(0, 240, 255, 0.4);
-            position: relative;
-        }
-        .cyber-qr-box::before, .cyber-qr-box::after {
+        /* Overlay dégradé sur la photo */
+        .moderne-photo-frame::after {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: var(--magenta);
-            box-shadow: 0 0 15px var(--magenta);
+            inset: 0;
+            background: linear-gradient(180deg, transparent 50%, rgba(10, 6, 2, 0.6) 100%);
+            pointer-events: none;
         }
-        .cyber-qr-box::before { top: -2px; left: -2px; clip-path: polygon(0 0, 100% 0, 0 100%); }
-        .cyber-qr-box::after { bottom: -2px; right: -2px; clip-path: polygon(100% 100%, 100% 0, 0 100%); }
         
-        /* Footer */
-        .cyber-footer {
-            padding: 60px 40px 40px;
-            text-align: center;
+        /* Bordure dorée autour de la photo */
+        .moderne-photo-frame::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            border-radius: 200px 200px 20px 20px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-photo-frame {
+                border-radius: 150px 150px 16px 16px;
+            }
+            .moderne-photo-frame::before {
+                border-radius: 150px 150px 16px 16px;
+            }
+        }
+        
+        /* ============================================
+           NOMS DES HÔTES
+           ============================================ */
+        .moderne-names {
             position: relative;
-            z-index: 1;
-        }
-        .cyber-footer-brand {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 0.2em;
-            color: var(--cyan);
-            text-shadow: 0 0 20px var(--cyan);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        .cyber-footer-tagline {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            letter-spacing: 0.3em;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 30px;
+            margin-top: -60px;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
         }
         
-        .cyber-btn-whatsapp {
+        @media (max-width: 480px) {
+            .moderne-names { margin-top: -40px; }
+        }
+        
+        .moderne-name-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .moderne-name {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(36px, 7vw, 56px);
+            color: white;
+            line-height: 0.95;
+            text-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.8),
+                0 0 40px rgba(201, 169, 97, 0.3);
+        }
+        
+        .moderne-name-amp {
+            font-family: 'Great Vibes', cursive;
+            font-size: clamp(24px, 5vw, 36px);
+            color: var(--gold-light);
+            opacity: 0.9;
+        }
+        
+        .moderne-lastname {
+            display: block;
+            font-family: 'Cinzel', serif;
+            font-size: clamp(14px, 2.5vw, 18px);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 500;
+            margin-top: 6px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Ligne décorative entre les noms */
+        .moderne-names-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        
+        .moderne-names-divider .line {
+            width: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        
+        .moderne-names-divider i {
+            color: var(--gold);
+            font-size: 14px;
+        }
+        
+        /* ============================================
+           MESSAGE D'INVITATION
+           ============================================ */
+        .moderne-message {
+            text-align: center;
+            margin: 40px 0 30px;
+            padding: 0 10px;
+        }
+        
+        .moderne-message-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.85);
+            font-style: italic;
+            font-weight: 300;
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-message-text { font-size: 16px; }
+        }
+        
+        .moderne-message-strong {
+            color: white;
+            font-weight: 500;
+            font-style: normal;
+        }
+        
+        /* ============================================
+           BLOC DATE / LIEU
+           ============================================ */
+        .moderne-event-info {
+            text-align: center;
+            padding: 30px 20px;
+            margin: 30px 0;
+            background: rgba(201, 169, 97, 0.05);
+            border-top: 1px solid rgba(201, 169, 97, 0.2);
+            border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+            border-radius: 2px;
+        }
+        
+        .moderne-event-label {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .moderne-event-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: white;
+            letter-spacing: 0.05em;
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-event-value { font-size: 18px; }
+        }
+        
+        .moderne-event-address {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        .moderne-event-separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .moderne-event-separator .line {
+            width: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        
+        .moderne-event-separator i {
+            color: var(--gold);
+            font-size: 12px;
+        }
+        
+        /* ============================================
+           BOUTON ITINÉRAIRE
+           ============================================ */
+        .moderne-btn-itinerary {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 14px 32px;
+            margin-top: 20px;
+            padding: 12px 28px;
             background: transparent;
-            border: 1px solid #25d366;
-            color: #25d366;
-            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid var(--gold);
+            color: var(--gold-light);
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .moderne-btn-itinerary:hover {
+            background: var(--gold);
+            color: #1a120a;
+            box-shadow: 0 8px 24px rgba(201, 169, 97, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        /* ============================================
+           TABLE ASSIGNÉE
+           ============================================ */
+        .moderne-table {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(107, 30, 46, 0.1);
+            border: 1px solid rgba(201, 169, 97, 0.25);
+        }
+        
+        .moderne-table-label {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+        
+        .moderne-table-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: white;
+        }
+        
+        /* ============================================
+           SECTION TITRE
+           ============================================ */
+        .moderne-section-title {
+            text-align: center;
+            margin: 40px 0 24px;
+            position: relative;
+        }
+        
+        .moderne-section-title span {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 500;
+        }
+        
+        .moderne-section-title::before,
+        .moderne-section-title::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        
+        .moderne-section-title::before { left: 0; }
+        .moderne-section-title::after { right: 0; }
+        
+        /* ============================================
+           DIAPORAMA PHOTOS
+           ============================================ */
+        .moderne-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .moderne-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .moderne-diaporama .slide.active {
+            opacity: 1;
+        }
+        
+        .moderne-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .moderne-diapo-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        
+        .moderne-diapo-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid rgba(201, 169, 97, 0.4);
+            color: var(--gold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .moderne-diapo-btn:hover {
+            background: var(--gold);
+            color: #1a120a;
+            transform: scale(1.1);
+        }
+        
+        .moderne-diapo-counter {
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.7);
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        .moderne-diapo-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        
+        .moderne-diapo-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(201, 169, 97, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .moderne-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.4);
+            box-shadow: 0 0 10px var(--gold);
+        }
+        
+        /* ============================================
+           FORMULAIRES
+           ============================================ */
+        .moderne-form-group {
+            margin-bottom: 22px;
+        }
+        
+        .moderne-form-group label {
+            display: block;
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .moderne-form-group input,
+        .moderne-form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            color: white;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 17px;
+            transition: all 0.3s ease;
+        }
+        
+        .moderne-form-group input:focus,
+        .moderne-form-group textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.15);
+        }
+        
+        .moderne-form-group input::placeholder,
+        .moderne-form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .moderne-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-options-grid { grid-template-columns: 1fr; }
+        }
+        
+        .moderne-option-radio { display: none; }
+        
+        .moderne-option-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            font-family: 'Cinzel', serif;
             font-size: 11px;
             letter-spacing: 0.2em;
             text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .moderne-option-label:hover {
+            border-color: var(--gold);
+            color: white;
+        }
+        
+        .moderne-option-radio:checked + .moderne-option-label {
+            border-color: var(--gold);
+            background: rgba(201, 169, 97, 0.15);
+            color: white;
+        }
+        
+        .moderne-btn-submit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: #1a120a;
+            border: none;
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(201, 169, 97, 0.3);
+        }
+        
+        .moderne-btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(201, 169, 97, 0.5);
+        }
+        
+        /* ============================================
+           BOISSONS
+           ============================================ */
+        .moderne-boisson-category {
+            margin-bottom: 24px;
+        }
+        
+        .moderne-boisson-category-title {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .moderne-boisson-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .moderne-boisson-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.75);
+            border-radius: 2px;
+        }
+        
+        .moderne-boisson-item:hover {
+            border-color: var(--gold);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .moderne-boisson-item.selected {
+            border-color: var(--gold);
+            background: rgba(201, 169, 97, 0.15);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .moderne-boisson-item .check {
+            opacity: 0;
+            color: var(--gold);
+            transition: opacity 0.3s ease;
+        }
+        
+        .moderne-boisson-item.selected .check {
+            opacity: 1;
+        }
+        
+        /* ============================================
+           QR CODE
+           ============================================ */
+        .moderne-qr-wrapper {
+            text-align: center;
+        }
+        
+        .moderne-qr-box {
+            display: inline-block;
+            padding: 16px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 8px 24px rgba(201, 169, 97, 0.3);
+            position: relative;
+        }
+        
+        .moderne-qr-box::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 1px solid rgba(201, 169, 97, 0.4);
+            border-radius: 6px;
+            pointer-events: none;
+        }
+        
+        .moderne-qr-label {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.25em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 16px;
+        }
+        
+        /* ============================================
+           SIGNATURE
+           ============================================ */
+        .moderne-signature {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(201, 169, 97, 0.2);
+        }
+        
+        .moderne-signature-intro {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+        }
+        
+        .moderne-signature-name {
+            font-family: 'Great Vibes', cursive;
+            font-size: 42px;
+            color: white;
+            line-height: 1;
+            text-shadow: 0 0 30px rgba(201, 169, 97, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .moderne-signature-name { font-size: 32px; }
+        }
+        
+        .moderne-rsvp {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(201, 169, 97, 0.1);
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+        
+        .moderne-rsvp .label {
+            color: var(--gold);
+            display: block;
+            font-size: 9px;
+            margin-bottom: 4px;
+        }
+        
+        .moderne-rsvp .value {
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* ============================================
+           MESSAGES
+           ============================================ */
+        .moderne-alert {
+            padding: 16px 24px;
+            margin: 20px 0;
+            font-size: 15px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border-left: 3px solid;
+            background: rgba(0, 0, 0, 0.3);
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .moderne-alert-success { border-color: #2d7a45; color: #a3e8b8; }
+        .moderne-alert-danger  { border-color: #c17c60; color: #fca5a5; }
+        .moderne-alert-warning { border-color: var(--gold); color: var(--gold-light); }
+        
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .moderne-footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px 20px;
+        }
+        
+        .moderne-footer-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .moderne-footer-divider .line {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+        
+        .moderne-footer-divider i {
+            color: var(--gold);
+            font-size: 16px;
+        }
+        
+        .moderne-footer-app {
+            font-family: 'Great Vibes', cursive;
+            font-size: 32px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(201, 169, 97, 0.4);
+        }
+        
+        .moderne-footer-tagline {
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: rgba(201, 169, 97, 0.6);
+            margin-bottom: 24px;
+        }
+        
+        .moderne-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold-light);
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 600;
             text-decoration: none;
             transition: all 0.3s ease;
         }
-        .cyber-btn-whatsapp:hover {
-            background: #25d366;
-            color: var(--black);
-            box-shadow: 0 0 30px rgba(37, 211, 102, 0.5);
+        
+        .moderne-whatsapp:hover {
+            background: var(--gold);
+            color: #1a120a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(201, 169, 97, 0.4);
         }
         
-        /* Alerts */
-        .cyber-alert {
-            padding: 16px 24px;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            border-left: 3px solid;
-        }
-        .cyber-alert-success { border-color: #10b981; background: rgba(16,185,129,0.1); color: #6ee7b7; }
-        .cyber-alert-danger  { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #fca5a5; }
-        
-        /* Download */
-        #downloadBtn {
+        /* ============================================
+           BOUTON TÉLÉCHARGEMENT
+           ============================================ */
+        #moderneDownloadBtn {
             position: fixed;
             bottom: 24px;
             right: 24px;
             z-index: 1000;
-            padding: 14px 24px;
-            background: linear-gradient(135deg, var(--cyan), var(--magenta));
-            color: var(--black);
-            border: none;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: #1a120a;
+            border: none;
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(201, 169, 97, 0.4);
             opacity: 0;
-            animation: fadeIn 0.8s ease-out 3.8s forwards;
+            animation: wrapperIn 1s ease-out 3.5s forwards;
         }
-        #downloadBtn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 50px rgba(0, 240, 255, 0.6);
+        
+        #moderneDownloadBtn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(201, 169, 97, 0.6);
         }
-        @media (max-width: 480px) { #downloadBtn { bottom: 12px; right: 12px; padding: 12px 18px; font-size: 11px; } }
+        
+        #moderneDownloadBtn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 480px) {
+            #moderneDownloadBtn {
+                bottom: 16px;
+                right: 16px;
+                padding: 10px 16px;
+                font-size: 9px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- ============================================
-         INTRO HOLOGRAMME
-         ============================================ -->
-    <div class="holo-intro">
-        <div class="holo-lines">
-            <span></span><span></span><span></span><span></span>
+    <!-- TRANSITION D'OUVERTURE -->
+    <div class="moderne-loader">
+        <div class="loader-name"><?php echo htmlspecialchars($host1); ?></div>
+        <div class="loader-divider">
+            <div class="line"></div>
+            <i class="fas fa-heart"></i>
+            <div class="line"></div>
         </div>
-        <div class="holo-text">INITIALIZING...</div>
     </div>
 
-    <!-- ============================================
-         NAVBAR CYBER
-         ============================================ -->
-    <nav class="cyber-navbar">
-        <div class="cyber-brand">
-            <span class="dot"></span>
-            <?php echo htmlspecialchars(strtoupper($appName)); ?>
-        </div>
-        <div class="cyber-status">
-            <span class="live">● LIVE</span> / INVITATION_v2.0
-        </div>
-    </nav>
+    <!-- FOND -->
+    <div class="moderne-bg"></div>
 
-    <!-- ============================================
-         HERO CYBER
-         ============================================ -->
-    <section class="cyber-hero">
-        
-        <div class="cyber-rings">
-            <div class="ring"></div>
-            <div class="ring"></div>
-            <div class="ring"></div>
-        </div>
-        
-        <div class="cyber-blason">
-            
-            <div class="cyber-tag">INVITATION PERSONNELLE</div>
-            
-            <div class="cyber-guest">
-                <span class="glitch" data-text="<?php echo htmlspecialchars($guestName); ?>">
-                    <?php echo htmlspecialchars($guestName); ?>
-                </span>
-            </div>
-            
-            <div class="cyber-divider">
-                <div class="line"></div>
-                <div class="diamond"></div>
-                <div class="line"></div>
-            </div>
-            
-            <div class="cyber-hosts-intro">// Vous êtes convié(e) à célébrer</div>
-            <div class="cyber-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="cyber-event-type">[ <?php echo htmlspecialchars(strtoupper($eventType)); ?> ]</div>
-            
-        </div>
-    </section>
+    <!-- CONTENU PRINCIPAL -->
+    <div class="moderne-wrapper">
 
-    <!-- ============================================
-         CARTE HOLOGRAMME (Détails)
-         ============================================ -->
-    <div class="cyber-card">
-        
-        <div class="cyber-card-title">DÉTAILS_ÉVÉNEMENT.config</div>
-        
-        <div class="cyber-info-grid">
+        <div class="moderne-card" id="moderneCard">
             
-            <div class="cyber-info-item">
-                <div class="label">DATE</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+            <!-- EN-TÊTE -->
+            <div class="moderne-header">
+                <div class="moderne-header-title">Invitation</div>
+                <div class="moderne-header-divider">
+                    <div class="line"></div>
+                    <div class="ornament">❦ ❦ ❦</div>
+                    <div class="line"></div>
+                </div>
             </div>
-            
-            <div class="cyber-info-item">
-                <div class="label">HEURE</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+
+            <!-- PHOTO PRINCIPALE -->
+            <?php if ($mainPhoto): ?>
+            <div class="moderne-photo-block">
+                <div class="moderne-photo-frame">
+                    <img src="<?php echo htmlspecialchars($mainPhoto); ?>" 
+                         alt="<?php echo htmlspecialchars($invitation['evenement_nom']); ?>"
+                         loading="eager"
+                         crossorigin="anonymous"
+                         onerror="this.parentElement.style.display='none';">
+                </div>
             </div>
-            
-            <div class="cyber-info-item" style="grid-column: 1 / -1;">
-                <div class="label">LIEU</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+            <?php endif; ?>
+
+            <!-- NOMS DES HÔTES -->
+            <div class="moderne-names">
+                <div class="moderne-name-row">
+                    <div style="text-align:center;">
+                        <div class="moderne-name"><?php echo htmlspecialchars($firstOnly1); ?></div>
+                        <?php if ($lastName1): ?>
+                            <span class="moderne-lastname"><?php echo htmlspecialchars(strtoupper($lastName1)); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <?php if ($hostName2): ?>
+                    <div class="moderne-name-amp">&</div>
+                    <div style="text-align:center;">
+                        <div class="moderne-name"><?php echo htmlspecialchars($firstOnly2); ?></div>
+                        <?php if ($lastName2): ?>
+                            <span class="moderne-lastname"><?php echo htmlspecialchars(strtoupper($lastName2)); ?></span>
+                        <?php endif; ?>
+                    </div>
                     <?php endif; ?>
                 </div>
+            </div>
+
+            <!-- MESSAGE D'INVITATION -->
+            <div class="moderne-message">
+                <p class="moderne-message-text">
+                    C'est avec un immense plaisir que nous vous convions à partager avec nous un moment d'exception à l'occasion de notre <span class="moderne-message-strong"><?php echo htmlspecialchars($eventType); ?></span>.
+                    <br><br>
+                    Votre présence serait pour nous le plus précieux des présents. Nous espérons de tout cœur que vous pourrez vous joindre à nous pour célébrer ce moment unique.
+                </p>
+            </div>
+
+            <!-- DESTINATAIRE -->
+            <div style="text-align: center; margin: 30px 0;">
+                <div class="moderne-event-label" style="margin-bottom: 10px;">À l'attention de</div>
+                <div style="font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: white; letter-spacing: 0.02em;">
+                    <?php echo htmlspecialchars($guestName); ?>
+                </div>
+            </div>
+
+            <!-- DATE / HEURE -->
+            <div class="moderne-event-info">
+                <div class="moderne-event-label">Date & Heure</div>
+                <div class="moderne-event-value">
+                    <?php echo htmlspecialchars($eventDate); ?>
+                    <?php if ($eventTime): ?>
+                        · <?php echo htmlspecialchars($eventTime); ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- LIEU -->
+            <div class="moderne-event-info">
+                <div class="moderne-event-label">Lieu de la célébration</div>
+                <div class="moderne-event-value"><?php echo htmlspecialchars($lieuDisplay); ?></div>
+                <?php if ($adresseDisplay): ?>
+                    <div class="moderne-event-address"><?php echo htmlspecialchars($adresseDisplay); ?></div>
+                <?php endif; ?>
+                
                 <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
                    target="_blank" 
                    rel="noopener"
-                   class="cyber-btn-itinerary">
-                    <i class="fas fa-route"></i> Ouvrir dans Maps
+                   class="moderne-btn-itinerary">
+                    <i class="fas fa-map-marked-alt"></i>
+                    Itinéraire
                 </a>
             </div>
-            
-            <div class="cyber-info-item" style="grid-column: 1 / -1;">
-                <div class="label">PLACES_RÉSERVÉES</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
-            </div>
-            
-        </div>
-    </div>
 
-    <!-- ============================================
-         MESSAGES
-         ============================================ -->
-    <?php if ($message): ?>
-        <div class="cyber-section apparue">
-            <div class="cyber-alert cyber-alert-<?php echo htmlspecialchars($messageType); ?>">
+            <!-- TABLE ASSIGNÉE -->
+            <?php if ($hasTable): ?>
+            <div class="moderne-table">
+                <div class="moderne-table-label">Votre table</div>
+                <div class="moderne-table-value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    <?php if (!empty($tableZone)): ?>
+                        <span style="font-size: 16px; color: var(--gold);"> · <?php echo htmlspecialchars($tableZone); ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- SIGNATURE -->
+            <div class="moderne-signature">
+                <div class="moderne-signature-intro">Avec toute notre affection,</div>
+                <div class="moderne-signature-name">
+                    <?php echo htmlspecialchars($invitation['evenement_nom']); ?>
+                </div>
+                
+                <div class="moderne-rsvp">
+                    <span class="label">RSVP</span>
+                    <span class="value"><?php echo htmlspecialchars($rsvpLabel); ?></span>
+                </div>
+            </div>
+
+            <!-- QR CODE -->
+            <div style="margin-top: 40px;">
+                <div class="moderne-section-title">
+                    <span>Code d'accès</span>
+                </div>
+                <div class="moderne-qr-wrapper">
+                    <div class="moderne-qr-box">
+                        <div id="moderneQrcode"></div>
+                    </div>
+                    <div class="moderne-qr-label"><?php echo htmlspecialchars($invitation['code_unique']); ?></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MESSAGES -->
+        <?php if ($message): ?>
+            <div class="moderne-alert moderne-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
 
-    <!-- ============================================
-         PHOTOS
-         ============================================ -->
-    <?php if (!empty($photosHost)): ?>
-        <div class="cyber-section">
-            <div class="cyber-section-title">// <span class="accent">GALERIE</span>_SOUVENIRS</div>
-            <div class="cyber-photos-grid">
-                <?php foreach ($photosHost as $photo): ?>
-                    <div class="cyber-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
+        <!-- DIAPORAMA PHOTOS -->
+        <?php if ($hasPhotos && count($photosHost) > 1): ?>
+        <div class="moderne-card" style="margin-top: 30px;">
+            <div class="moderne-section-title">
+                <span>Souvenirs</span>
+            </div>
+            
+            <div class="moderne-diaporama" id="moderneDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Photo ' . ($index + 1)); ?>"
+                             loading="lazy"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+            </div>
+            
+            <div class="moderne-diapo-nav">
+                <button class="moderne-diapo-btn" onclick="moderneDiapoChange(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="moderne-diapo-counter" id="moderneDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                <button class="moderne-diapo-btn" onclick="moderneDiapoChange(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="moderne-diapo-dots" id="moderneDiapoDots">
+                <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                    <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="moderneDiapoGoTo(<?php echo $i; ?>)"></span>
+                <?php endfor; ?>
             </div>
         </div>
-    <?php endif; ?>
+        <?php endif; ?>
 
-    <!-- ============================================
-         QR CODE
-         ============================================ -->
-    <div class="cyber-section">
-        <div class="cyber-section-title">// <span class="accent">CODE</span>_D'ACCÈS</div>
-        <div class="cyber-qr-wrapper">
-            <div class="cyber-qr-box">
-                <div id="qrcode"></div>
+        <!-- CONFIRMATION -->
+        <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
+        <div class="moderne-card" style="margin-top: 30px;">
+            <div class="moderne-section-title">
+                <span>Confirmation</span>
             </div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);letter-spacing:0.3em;margin-top:20px;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         CONFIRMATION
-         ============================================ -->
-    <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="cyber-section">
-            <div class="cyber-section-title">// <span class="accent">CONFIRM</span>_PRÉSENCE</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
                 <input type="hidden" name="action" value="confirmer">
                 
-                <div class="cyber-form-group">
-                    <label>nombre_personnes</label>
+                <div class="moderne-form-group">
+                    <label>Nombre de personnes</label>
                     <input type="number" name="nombre_personnes" value="1" min="1" max="<?php echo $invitation['nb_places_max'] ?? 1; ?>">
                 </div>
                 
-                <div class="cyber-form-group">
-                    <label>réponse</label>
-                    <div class="cyber-options-grid">
+                <div class="moderne-form-group">
+                    <label>Votre réponse</label>
+                    <div class="moderne-options-grid">
                         <div>
-                            <input type="radio" name="reponse" id="presenceOui" value="CONFIRMEE" checked class="cyber-option-radio">
-                            <label for="presenceOui" class="cyber-option-label">
-                                <i class="fas fa-play"></i> Je serai là
+                            <input type="radio" name="reponse" id="moderneOui" value="CONFIRMEE" checked class="moderne-option-radio">
+                            <label for="moderneOui" class="moderne-option-label">
+                                <i class="fas fa-check"></i> Je confirme
                             </label>
                         </div>
                         <div>
-                            <input type="radio" name="reponse" id="presenceNon" value="REFUSEE" class="cyber-option-radio">
-                            <label for="presenceNon" class="cyber-option-label">
-                                <i class="fas fa-times"></i> Absent(e)
+                            <input type="radio" name="reponse" id="moderneNon" value="REFUSEE" class="moderne-option-radio">
+                            <label for="moderneNon" class="moderne-option-label">
+                                <i class="fas fa-times"></i> Je ne peux pas
                             </label>
                         </div>
                     </div>
                 </div>
                 
-                <div class="cyber-form-group">
-                    <label>message_</label>
-                    <textarea name="message_invite" rows="3" placeholder="Votre message..."></textarea>
+                <div class="moderne-form-group">
+                    <label>Message (optionnel)</label>
+                    <textarea name="message_invite" rows="3" placeholder="Un petit mot..."></textarea>
                 </div>
                 
-                <button type="submit" class="cyber-btn-submit">
-                    <i class="fas fa-paper-plane"></i> TRANSMETTRE
+                <button type="submit" class="moderne-btn-submit">
+                    <i class="fas fa-check"></i>
+                    Confirmer ma présence
                 </button>
             </form>
         </div>
-    <?php endif; ?>
+        <?php endif; ?>
 
-    <!-- ============================================
-         BOISSONS
-         ============================================ -->
-    <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="cyber-section">
-            <div class="cyber-section-title">// <span class="accent">PRÉFÉRENCES</span>_BOISSONS</div>
+        <!-- BOISSONS -->
+        <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
+        <div class="moderne-card" style="margin-top: 30px;">
+            <div class="moderne-section-title">
+                <span>Vos préférences</span>
+            </div>
             
             <?php if ($isLocked): ?>
-                <div style="text-align:center;color:var(--cyan);font-family:'JetBrains Mono',monospace;font-size:12px;padding:20px 0;">
-                    <i class="fas fa-lock"></i> PRÉFÉRENCES_ENREGISTRÉES
+                <div style="text-align: center; color: var(--gold); font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; padding: 20px 0;">
+                    <i class="fas fa-lock"></i> Préférences enregistrées
                 </div>
-                <div class="cyber-boisson-grid" style="justify-content:center;">
+                <div class="moderne-boisson-grid" style="justify-content: center;">
                     <?php foreach ($boissons as $b):
                         if (!isset($preferencesBoissons[$b['id']])) continue;
                     ?>
-                        <div class="cyber-boisson-item selected">
+                        <div class="moderne-boisson-item selected" style="cursor: default;">
                             <i class="fas <?php echo getBoissonIcon($b['type']); ?>"></i>
                             <span><?php echo htmlspecialchars($b['nom']); ?></span>
                             <i class="fas fa-check check"></i>
@@ -1041,26 +1355,26 @@
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
-                <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=preferences" id="preferencesForm">
+                <p style="text-align: center; font-family: 'Cormorant Garamond', serif; font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 24px;">
+                    Choisissez jusqu'à <strong style="color: var(--gold);">2 boissons</strong> : <span id="moderneSelectedCount">0</span>/2
+                </p>
+                
+                <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=preferences">
                     <input type="hidden" name="action" value="preferences">
                     
-                    <p style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);margin-bottom:20px;letter-spacing:0.1em;">
-                        SELECT_2_MAX : <span id="selectedCount" style="color:var(--cyan);">0</span>/2
-                    </p>
-                    
                     <?php foreach ($boissonsGrouped as $type => $boissonsByType): ?>
-                        <div class="cyber-boisson-category">
-                            <div class="cyber-boisson-category-title">
+                        <div class="moderne-boisson-category">
+                            <div class="moderne-boisson-category-title">
                                 <i class="fas <?php echo getBoissonIcon($type); ?>"></i>
-                                <?php echo htmlspecialchars($type ?: 'AUTRES'); ?>
+                                <?php echo htmlspecialchars($type ?: 'Autres'); ?>
                             </div>
-                            <div class="cyber-boisson-grid">
+                            <div class="moderne-boisson-grid">
                                 <?php foreach ($boissonsByType as $b): 
                                     $selected = isset($preferencesBoissons[$b['id']]);
                                 ?>
-                                    <div class="cyber-boisson-item <?php echo $selected ? 'selected' : ''; ?>" 
+                                    <div class="moderne-boisson-item <?php echo $selected ? 'selected' : ''; ?>" 
                                          data-id="<?php echo $b['id']; ?>"
-                                         onclick="toggleBoisson(this, <?php echo $b['id']; ?>)">
+                                         onclick="moderneToggleBoisson(this, <?php echo $b['id']; ?>)">
                                         <i class="fas <?php echo getBoissonIcon($b['type']); ?>"></i>
                                         <span><?php echo htmlspecialchars($b['nom']); ?></span>
                                         <i class="fas fa-check check"></i>
@@ -1072,119 +1386,217 @@
                         </div>
                     <?php endforeach; ?>
                     
-                    <button type="submit" class="cyber-btn-submit">
-                        <i class="fas fa-save"></i> SAUVEGARDER
+                    <button type="submit" class="moderne-btn-submit" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
                     </button>
                 </form>
             <?php endif; ?>
         </div>
-    <?php endif; ?>
+        <?php endif; ?>
 
-    <!-- ============================================
-         FOOTER CYBER
-         ============================================ -->
-    <footer class="cyber-footer">
-        <div class="cyber-footer-brand"><?php echo htmlspecialchars($appName); ?></div>
-        <div class="cyber-footer-tagline">// EXPÉRIENCE_ÉVÉNEMENTIELLE_v2.0</div>
-        
-        <a href="https://wa.me/243829018462" target="_blank" rel="noopener" class="cyber-btn-whatsapp">
-            <i class="fab fa-whatsapp"></i> CONTACT
-        </a>
-        
-        <div style="margin-top:30px;padding-top:20px;border-top:1px solid rgba(0, 240, 255, 0.2);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.3em;color:var(--text-muted);">
-            © <?php echo date('Y'); ?> // SYSTÈME_OPÉRATIONNEL
-        </div>
-    </footer>
+        <!-- FOOTER -->
+        <footer class="moderne-footer">
+            <div class="moderne-footer-divider">
+                <div class="line"></div>
+                <i class="fas fa-heart"></i>
+                <div class="line"></div>
+            </div>
+            <div class="moderne-footer-app"><?php echo htmlspecialchars($appName); ?></div>
+            <div class="moderne-footer-tagline">Invitation d'exception</div>
+            
+            <a href="https://wa.me/243963967028?text=Bonjour%2C%20je%20souhaite%20avoir%20des%20informations%20sur%20mon%20invitation" 
+               target="_blank" 
+               rel="noopener"
+               class="moderne-whatsapp">
+                <i class="fab fa-whatsapp"></i>
+                Nous contacter
+            </a>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(201, 169, 97, 0.15); font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(201, 169, 97, 0.4);">
+                © <?php echo date('Y'); ?> · Tous droits réservés
+            </div>
+        </footer>
 
-    <button id="downloadBtn" onclick="telechargerJPEG()">
+    </div>
+
+    <!-- BOUTON TÉLÉCHARGEMENT -->
+    <button id="moderneDownloadBtn" onclick="moderneDownload()">
         <i class="fas fa-download"></i>
-        <span id="btnText">Télécharger</span>
+        <span id="moderneBtnText">Télécharger</span>
     </button>
 
     <script>
-        // Scroll animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.cyber-card, .cyber-section');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
-                        observer.unobserve(entry.target);
-                    } 
-                });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
-        });
-
-        // QR
+        // QR CODE
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
-                    new QRCode(document.getElementById('qrcode'), {
+                    new QRCode(document.getElementById('moderneQrcode'), {
                         text: '<?php echo addslashes($fullUrl); ?>',
-                        width: 180, height: 180,
-                        colorDark: '#05050a', colorLight: '#e8e8f0',
+                        width: 180,
+                        height: 180,
+                        colorDark: '#1a120a',
+                        colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.H
                     });
-                } catch(e) { console.error(e); }
+                } catch(e) {
+                    console.error('Erreur QR code:', e);
+                }
             }
         });
 
-        // Download
-        async function telechargerJPEG() {
-            const btn = document.getElementById('downloadBtn');
-            const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.cyber-hero');
+        // DIAPORAMA
+        let moderneDiapoIndex = 0;
+        const moderneSlides = document.querySelectorAll('#moderneDiaporama .slide');
+        const moderneDots = document.querySelectorAll('#moderneDiapoDots span');
+        const moderneCounter = document.getElementById('moderneDiapoCounter');
+        let moderneDiapoInterval = null;
+
+        function moderneUpdateDiapo() {
+            moderneSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === moderneDiapoIndex);
+            });
+            moderneDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === moderneDiapoIndex);
+            });
+            if (moderneCounter) {
+                moderneCounter.textContent = (moderneDiapoIndex + 1) + ' / ' + moderneSlides.length;
+            }
+        }
+
+        function moderneDiapoChange(direction) {
+            moderneDiapoIndex += direction;
+            if (moderneDiapoIndex < 0) moderneDiapoIndex = moderneSlides.length - 1;
+            if (moderneDiapoIndex >= moderneSlides.length) moderneDiapoIndex = 0;
+            moderneUpdateDiapo();
+            resetModerneDiapoAuto();
+        }
+
+        function moderneDiapoGoTo(index) {
+            moderneDiapoIndex = index;
+            moderneUpdateDiapo();
+            resetModerneDiapoAuto();
+        }
+
+        function resetModerneDiapoAuto() {
+            if (moderneDiapoInterval) clearInterval(moderneDiapoInterval);
+            if (moderneSlides.length > 1) {
+                moderneDiapoInterval = setInterval(() => {
+                    moderneDiapoIndex = (moderneDiapoIndex + 1) % moderneSlides.length;
+                    moderneUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (moderneSlides.length > 0) {
+                moderneUpdateDiapo();
+                resetModerneDiapoAuto();
+                
+                const container = document.getElementById('moderneDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (moderneDiapoInterval) clearInterval(moderneDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetModerneDiapoAuto);
+                }
+            }
+        });
+
+        // BOISSONS
+        let moderneSelectedBoissons = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.moderne-boisson-item.selected').forEach(item => {
+                const id = parseInt(item.dataset.id);
+                if (!isNaN(id) && !moderneSelectedBoissons.includes(id)) {
+                    moderneSelectedBoissons.push(id);
+                }
+            });
+            moderneUpdateBoissonCount();
+        });
+
+        function moderneToggleBoisson(element, id) {
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+                const index = moderneSelectedBoissons.indexOf(id);
+                if (index > -1) moderneSelectedBoissons.splice(index, 1);
+                const checkbox = element.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+                moderneUpdateBoissonCount();
+                return;
+            }
+            
+            if (moderneSelectedBoissons.length >= 2) {
+                alert('Vous ne pouvez sélectionner que 2 boissons maximum.');
+                return;
+            }
+            
+            element.classList.add('selected');
+            moderneSelectedBoissons.push(id);
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.checked = true;
+            moderneUpdateBoissonCount();
+        }
+
+        function moderneUpdateBoissonCount() {
+            const el = document.getElementById('moderneSelectedCount');
+            if (el) el.textContent = moderneSelectedBoissons.length;
+            
+            document.querySelectorAll('.moderne-boisson-item').forEach(item => {
+                if (!item.classList.contains('selected') && moderneSelectedBoissons.length >= 2) {
+                    item.style.opacity = '0.4';
+                    item.style.cursor = 'not-allowed';
+                } else {
+                    item.style.opacity = '1';
+                    item.style.cursor = 'pointer';
+                }
+            });
+        }
+
+        // TÉLÉCHARGEMENT
+        async function moderneDownload() {
+            const btn = document.getElementById('moderneDownloadBtn');
+            const btnText = document.getElementById('moderneBtnText');
+            const card = document.getElementById('moderneCard');
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5, useCORS: true,
-                    backgroundColor: '#05050a', logging: false
+                await new Promise(r => setTimeout(r, 400));
+                
+                const canvas = await html2canvas(card, {
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#1a120a',
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('moderneCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                        }
+                    }
                 });
+                
                 const link = document.createElement('a');
-                link.download = `cyber_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
+                const name = '<?php echo htmlspecialchars($invitation['evenement_nom']); ?>';
+                link.download = `invitation_${name.replace(/\s/g, '_')}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
-                btnText.textContent = '✓ Téléchargé';
+                
+                btnText.textContent = 'Téléchargé ✓';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             } catch(e) {
+                console.error(e);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             }
+            
             btn.disabled = false;
         }
-
-        // Boissons
-        <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
-        let selectedBoissons = [];
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.cyber-boisson-item.selected').forEach(item => {
-                const id = parseInt(item.dataset.id);
-                if (!selectedBoissons.includes(id)) selectedBoissons.push(id);
-            });
-            updateCount();
-        });
-        function toggleBoisson(element, id) {
-            if (element.classList.contains('selected')) {
-                element.classList.remove('selected');
-                const idx = selectedBoissons.indexOf(id);
-                if (idx > -1) selectedBoissons.splice(idx, 1);
-                element.querySelector('input[type="checkbox"]').checked = false;
-                updateCount(); return;
-            }
-            if (selectedBoissons.length >= 2) { alert('Maximum 2 boissons.'); return; }
-            element.classList.add('selected');
-            selectedBoissons.push(id);
-            element.querySelector('input[type="checkbox"]').checked = true;
-            updateCount();
-        }
-        function updateCount() {
-            const el = document.getElementById('selectedCount');
-            if (el) el.textContent = selectedBoissons.length;
-        }
-        <?php endif; ?>
     </script>
 
 </body>
