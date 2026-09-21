@@ -4,12 +4,10 @@
  * TEMPLATE : MODERNE — Design contemporain élégant
  * ============================================================
  * 
- * Inspiré du design fourni :
- * - Fond sombre dégradé (brun/noir)
- * - Grande photo centrale avec forme arrondie
- * - Typographie calligraphiée blanche (Great Vibes)
- * - Noms en blanc avec sous-titres dorés
- * - Transition d'apparition fluide
+ * Version avec transitions d'apparition au scroll :
+ * - Chaque section apparaît en fondu + translation
+ * - Animation en cascade pour les éléments internes
+ * - Effet "reveal" fluide
  * 
  * ============================================================
  */
@@ -20,13 +18,11 @@
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 
-// Détecter le premier prénom du nom complet (pour "Bénédicte & Henock")
+// Détecter le premier prénom du nom complet
 $hostParts = preg_split('/\s+(?:et|&)\s+/i', $host1);
 $hostName1 = trim($hostParts[0] ?? $host1);
 $hostName2 = trim($hostParts[1] ?? '');
 
-// Extraire les noms de famille (dernier mot après le prénom)
-// Pour "Bénédicte Mesu & Henock Moke" → "MESU" et "MOKE"
 $hostFull1 = $hostName1;
 $hostFull2 = $hostName2;
 $lastName1 = '';
@@ -34,7 +30,6 @@ $lastName2 = '';
 $firstOnly1 = $hostName1;
 $firstOnly2 = $hostName2;
 
-// On prend le premier mot comme prénom, le reste comme nom
 $parts1 = explode(' ', $hostName1);
 if (count($parts1) > 1) {
     $firstOnly1 = $parts1[0];
@@ -59,7 +54,7 @@ if (($invitation['statut'] ?? '') === 'CONFIRMEE') {
     $rsvpClass = 'refused';
 }
 
-// Photo principale (première photo_host ou fond)
+// Photo principale
 $mainPhoto = '';
 if (!empty($photosHost)) {
     $mainPhoto = getPhotoUrl($photosHost[0]['photo']);
@@ -212,6 +207,64 @@ if (!empty($photosHost)) {
         }
         
         /* ============================================
+           TRANSITIONS D'APPARITION AU SCROLL
+           ============================================ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(60px);
+            transition: opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: opacity, transform;
+        }
+        
+        .reveal.apparue {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Variantes de transition */
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-80px);
+            transition: opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .reveal-left.apparue {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(80px);
+            transition: opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .reveal-right.apparue {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.85);
+            transition: opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .reveal-scale.apparue {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* Délais en cascade */
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
+        .reveal-delay-6 { transition-delay: 0.6s; }
+        
+        /* ============================================
            CARTE PRINCIPALE
            ============================================ */
         .moderne-card {
@@ -232,7 +285,6 @@ if (!empty($photosHost)) {
             .moderne-card { padding: 30px 20px 40px; }
         }
         
-        /* Bordure décorative */
         .moderne-card::before {
             content: '';
             position: absolute;
@@ -247,7 +299,7 @@ if (!empty($photosHost)) {
         }
         
         /* ============================================
-           EN-TÊTE : "Invitation"
+           EN-TÊTE
            ============================================ */
         .moderne-header {
             text-align: center;
@@ -321,7 +373,6 @@ if (!empty($photosHost)) {
             transform: scale(1.05);
         }
         
-        /* Overlay dégradé sur la photo */
         .moderne-photo-frame::after {
             content: '';
             position: absolute;
@@ -330,7 +381,6 @@ if (!empty($photosHost)) {
             pointer-events: none;
         }
         
-        /* Bordure dorée autour de la photo */
         .moderne-photo-frame::before {
             content: '';
             position: absolute;
@@ -351,7 +401,7 @@ if (!empty($photosHost)) {
         }
         
         /* ============================================
-           NOMS DES HÔTES
+           NOMS
            ============================================ */
         .moderne-names {
             position: relative;
@@ -404,28 +454,8 @@ if (!empty($photosHost)) {
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
         }
         
-        /* Ligne décorative entre les noms */
-        .moderne-names-divider {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin: 12px 0;
-        }
-        
-        .moderne-names-divider .line {
-            width: 40px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-        }
-        
-        .moderne-names-divider i {
-            color: var(--gold);
-            font-size: 14px;
-        }
-        
         /* ============================================
-           MESSAGE D'INVITATION
+           MESSAGE
            ============================================ */
         .moderne-message {
             text-align: center;
@@ -495,25 +525,6 @@ if (!empty($photosHost)) {
             font-style: italic;
         }
         
-        .moderne-event-separator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin: 20px 0;
-        }
-        
-        .moderne-event-separator .line {
-            width: 40px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-        }
-        
-        .moderne-event-separator i {
-            color: var(--gold);
-            font-size: 12px;
-        }
-        
         /* ============================================
            BOUTON ITINÉRAIRE
            ============================================ */
@@ -544,7 +555,7 @@ if (!empty($photosHost)) {
         }
         
         /* ============================================
-           TABLE ASSIGNÉE
+           TABLE
            ============================================ */
         .moderne-table {
             text-align: center;
@@ -602,7 +613,7 @@ if (!empty($photosHost)) {
         .moderne-section-title::after { right: 0; }
         
         /* ============================================
-           DIAPORAMA PHOTOS
+           DIAPORAMA
            ============================================ */
         .moderne-diaporama {
             position: relative;
@@ -1104,12 +1115,12 @@ if (!empty($photosHost)) {
     <!-- CONTENU PRINCIPAL -->
     <div class="moderne-wrapper">
 
-        <div class="moderne-card" id="moderneCard">
+        <div class="moderne-card reveal-scale" id="moderneCard">
             
             <!-- EN-TÊTE -->
             <div class="moderne-header">
-                <div class="moderne-header-title">Invitation</div>
-                <div class="moderne-header-divider">
+                <div class="moderne-header-title reveal" data-delay="1">Invitation</div>
+                <div class="moderne-header-divider reveal" data-delay="2">
                     <div class="line"></div>
                     <div class="ornament">❦ ❦ ❦</div>
                     <div class="line"></div>
@@ -1118,7 +1129,7 @@ if (!empty($photosHost)) {
 
             <!-- PHOTO PRINCIPALE -->
             <?php if ($mainPhoto): ?>
-            <div class="moderne-photo-block">
+            <div class="moderne-photo-block reveal" data-delay="3">
                 <div class="moderne-photo-frame">
                     <img src="<?php echo htmlspecialchars($mainPhoto); ?>" 
                          alt="<?php echo htmlspecialchars($invitation['evenement_nom']); ?>"
@@ -1130,7 +1141,7 @@ if (!empty($photosHost)) {
             <?php endif; ?>
 
             <!-- NOMS DES HÔTES -->
-            <div class="moderne-names">
+            <div class="moderne-names reveal" data-delay="4">
                 <div class="moderne-name-row">
                     <div style="text-align:center;">
                         <div class="moderne-name"><?php echo htmlspecialchars($firstOnly1); ?></div>
@@ -1152,7 +1163,7 @@ if (!empty($photosHost)) {
             </div>
 
             <!-- MESSAGE D'INVITATION -->
-            <div class="moderne-message">
+            <div class="moderne-message reveal" data-delay="5">
                 <p class="moderne-message-text">
                     C'est avec un immense plaisir que nous vous convions à partager avec nous un moment d'exception à l'occasion de notre <span class="moderne-message-strong"><?php echo htmlspecialchars($eventType); ?></span>.
                     <br><br>
@@ -1161,7 +1172,7 @@ if (!empty($photosHost)) {
             </div>
 
             <!-- DESTINATAIRE -->
-            <div style="text-align: center; margin: 30px 0;">
+            <div class="reveal" data-delay="6" style="text-align: center; margin: 30px 0;">
                 <div class="moderne-event-label" style="margin-bottom: 10px;">À l'attention de</div>
                 <div style="font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: white; letter-spacing: 0.02em;">
                     <?php echo htmlspecialchars($guestName); ?>
@@ -1169,7 +1180,7 @@ if (!empty($photosHost)) {
             </div>
 
             <!-- DATE / HEURE -->
-            <div class="moderne-event-info">
+            <div class="moderne-event-info reveal-left" data-delay="1">
                 <div class="moderne-event-label">Date & Heure</div>
                 <div class="moderne-event-value">
                     <?php echo htmlspecialchars($eventDate); ?>
@@ -1180,7 +1191,7 @@ if (!empty($photosHost)) {
             </div>
 
             <!-- LIEU -->
-            <div class="moderne-event-info">
+            <div class="moderne-event-info reveal-right" data-delay="2">
                 <div class="moderne-event-label">Lieu de la célébration</div>
                 <div class="moderne-event-value"><?php echo htmlspecialchars($lieuDisplay); ?></div>
                 <?php if ($adresseDisplay): ?>
@@ -1198,7 +1209,7 @@ if (!empty($photosHost)) {
 
             <!-- TABLE ASSIGNÉE -->
             <?php if ($hasTable): ?>
-            <div class="moderne-table">
+            <div class="moderne-table reveal-scale" data-delay="3">
                 <div class="moderne-table-label">Votre table</div>
                 <div class="moderne-table-value">
                     <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
@@ -1210,7 +1221,7 @@ if (!empty($photosHost)) {
             <?php endif; ?>
 
             <!-- SIGNATURE -->
-            <div class="moderne-signature">
+            <div class="moderne-signature reveal" data-delay="4">
                 <div class="moderne-signature-intro">Avec toute notre affection,</div>
                 <div class="moderne-signature-name">
                     <?php echo htmlspecialchars($invitation['evenement_nom']); ?>
@@ -1223,7 +1234,7 @@ if (!empty($photosHost)) {
             </div>
 
             <!-- QR CODE -->
-            <div style="margin-top: 40px;">
+            <div style="margin-top: 40px;" class="reveal-scale" data-delay="5">
                 <div class="moderne-section-title">
                     <span>Code d'accès</span>
                 </div>
@@ -1239,7 +1250,7 @@ if (!empty($photosHost)) {
 
         <!-- MESSAGES -->
         <?php if ($message): ?>
-            <div class="moderne-alert moderne-alert-<?php echo htmlspecialchars($messageType); ?>">
+            <div class="moderne-alert moderne-alert-<?php echo htmlspecialchars($messageType); ?> reveal">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
             </div>
@@ -1247,7 +1258,7 @@ if (!empty($photosHost)) {
 
         <!-- DIAPORAMA PHOTOS -->
         <?php if ($hasPhotos && count($photosHost) > 1): ?>
-        <div class="moderne-card" style="margin-top: 30px;">
+        <div class="moderne-card reveal" style="margin-top: 30px;">
             <div class="moderne-section-title">
                 <span>Souvenirs</span>
             </div>
@@ -1288,7 +1299,7 @@ if (!empty($photosHost)) {
 
         <!-- CONFIRMATION -->
         <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="moderne-card" style="margin-top: 30px;">
+        <div class="moderne-card reveal" style="margin-top: 30px;">
             <div class="moderne-section-title">
                 <span>Confirmation</span>
             </div>
@@ -1334,7 +1345,7 @@ if (!empty($photosHost)) {
 
         <!-- BOISSONS -->
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="moderne-card" style="margin-top: 30px;">
+        <div class="moderne-card reveal" style="margin-top: 30px;">
             <div class="moderne-section-title">
                 <span>Vos préférences</span>
             </div>
@@ -1396,7 +1407,7 @@ if (!empty($photosHost)) {
         <?php endif; ?>
 
         <!-- FOOTER -->
-        <footer class="moderne-footer">
+        <footer class="moderne-footer reveal">
             <div class="moderne-footer-divider">
                 <div class="line"></div>
                 <i class="fas fa-heart"></i>
@@ -1427,7 +1438,48 @@ if (!empty($photosHost)) {
     </button>
 
     <script>
-        // QR CODE
+        // ================================================================
+        // 1. ANIMATIONS AU SCROLL (REVEAL)
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const reveals = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Appliquer le délai si spécifié
+                        const delay = entry.target.getAttribute('data-delay');
+                        if (delay) {
+                            setTimeout(() => {
+                                entry.target.classList.add('apparue');
+                            }, delay * 100);
+                        } else {
+                            entry.target.classList.add('apparue');
+                        }
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { 
+                threshold: 0.1, 
+                rootMargin: '0px 0px -80px 0px' 
+            });
+            
+            reveals.forEach(el => observer.observe(el));
+            
+            // Fallback : rendre visible tout ce qui est déjà dans le viewport
+            setTimeout(() => {
+                reveals.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
+        });
+
+        // ================================================================
+        // 2. QR CODE
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
@@ -1445,7 +1497,9 @@ if (!empty($photosHost)) {
             }
         });
 
-        // DIAPORAMA
+        // ================================================================
+        // 3. DIAPORAMA PHOTOS
+        // ================================================================
         let moderneDiapoIndex = 0;
         const moderneSlides = document.querySelectorAll('#moderneDiaporama .slide');
         const moderneDots = document.querySelectorAll('#moderneDiapoDots span');
@@ -1503,7 +1557,9 @@ if (!empty($photosHost)) {
             }
         });
 
-        // BOISSONS
+        // ================================================================
+        // 4. BOISSONS
+        // ================================================================
         let moderneSelectedBoissons = [];
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1554,7 +1610,9 @@ if (!empty($photosHost)) {
             });
         }
 
-        // TÉLÉCHARGEMENT
+        // ================================================================
+        // 5. TÉLÉCHARGEMENT
+        // ================================================================
         async function moderneDownload() {
             const btn = document.getElementById('moderneDownloadBtn');
             const btnText = document.getElementById('moderneBtnText');
