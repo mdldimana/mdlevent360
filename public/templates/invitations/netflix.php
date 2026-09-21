@@ -4,9 +4,12 @@
  * TEMPLATE : NETFLIX v3 - Refonte complète
  * ============================================================
  * 
- * - Section "Informations complémentaires" supprimée
- * - Photos en diaporama automatique (object-fit: contain)
- * - Téléchargement JPEG corrigé (les écrits apparaissent)
+ * Nouveautés v3 :
+ * - Affichage du nom de la table (si assignée)
+ * - Photos en diaporama plein écran (image entière visible)
+ * - Téléchargement corrigé (capture tout le contenu)
+ * - Texte d'invitation personnalisé
+ * - Suppression de la section "Informations complémentaires"
  * 
  * ============================================================
  */
@@ -336,6 +339,16 @@
             border-radius: 3px;
             font-size: 11px;
             font-weight: 800;
+        }
+        .hero-meta .badge-table {
+            background: var(--nf-green);
+            color: black;
+            padding: 2px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
         
         /* Synopsis */
@@ -766,109 +779,6 @@
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS
-           ============================================ */
-        .nf-slideshow {
-            position: relative;
-            width: 100%;
-            max-width: 1000px;
-            margin: 0 auto;
-            aspect-ratio: 16/9;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-        }
-        .nf-slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-        }
-        .nf-slide.active {
-            opacity: 1;
-            z-index: 2;
-        }
-        .nf-slide img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* ✅ Affiche la photo EN ENTIER */
-            display: block;
-        }
-        .nf-slide-caption {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 16px 24px;
-            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.9) 100%);
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 3;
-        }
-        .nf-slide-caption strong {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 18px;
-            letter-spacing: 0.05em;
-            color: var(--nf-red);
-            margin-right: 8px;
-        }
-        .nf-slideshow-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 4;
-            transition: all 0.3s ease;
-            opacity: 0;
-        }
-        .nf-slideshow:hover .nf-slideshow-nav { opacity: 1; }
-        .nf-slideshow-nav:hover {
-            background: var(--nf-red);
-            border-color: var(--nf-red);
-            transform: translateY(-50%) scale(1.1);
-        }
-        .nf-slideshow-nav.prev { left: 16px; }
-        .nf-slideshow-nav.next { right: 16px; }
-        .nf-slideshow-dots {
-            position: absolute;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            z-index: 4;
-        }
-        .nf-slideshow-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.4);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-        }
-        .nf-slideshow-dot.active {
-            background: var(--nf-red);
-            transform: scale(1.3);
-        }
-        
-        /* ============================================
            QR CODE
            ============================================ */
         .nf-qr-wrapper {
@@ -1014,6 +924,115 @@
                 font-size: 13px;
             }
         }
+
+        /* ============================================
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .photo-diaporama {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            min-height: 400px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .photo-diaporama .diapo-slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 1.2s ease-in-out;
+            z-index: 1;
+        }
+
+        .photo-diaporama .diapo-slide.active {
+            opacity: 1;
+            z-index: 2;
+        }
+
+        .photo-diaporama .diapo-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* ← Permet de voir l'image entière */
+            background: #000;
+            border-radius: 8px;
+            transition: transform 8s ease-in-out;
+        }
+
+        .photo-diaporama .diapo-slide.active img {
+            transform: scale(1.05);
+        }
+
+        .diapo-nav {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .diapo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .diapo-dot.active {
+            background: var(--nf-red);
+            width: 28px;
+            border-radius: 5px;
+            box-shadow: 0 0 12px rgba(229, 9, 20, 0.8);
+        }
+
+        .diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .diapo-arrow:hover {
+            background: var(--nf-red);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .diapo-arrow.prev { left: 20px; }
+        .diapo-arrow.next { right: 20px; }
+
+        @media (max-width: 480px) {
+            .photo-diaporama { height: 50vh; min-height: 300px; }
+            .diapo-arrow { width: 36px; height: 36px; font-size: 14px; }
+            .diapo-arrow.prev { left: 10px; }
+            .diapo-arrow.next { right: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -1037,9 +1056,7 @@
         <ul class="netflix-nav-links">
             <li><a href="#hero">Accueil</a></li>
             <li><a href="#details">Détails</a></li>
-            <?php if (!empty($photosHost)): ?>
-                <li><a href="#photos">Photos</a></li>
-            <?php endif; ?>
+            <li><a href="#photos">Photos</a></li>
             <li><a href="#confirm">Confirmer</a></li>
         </ul>
     </nav>
@@ -1074,14 +1091,24 @@
                 <span class="badge-age">+<?php echo $invitation['nb_places_max'] ?? 1; ?></span>
                 <span class="badge-hd">HD</span>
                 <span><?php echo htmlspecialchars(strtoupper($eventType)); ?></span>
+                
+                <!-- Badge Table -->
+                <?php if (!empty($hasTable)): ?>
+                    <span class="badge-table">
+                        <i class="fas fa-chair"></i>
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                        <?php if (!empty($tableZone)): ?>
+                            · <?php echo htmlspecialchars($tableZone); ?>
+                        <?php endif; ?>
+                    </span>
+                <?php endif; ?>
             </div>
             
-            <!-- Synopsis -->
+            <!-- Synopsis personnalisé -->
             <p class="hero-synopsis">
-                <strong><?php echo htmlspecialchars($guestName); ?></strong>, vous êtes convié(e) à la projection exclusive de l'événement le plus attendu de l'année.
-                <?php if (!empty($eventDescription)): ?>
-                    <?php echo htmlspecialchars(mb_substr($eventDescription, 0, 150)); ?><?php if (mb_strlen($eventDescription) > 150) echo '...'; ?>
-                <?php endif; ?>
+                C'est avec un immense plaisir que nous vous convions à partager avec nous un moment d'exception à l'occasion de notre <strong><?php echo htmlspecialchars($eventType); ?></strong>.
+                <br><br>
+                Votre présence serait pour nous le plus précieux des présents. Nous espérons de tout cœur que vous pourrez vous joindre à nous pour célébrer ce moment unique.
             </p>
             
             <!-- Boutons d'action -->
@@ -1165,21 +1192,19 @@
                     <div class="nf-card-sub"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
                 </div>
             </div>
-            
-            <?php if ($hasTable): ?>
+
             <!-- Carte Table (si assignée) -->
+            <?php if (!empty($hasTable)): ?>
             <div class="nf-card">
-                <div style="width:100%;height:100%;background:linear-gradient(135deg,#2a1a0a 0%,#000 100%);display:flex;align-items:center;justify-content:center;color:var(--nf-red);font-size:60px;">
+                <div style="width:100%;height:100%;background:linear-gradient(135deg,#0a2a1a 0%,#000 100%);display:flex;align-items:center;justify-content:center;color:var(--nf-green);font-size:60px;">
                     <i class="fas fa-chair"></i>
                 </div>
                 <div class="nf-card-overlay" style="opacity:1;">
-                    <div class="nf-card-title">TABLE</div>
-                    <div class="nf-card-sub">
-                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
-                        <?php if ($tableZone): ?>
-                            <br><span style="font-size:10px;">(<?php echo htmlspecialchars($tableZone); ?>)</span>
-                        <?php endif; ?>
-                    </div>
+                    <div class="nf-card-title">VOTRE TABLE</div>
+                    <div class="nf-card-sub"><?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?></div>
+                    <?php if (!empty($tableZone)): ?>
+                        <div class="nf-card-sub" style="font-size:10px;">Zone <?php echo htmlspecialchars($tableZone); ?></div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endif; ?>
@@ -1188,7 +1213,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- SECTION PHOTOS (DIAPORAMA)                    -->
+    <!-- SECTION PHOTOS (diaporama plein écran)        -->
     <!-- ============================================ -->
     <?php if (!empty($photosHost)): ?>
         <section class="nf-section" id="photos">
@@ -1198,37 +1223,30 @@
                 <div class="line"></div>
             </div>
             
-            <div class="nf-slideshow" id="slideshow">
+            <div class="photo-diaporama" id="photoDiaporama">
                 <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="nf-slide <?php echo $index === 0 ? 'active' : ''; ?>" data-index="<?php echo $index; ?>">
+                    <div class="diapo-slide <?php echo $index === 0 ? 'active' : ''; ?>" data-index="<?php echo $index; ?>">
                         <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
-                             alt="<?php echo htmlspecialchars($photo['titre'] ?? ''); ?>"
-                             loading="lazy">
-                        <?php if (!empty($photo['titre']) || !empty($photo['description'])): ?>
-                            <div class="nf-slide-caption">
-                                <?php if (!empty($photo['titre'])): ?>
-                                    <strong><?php echo htmlspecialchars($photo['titre']); ?></strong>
-                                <?php endif; ?>
-                                <?php if (!empty($photo['description'])): ?>
-                                    <?php echo htmlspecialchars($photo['description']); ?>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Photo ' . ($index + 1)); ?>"
+                             loading="<?php echo $index === 0 ? 'eager' : 'lazy'; ?>"
+                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#E50914;font-size:80px;\'><i class=\'fas fa-film\'></i></div>';">
                     </div>
                 <?php endforeach; ?>
                 
-                <button class="nf-slideshow-nav prev" onclick="changeSlide(-1)" aria-label="Précédent">
+                <!-- Flèches de navigation -->
+                <button class="diapo-arrow prev" onclick="changeSlide(-1)">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <button class="nf-slideshow-nav next" onclick="changeSlide(1)" aria-label="Suivant">
+                <button class="diapo-arrow next" onclick="changeSlide(1)">
                     <i class="fas fa-chevron-right"></i>
                 </button>
                 
-                <div class="nf-slideshow-dots" id="slideshowDots">
+                <!-- Points de navigation -->
+                <div class="diapo-nav">
                     <?php foreach ($photosHost as $index => $photo): ?>
-                        <button class="nf-slideshow-dot <?php echo $index === 0 ? 'active' : ''; ?>" 
-                                data-index="<?php echo $index; ?>"
-                                onclick="goToSlide(<?php echo $index; ?>)"></button>
+                        <button class="diapo-dot <?php echo $index === 0 ? 'active' : ''; ?>" 
+                                onclick="goToSlide(<?php echo $index; ?>)"
+                                aria-label="Photo <?php echo $index + 1; ?>"></button>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -1392,9 +1410,7 @@
         <div class="nf-footer-links">
             <a href="#hero">Accueil</a>
             <a href="#details">Détails</a>
-            <?php if (!empty($photosHost)): ?>
-                <a href="#photos">Photos</a>
-            <?php endif; ?>
+            <a href="#photos">Photos</a>
             <a href="#confirm">Confirmer</a>
         </div>
         
@@ -1452,7 +1468,7 @@
         // ================================================================
         // 3. SCROLL HORIZONTAL AVEC MOLETTE (comme Netflix)
         // ================================================================
-        document.querySelectorAll('.nf-row-scroller').forEach(scroller => {
+        document.querySelectorAll('.nf-row-scroller, .photo-diaporama').forEach(scroller => {
             scroller.addEventListener('wheel', function(e) {
                 if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
                     e.preventDefault();
@@ -1484,58 +1500,73 @@
         // ================================================================
         // 5. DIAPORAMA PHOTOS
         // ================================================================
-        <?php if (!empty($photosHost)): ?>
         let currentSlide = 0;
-        const slides = document.querySelectorAll('.nf-slide');
-        const dots = document.querySelectorAll('.nf-slideshow-dot');
-        let slideshowInterval = null;
-        const SLIDESHOW_DELAY = 4000; // 4 secondes
+        let diapoInterval = null;
+        const slides = document.querySelectorAll('.diapo-slide');
+        const dots = document.querySelectorAll('.diapo-dot');
+        const totalSlides = slides.length;
 
         function showSlide(index) {
-            if (slides.length === 0) return;
-            if (index < 0) index = slides.length - 1;
-            if (index >= slides.length) index = 0;
+            if (totalSlides === 0) return;
             
-            slides.forEach((slide, i) => {
-                slide.classList.toggle('active', i === index);
-            });
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
+            // Normaliser l'index
+            if (index >= totalSlides) index = 0;
+            if (index < 0) index = totalSlides - 1;
+            
+            // Masquer tous les slides
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Afficher le slide actif
+            if (slides[index]) slides[index].classList.add('active');
+            if (dots[index]) dots[index].classList.add('active');
+            
             currentSlide = index;
         }
 
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
         function changeSlide(direction) {
-            showSlide(currentSlide + direction);
-            resetSlideshowTimer();
+            if (direction === 1) nextSlide();
+            else prevSlide();
+            resetDiapoInterval();
         }
 
         function goToSlide(index) {
             showSlide(index);
-            resetSlideshowTimer();
+            resetDiapoInterval();
         }
 
-        function startSlideshow() {
-            if (slides.length <= 1) return;
-            slideshowInterval = setInterval(() => {
-                showSlide(currentSlide + 1);
-            }, SLIDESHOW_DELAY);
-        }
-
-        function resetSlideshowTimer() {
-            if (slideshowInterval) {
-                clearInterval(slideshowInterval);
-                startSlideshow();
+        function resetDiapoInterval() {
+            if (diapoInterval) clearInterval(diapoInterval);
+            if (totalSlides > 1) {
+                diapoInterval = setInterval(nextSlide, 5000); // Change toutes les 5 secondes
             }
         }
 
+        // Démarrer le diaporama automatique
         document.addEventListener('DOMContentLoaded', function() {
-            if (slides.length > 0) {
-                showSlide(0);
-                startSlideshow();
+            if (totalSlides > 1) {
+                diapoInterval = setInterval(nextSlide, 5000);
             }
         });
-        <?php endif; ?>
+
+        // Pause au survol
+        const diaporama = document.getElementById('photoDiaporama');
+        if (diaporama) {
+            diaporama.addEventListener('mouseenter', () => {
+                if (diapoInterval) clearInterval(diapoInterval);
+            });
+            diaporama.addEventListener('mouseleave', () => {
+                resetDiapoInterval();
+            });
+        }
 
         // ================================================================
         // 6. TÉLÉCHARGEMENT JPEG (CORRIGÉ)
@@ -1549,53 +1580,62 @@
             btnText.textContent = 'Génération...';
             
             try {
-                // Attendre que toutes les animations soient terminées
+                // Attendre un peu pour être sûr que tout est chargé
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
+                // S'assurer que les animations sont terminées
+                const heroContent = hero.querySelector('.hero-content');
+                if (heroContent) {
+                    heroContent.style.opacity = '1';
+                    heroContent.style.transform = 'translateY(0)';
+                }
+                
+                // Forcer l'affichage des éléments cachés par les animations
+                hero.querySelectorAll('.netflix-badge, .hero-title, .hero-meta, .hero-synopsis, .hero-actions').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                    el.style.filter = 'blur(0)';
+                    el.style.animation = 'none';
+                });
+                
+                // Capture avec html2canvas
                 const canvas = await html2canvas(hero, {
-                    scale: 2.5,
+                    scale: 2,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#000000',
                     logging: false,
-                    letterRendering: true,
-                    // ✅ FORCE l'affichage des éléments animés lors de la capture
+                    windowWidth: hero.scrollWidth,
+                    windowHeight: hero.scrollHeight,
+                    scrollX: 0,
+                    scrollY: -window.scrollY,
                     onclone: function(clonedDoc) {
+                        // S'assurer que le background est visible
                         const clonedHero = clonedDoc.querySelector('.netflix-hero');
-                        if (!clonedHero) return;
-                        
-                        // Forcer l'opacité et la position des éléments animés
-                        const elementsToFix = [
-                            '.netflix-badge',
-                            '.hero-title',
-                            '.hero-meta',
-                            '.hero-synopsis',
-                            '.hero-actions',
-                            '.hero-content'
-                        ];
-                        
-                        elementsToFix.forEach(selector => {
-                            const el = clonedHero.querySelector(selector);
-                            if (el) {
-                                el.style.opacity = '1';
-                                el.style.transform = 'translateY(0) translateX(0)';
-                                el.style.animation = 'none';
-                                el.style.filter = 'none';
+                        if (clonedHero) {
+                            const clonedBg = clonedHero.querySelector('.hero-bg');
+                            if (clonedBg) {
+                                clonedBg.style.animation = 'none';
                             }
-                        });
-                        
-                        // S'assurer que le fond est bien visible
-                        const bg = clonedHero.querySelector('.hero-bg');
-                        if (bg) {
-                            bg.style.animation = 'none';
-                            bg.style.transform = 'scale(1)';
+                            const clonedContent = clonedHero.querySelector('.hero-content');
+                            if (clonedContent) {
+                                clonedContent.style.opacity = '1';
+                                clonedContent.style.transform = 'translateY(0)';
+                            }
+                            // Forcer l'affichage de tous les éléments
+                            clonedHero.querySelectorAll('.netflix-badge, .hero-title, .hero-meta, .hero-synopsis, .hero-actions').forEach(el => {
+                                el.style.opacity = '1';
+                                el.style.transform = 'translateY(0)';
+                                el.style.filter = 'blur(0)';
+                                el.style.animation = 'none';
+                            });
                         }
                     }
                 });
                 
                 const link = document.createElement('a');
                 const host = '<?php echo htmlspecialchars($host1); ?>' || 'invitation';
-                link.download = `netflix_${host.replace(/\s/g, '_')}.jpg`;
+                link.download = `invitation_${host.replace(/\s/g, '_')}_${Date.now()}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
                 
