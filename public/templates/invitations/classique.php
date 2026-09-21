@@ -817,7 +817,7 @@ if (($invitation['statut'] ?? '') === 'CONFIRMEE') {
             </div>
             
             <div class="form-group">
-                <label><i class="fas fa-pen"></i> Message (optionnel)</label>
+                <label><i class="fas fa-pen"></i> Laissez-nous quelques mots. Un vœu, un souvenir, un conseil... Chaque ligne écrite ici restera à jamais dans notre cœur.</label>
                 <textarea name="message_invite" placeholder="Un petit mot pour les organisateurs..." rows="3"></textarea>
             </div>
             

@@ -1321,7 +1321,7 @@
                 </div>
                 
                 <div class="nf-form-group">
-                    <label>Message (optionnel)</label>
+                    <label>Laissez-nous quelques mots. Un vœu, un souvenir, un conseil... Chaque ligne écrite ici restera à jamais dans notre cœur.</label>
                     <textarea name="message_invite" rows="3" placeholder="Un petit mot..."></textarea>
                 </div>
                 
