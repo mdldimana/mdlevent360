@@ -51,7 +51,6 @@ if (!$isUserAdmin && !empty($accessibleEventIds)) {
     $eventFilter = " AND e.id IN ($placeholders) ";
     $eventParams = $accessibleEventIds;
 } elseif (!$isUserAdmin && empty($accessibleEventIds)) {
-    // Non-admin sans aucun événement → tout à zéro
     $eventFilter = " AND 1 = 0 ";
 }
 
@@ -70,6 +69,8 @@ $stats = [
     'tables'             => 0,
     'places'             => 0,
     'boissons_choisies'  => 0,
+    'messages'           => 0,  // ← NOUVEAU
+    'messages_non_lus'   => 0,  // ← NOUVEAU
 ];
 
 try {
@@ -82,7 +83,7 @@ try {
     }
     $stats['evenements'] = (int)($stmt->fetch()['cnt'] ?? 0);
 
-    // Invités (via invitations pour filtrer par événement)
+    // Invités
     if (!$isUserAdmin) {
         $sql = "SELECT COUNT(DISTINCT inv.id) AS cnt 
                 FROM invites inv 
@@ -188,6 +189,40 @@ try {
         $stmt = $pdo->query("SELECT COUNT(*) AS cnt FROM preferences_invitation");
     }
     $stats['boissons_choisies'] = (int)($stmt->fetch()['cnt'] ?? 0);
+
+    // ⭐ MESSAGES : Nombre de messages laissés par les invités
+    if (!$isUserAdmin) {
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) AS cnt 
+            FROM invitations i 
+            INNER JOIN evenements e ON e.id = i.id_evenement 
+            WHERE i.message IS NOT NULL AND i.message != '' " . $eventFilter
+        );
+        $stmt->execute($eventParams);
+    } else {
+        $stmt = $pdo->query("SELECT COUNT(*) AS cnt FROM invitations WHERE message IS NOT NULL AND message != ''");
+    }
+    $stats['messages'] = (int)($stmt->fetch()['cnt'] ?? 0);
+
+    // ⭐ MESSAGES NON LUS (si la colonne message_lu existe)
+    try {
+        if (!$isUserAdmin) {
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) AS cnt 
+                FROM invitations i 
+                INNER JOIN evenements e ON e.id = i.id_evenement 
+                WHERE i.message IS NOT NULL AND i.message != '' 
+                AND (i.message_lu IS NULL OR i.message_lu = 0) " . $eventFilter
+            );
+            $stmt->execute($eventParams);
+        } else {
+            $stmt = $pdo->query("SELECT COUNT(*) AS cnt FROM invitations WHERE message IS NOT NULL AND message != '' AND (message_lu IS NULL OR message_lu = 0)");
+        }
+        $stats['messages_non_lus'] = (int)($stmt->fetch()['cnt'] ?? 0);
+    } catch (PDOException $e) {
+        // La colonne message_lu n'existe pas encore, on met 0
+        $stats['messages_non_lus'] = 0;
+    }
 
 } catch (PDOException $e) {
     error_log('Erreur statistiques : ' . $e->getMessage());
@@ -307,7 +342,6 @@ $zoneLabels = [
 
 $zoneStats = [];
 try {
-    // ⭐ Requête corrigée : la sous-requête utilise inv.nombre_personnes depuis la table invites
     if (!$isUserAdmin) {
         $sql = "
             SELECT 
@@ -363,7 +397,7 @@ try {
 }
 
 // ============================================
-// ID PREMIER ÉVÉNEMENT (pour lien "Par événement")
+// ID PREMIER ÉVÉNEMENT
 // ============================================
 
 $evenement_id = 0;
@@ -537,6 +571,7 @@ $roles_user = $user['roles'] ?? [];
     .stat-card .stat-change.up      { background: rgba(16, 185, 129, 0.15); color: #065f46; }
     .stat-card .stat-change.down    { background: rgba(239, 68, 68, 0.12);  color: #991b1b; }
     .stat-card .stat-change.neutral { background: rgba(245, 158, 11, 0.15); color: #92400e; }
+    .stat-card .stat-change.pink    { background: rgba(236, 72, 153, 0.15); color: #9d174d; }
 
     /* ========== CARDS RAPPORT ========== */
     .card-rapport {
@@ -618,6 +653,7 @@ $roles_user = $user['roles'] ?? [];
         display: block;
         color: inherit;
         text-decoration: none;
+        position: relative;
     }
     .rapport-card:hover {
         transform: translateY(-4px);
@@ -639,8 +675,34 @@ $roles_user = $user['roles'] ?? [];
     .rapport-card .icon-wrap.purple { background: linear-gradient(135deg, #a855f7, #d8b4fe); }
     .rapport-card .icon-wrap.pink   { background: linear-gradient(135deg, #ec4899, #f472b6); }
     .rapport-card .icon-wrap.gold   { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+    .rapport-card .icon-wrap.dark   { background: linear-gradient(135deg, #1a1a1a, #374151); }
     .rapport-card .title { font-weight: 700; color: #1a1a1a; font-size: 12px; }
     .rapport-card .desc  { font-size: 10px; color: #9a8a7f; margin-top: 3px; }
+    
+    /* Badge notification sur la carte Messages */
+    .rapport-card .notif-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        background: #ef4444;
+        color: white;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulseBadge 2s ease-in-out infinite;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    }
+    
+    @keyframes pulseBadge {
+        0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); }
+        50% { transform: scale(1.1); box-shadow: 0 4px 16px rgba(239, 68, 68, 0.6); }
+    }
 
     /* ========== BOUTONS EXPORT ========== */
     .btn-export {
@@ -838,6 +900,19 @@ $roles_user = $user['roles'] ?? [];
                         </a>
                     </div>
                     
+                    <!-- ⭐ NOUVELLE CARTE : MESSAGES -->
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="message.php" class="rapport-card">
+                            <?php if ((int)$stats['messages_non_lus'] > 0): ?>
+                                <span class="notif-badge"><?php echo (int)$stats['messages_non_lus']; ?></span>
+                            <?php endif; ?>
+                            <div class="icon-wrap dark"><i class="bi bi-chat-dots-fill"></i></div>
+                            <div class="title">Messages</div>
+                            <div class="desc">
+                                <?php echo (int)$stats['messages']; ?> message<?php echo (int)$stats['messages'] > 1 ? 's' : ''; ?>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -895,6 +970,22 @@ $roles_user = $user['roles'] ?? [];
                         <div class="stat-change up"><i class="bi bi-check-circle-fill"></i> Préférences</div>
                     </div>
                 </div>
+                
+                <!-- ⭐ NOUVELLE STAT : MESSAGES -->
+                <div class="col-xl-3 col-lg-4 col-md-6 fade-in">
+                    <div class="stat-card">
+                        <div class="stat-icon dark" style="background: linear-gradient(135deg, #1a1a1a, #374151);">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </div>
+                        <div class="stat-number"><?php echo (int)$stats['messages']; ?></div>
+                        <div class="stat-label">Messages reçus</div>
+                        <div class="stat-change <?php echo (int)$stats['messages_non_lus'] > 0 ? 'pink' : 'up'; ?>">
+                            <i class="bi bi-<?php echo (int)$stats['messages_non_lus'] > 0 ? 'bell-fill' : 'check-circle-fill'; ?>"></i>
+                            <?php echo (int)$stats['messages_non_lus']; ?> non lu<?php echo (int)$stats['messages_non_lus'] > 1 ? 's' : ''; ?>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="col-xl-3 col-lg-4 col-md-6 fade-in">
                     <div class="stat-card">
                         <div class="stat-icon red"><i class="bi bi-x-circle-fill"></i></div>
@@ -1048,35 +1139,35 @@ $roles_user = $user['roles'] ?? [];
                 </div>
 
                 <!-- EXPORTS -->
-               <!-- EXPORTS -->
-<div class="col-12 fade-in">
-    <div class="card-rapport">
-        <div class="card-header-custom">
-            <i class="bi bi-download"></i> Exporter les rapports
-        </div>
-        <?php if (hasPermission('rapports.exporter')): ?>
-            <div class="d-flex flex-wrap gap-2">
-                <!-- ⭐ Nouveaux exports stylés (même design que les boissons) -->
-                <a href="export_pdf/export_invites.php?evenement=<?php echo (int)$evenement_id; ?>" 
-                   class="btn-export" target="_blank" rel="noopener">
-                    <i class="bi bi-file-earmark-pdf-fill"></i> Invités (PDF)
-                </a>
-                <a href="export_pdf/export_presences.php?evenement=<?php echo (int)$evenement_id; ?>" 
-                   class="btn-export gray" target="_blank" rel="noopener">
-                    <i class="bi bi-file-earmark-pdf-fill"></i> Présences (PDF)
-                </a>
-                <a href="export_pdf/export_boissons.php?evenement=<?php echo (int)$evenement_id; ?>" 
-                   class="btn-export purple" target="_blank" rel="noopener">
-                    <i class="bi bi-file-earmark-pdf-fill"></i> Boissons (PDF)
-                </a>
-                <a href="export_pdf/export_global.php?evenement=<?php echo (int)$evenement_id; ?>" 
-                   class="btn-export dark" target="_blank" rel="noopener">
-                    <i class="bi bi-file-earmark-pdf-fill"></i> Rapport global (PDF)
-                </a>
+                <div class="col-12 fade-in">
+                    <div class="card-rapport">
+                        <div class="card-header-custom">
+                            <i class="bi bi-download"></i> Exporter les rapports
+                        </div>
+                        <?php if (hasPermission('rapports.exporter')): ?>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="export_pdf/export_invites.php?evenement=<?php echo (int)$evenement_id; ?>" 
+                                   class="btn-export" target="_blank" rel="noopener">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Invités (PDF)
+                                </a>
+                                <a href="export_pdf/export_presences.php?evenement=<?php echo (int)$evenement_id; ?>" 
+                                   class="btn-export gray" target="_blank" rel="noopener">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Présences (PDF)
+                                </a>
+                                <a href="export_pdf/export_boissons.php?evenement=<?php echo (int)$evenement_id; ?>" 
+                                   class="btn-export purple" target="_blank" rel="noopener">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Boissons (PDF)
+                                </a>
+                                <a href="export_pdf/export_global.php?evenement=<?php echo (int)$evenement_id; ?>" 
+                                   class="btn-export dark" target="_blank" rel="noopener">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Rapport global (PDF)
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
-    </div>
-</div>
+
             <div class="app-footer">
                 <i class="bi bi-heart-fill"></i>
                 <?php echo APP_NAME; ?> • Tous droits réservés • <?php echo date('Y'); ?>
