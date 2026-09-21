@@ -960,7 +960,7 @@ try {
                                     <?php endif; ?>
                                 </p>
                                 <?php if (hasPermission('evenements.creer') || hasPermission('evenements.ajouter')): ?>
-                                    <a href="admin/evenements/creer.php" class="btn" style="background: linear-gradient(135deg, #c17c60, #d4a574); color: white; border: none; font-weight: 600; font-size: 13px; padding: 8px 18px; border-radius: 10px;">
+                                    <a href="evenements/creer.php" class="btn" style="background: linear-gradient(135deg, #c17c60, #d4a574); color: white; border: none; font-weight: 600; font-size: 13px; padding: 8px 18px; border-radius: 10px;">
                                         <i class="bi bi-plus-circle"></i> Créer un événement
                                     </a>
                                 <?php endif; ?>
@@ -1031,7 +1031,7 @@ try {
                                     <?php endif; ?>
                                 </p>
                                 <?php if (hasPermission('invites.creer')): ?>
-                                    <a href="admin/invites/creer.php" class="btn" style="background: linear-gradient(135deg, #c17c60, #d4a574); color: white; border: none; font-weight: 600; font-size: 13px; padding: 8px 18px; border-radius: 10px;">
+                                    <a href="invites/creer.php" class="btn" style="background: linear-gradient(135deg, #c17c60, #d4a574); color: white; border: none; font-weight: 600; font-size: 13px; padding: 8px 18px; border-radius: 10px;">
                                         <i class="bi bi-plus-circle"></i> Ajouter un invité
                                     </a>
                                 <?php endif; ?>
