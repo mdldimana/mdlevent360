@@ -1,9 +1,26 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : DIPLÔME / GRADUATION
+ * TEMPLATE : DIPLÔME / GRADUATION - v3
+ * ============================================================
+ * 
+ * Améliorations v3 :
+ * - Photo de fond en background (non floue)
+ * - Nom de la table
+ * - Diaporama photos plein écran
+ * - Animations de sections en cascade
+ * - Palette de couleurs raffinée (navy/or/crème)
+ * - Suppression du header
+ * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+$hasTable = !empty($tableNom) || !empty($tableNumero);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -19,31 +36,76 @@
     
     <style>
         :root {
-            --navy: #0f1a3d;
-            --navy-dark: #060e24;
+            /* Palette raffinée */
+            --navy: #0a1633;
+            --navy-dark: #050b1f;
+            --navy-mid: #132148;
             --navy-light: #1e2d5c;
             --gold: #d4af37;
             --gold-light: #f4e5a1;
+            --gold-soft: #c9a961;
             --gold-dark: #8b6914;
-            --cream: #f5efe3;
-            --paper: #faf6ee;
+            --cream: #f7f1e3;
+            --paper: #fdfaf3;
+            --paper-alt: #f5efe3;
             --text: #2a2420;
             --text-muted: #6a5a4a;
+            --text-light: #9a8a7a;
+            --border-gold: rgba(212, 175, 55, 0.35);
         }
         
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
+        /* ============================================
+           PHOTO DE FOND (BACKGROUND PRINCIPAL - NON FLOUE)
+           ============================================ */
+        html {
+            background: var(--navy-dark);
+        }
+        
         body {
             font-family: 'Cormorant Garamond', Georgia, serif;
-            background: 
-                radial-gradient(ellipse at top, #1e2d5c 0%, transparent 60%),
-                linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
             background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: var(--navy-dark);
+            <?php else: ?>
+            background: var(--navy-dark);
+            <?php endif; ?>
             color: var(--cream);
             min-height: 100vh;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+        }
+        
+        /* Overlay dégradé subtil par-dessus la photo */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(30, 45, 92, 0.55) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(5, 11, 31, 0.7) 0%, 
+                    rgba(10, 22, 51, 0.6) 30%,
+                    rgba(5, 11, 31, 0.75) 70%,
+                    rgba(5, 11, 31, 0.9) 100%);
+            pointer-events: none;
+        }
+        
+        /* Contenu au-dessus de l'overlay */
+        .graduation-hero,
+        .certificate-card,
+        .graduation-section,
+        .graduation-footer {
+            position: relative;
+            z-index: 2;
         }
         
         /* ============================================
@@ -77,45 +139,53 @@
         }
         
         /* ============================================
-           NAVBAR
+           ANIMATIONS DE SECTIONS EN CASCADE
            ============================================ */
-        .graduation-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 16px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(6, 14, 36, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 2px solid var(--gold);
+        .grad-anim {
             opacity: 0;
-            animation: fadeIn 0.8s ease-out 2.5s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .graduation-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Cinzel', serif;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--gold);
-            letter-spacing: 0.15em;
+            transform: translateY(60px) scale(0.96);
+            transition: 
+                opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
         }
         
-        .graduation-status {
-            font-family: 'Cinzel', serif;
-            font-size: 12px;
-            letter-spacing: 0.3em;
-            color: var(--gold-light);
-            text-transform: uppercase;
+        .grad-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
+        
+        /* Variantes */
+        .grad-anim.from-left {
+            transform: translateX(-80px);
+        }
+        .grad-anim.from-left.apparue {
+            transform: translateX(0);
+        }
+        
+        .grad-anim.from-right {
+            transform: translateX(80px);
+        }
+        .grad-anim.from-right.apparue {
+            transform: translateX(0);
+        }
+        
+        .grad-anim.zoom-in {
+            transform: scale(0.85);
+        }
+        .grad-anim.zoom-in.apparue {
+            transform: scale(1);
+        }
+        
+        /* Délais en cascade */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO
+           HERO (SANS NAVBAR)
            ============================================ */
         .graduation-hero {
             position: relative;
@@ -124,12 +194,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 100px 20px 60px;
+            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
-        /* Rayons de lumière */
+        /* Rayons de lumière dorée */
         .light-rays {
             position: absolute;
             top: 0;
@@ -139,25 +209,25 @@
             height: 60%;
             background: conic-gradient(from 180deg at 50% 0%, 
                 transparent 0deg,
-                rgba(212, 175, 55, 0.05) 20deg,
+                rgba(212, 175, 55, 0.04) 20deg,
                 transparent 40deg,
-                rgba(212, 175, 55, 0.08) 60deg,
+                rgba(212, 175, 55, 0.07) 60deg,
                 transparent 80deg,
-                rgba(212, 175, 55, 0.05) 100deg,
+                rgba(212, 175, 55, 0.04) 100deg,
                 transparent 120deg,
-                rgba(212, 175, 55, 0.08) 140deg,
+                rgba(212, 175, 55, 0.07) 140deg,
                 transparent 160deg,
-                rgba(212, 175, 55, 0.05) 180deg,
+                rgba(212, 175, 55, 0.04) 180deg,
                 transparent 200deg,
-                rgba(212, 175, 55, 0.08) 220deg,
+                rgba(212, 175, 55, 0.07) 220deg,
                 transparent 240deg,
-                rgba(212, 175, 55, 0.05) 260deg,
+                rgba(212, 175, 55, 0.04) 260deg,
                 transparent 280deg,
-                rgba(212, 175, 55, 0.08) 300deg,
+                rgba(212, 175, 55, 0.07) 300deg,
                 transparent 320deg,
-                rgba(212, 175, 55, 0.05) 340deg,
+                rgba(212, 175, 55, 0.04) 340deg,
                 transparent 360deg);
-            animation: raysRotate 20s linear infinite;
+            animation: raysRotate 25s linear infinite;
             z-index: 0;
             pointer-events: none;
         }
@@ -196,16 +266,16 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 24px;
+            padding: 10px 24px;
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: var(--navy-dark);
             font-family: 'Cinzel', serif;
             font-size: 12px;
             font-weight: 700;
-            letter-spacing: 0.2em;
+            letter-spacing: 0.25em;
             border-radius: 4px;
             margin-bottom: 30px;
-            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4);
             text-transform: uppercase;
         }
         
@@ -216,6 +286,7 @@
             color: var(--gold-light);
             margin-bottom: 30px;
             letter-spacing: 0.02em;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
         }
         
         .graduation-divider {
@@ -280,7 +351,7 @@
         }
         
         /* ============================================
-           CERTIFICAT (Détails)
+           CARTE CERTIFICAT (Détails)
            ============================================ */
         .certificate-card {
             position: relative;
@@ -290,22 +361,15 @@
             background: var(--paper);
             background-image: 
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="n"><feTurbulence baseFrequency="0.9" numOctaves="3"/></filter><rect width="100" height="100" filter="url(%23n)" opacity="0.04"/></svg>'),
-                radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+                radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.06) 0%, transparent 70%);
             border: 3px double var(--gold);
             box-shadow: 
                 0 0 0 8px var(--navy-dark),
                 0 0 0 10px var(--gold),
                 0 20px 60px rgba(0, 0, 0, 0.6);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.9s ease;
             z-index: 10;
             color: var(--text);
             text-align: center;
-        }
-        .certificate-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .certificate-card { padding: 40px 22px; margin: 40px 15px; }
@@ -402,6 +466,25 @@
             font-weight: 400;
         }
         
+        /* ⭐ CARTE TABLE */
+        .certificate-table-item {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05)) !important;
+            border: 2px solid var(--gold) !important;
+            animation: tableCardPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes tableCardPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+            50% { box-shadow: 0 0 30px 0 rgba(212, 175, 55, 0.6); }
+        }
+        
+        .certificate-table-item .value {
+            font-size: 26px !important;
+            color: var(--gold-dark) !important;
+            letter-spacing: 0.05em;
+        }
+        
         .certificate-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -434,20 +517,15 @@
             max-width: 900px;
             margin: 60px auto;
             padding: 50px 40px;
-            background: var(--navy-dark);
+            background: rgba(5, 11, 31, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 3px solid var(--gold);
             box-shadow: 
                 0 0 0 6px var(--navy),
-                0 0 60px rgba(212, 175, 55, 0.2);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s ease;
+                0 0 60px rgba(212, 175, 55, 0.25);
             z-index: 10;
             color: var(--cream);
-        }
-        .graduation-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .graduation-section { padding: 35px 22px; margin: 40px 15px; }
@@ -465,7 +543,131 @@
             text-transform: uppercase;
         }
         
-        /* Formulaires */
+        /* ============================================
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .graduation-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: var(--navy-dark);
+            border: 3px solid var(--gold);
+            box-shadow: 
+                0 0 0 6px var(--navy),
+                0 0 40px rgba(212, 175, 55, 0.3);
+        }
+        
+        .graduation-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            background: var(--navy-dark);
+        }
+        
+        .graduation-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .graduation-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--navy-dark);
+            padding: 8px;
+        }
+        
+        /* Flèches */
+        .graduation-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.9);
+            border: 2px solid var(--gold-light);
+            color: var(--navy-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+        }
+        
+        .graduation-diapo-arrow:hover {
+            background: var(--gold-light);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+        }
+        
+        .graduation-diapo-arrow.prev { left: 16px; }
+        .graduation-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .graduation-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .graduation-diapo-arrow.prev { left: 8px; }
+            .graduation-diapo-arrow.next { right: 8px; }
+        }
+        
+        /* Compteur */
+        .graduation-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(5, 11, 31, 0.9);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            padding: 8px 16px;
+            z-index: 10;
+        }
+        
+        /* Points */
+        .graduation-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(5, 11, 31, 0.85);
+            padding: 10px 20px;
+            border: 2px solid var(--gold);
+            backdrop-filter: blur(10px);
+        }
+        
+        .graduation-diapo-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .graduation-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.4);
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.9);
+        }
+        
+        /* ============================================
+           FORMULAIRES
+           ============================================ */
         .graduation-form-group { margin-bottom: 24px; }
         .graduation-form-group label {
             display: block;
@@ -562,47 +764,6 @@
                 0 0 0 3px var(--navy-dark),
                 0 0 0 5px var(--gold),
                 0 16px 40px rgba(212, 175, 55, 0.6);
-        }
-        
-        /* Photos */
-        .graduation-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 24px;
-        }
-        .graduation-photo {
-            background: var(--cream);
-            padding: 16px 16px 60px;
-            border: 3px solid var(--gold);
-            box-shadow: 
-                8px 8px 0 var(--gold-dark),
-                0 0 40px rgba(212, 175, 55, 0.3);
-            transition: all 0.4s ease;
-            position: relative;
-        }
-        .graduation-photo:hover {
-            transform: translate(-4px, -4px);
-            box-shadow: 
-                12px 12px 0 var(--gold-dark),
-                0 0 60px rgba(212, 175, 55, 0.5);
-            z-index: 5;
-        }
-        .graduation-photo img {
-            width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-            border: 1px solid var(--gold-dark);
-        }
-        .graduation-photo .caption {
-            position: absolute;
-            bottom: 16px;
-            left: 0; right: 0;
-            text-align: center;
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            color: var(--navy);
-            letter-spacing: 0.15em;
-            font-weight: 700;
         }
         
         /* Boissons */
@@ -764,6 +925,10 @@
         @media (max-width: 480px) {
             #downloadBtn { bottom: 12px; right: 12px; padding: 12px 20px; font-size: 10px; }
         }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -773,13 +938,7 @@
         <div class="graduation-hat-intro">🎓</div>
     </div>
 
-    <!-- NAVBAR -->
-    <nav class="graduation-navbar">
-        <div class="graduation-brand">🎓 <?php echo htmlspecialchars($appName); ?></div>
-        <div class="graduation-status">✦ INVITATION ACADÉMIQUE ✦</div>
-    </nav>
-
-    <!-- HERO -->
+    <!-- HERO (SANS NAVBAR) -->
     <section class="graduation-hero">
         <div class="light-rays"></div>
         
@@ -812,8 +971,8 @@
         </div>
     </section>
 
-    <!-- CERTIFICAT -->
-    <div class="certificate-card">
+    <!-- CERTIFICAT (Animé) -->
+    <div class="certificate-card grad-anim zoom-in">
         
         <div class="certificate-title">Université de la Réussite</div>
         <div class="certificate-main-title">Certificat de Célébration</div>
@@ -825,17 +984,17 @@
         
         <div class="certificate-info-grid">
             
-            <div class="certificate-info-item">
+            <div class="certificate-info-item grad-anim delay-1">
                 <div class="label">Date</div>
                 <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
             </div>
             
-            <div class="certificate-info-item">
+            <div class="certificate-info-item grad-anim delay-2">
                 <div class="label">Heure</div>
                 <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
             </div>
             
-            <div class="certificate-info-item" style="grid-column: 1 / -1;">
+            <div class="certificate-info-item grad-anim delay-3" style="grid-column: 1 / -1;">
                 <div class="label">Lieu de la cérémonie</div>
                 <div class="value">
                     <?php echo htmlspecialchars($lieuDisplay); ?>
@@ -849,7 +1008,17 @@
                 </a>
             </div>
             
-            <div class="certificate-info-item" style="grid-column: 1 / -1;">
+            <!-- ⭐ TABLE ASSIGNÉE -->
+            <?php if ($hasTable): ?>
+            <div class="certificate-info-item certificate-table-item grad-anim delay-4">
+                <div class="label">🎓 Votre table</div>
+                <div class="value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="certificate-info-item grad-anim delay-5" style="grid-column: 1 / -1;">
                 <div class="label">Places réservées</div>
                 <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
             </div>
@@ -858,7 +1027,7 @@
     </div>
 
     <?php if ($message): ?>
-        <div class="graduation-section apparue">
+        <div class="graduation-section grad-anim apparue">
             <div class="graduation-alert graduation-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -866,21 +1035,49 @@
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($photosHost)): ?>
-        <div class="graduation-section">
+    <!-- ⭐ DIAPORAMA PHOTOS -->
+    <?php if ($hasPhotos): ?>
+        <div class="graduation-section grad-anim from-left">
             <div class="graduation-section-title">✦ Souvenirs de Promotion ✦</div>
-            <div class="graduation-photos-grid">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="graduation-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="caption">✦ Photo <?php echo $index + 1; ?> ✦</div>
+            
+            <div class="graduation-diaporama" id="graduationDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Photo ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="graduation-diapo-arrow prev" onclick="graduationDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="graduation-diapo-arrow next" onclick="graduationDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="graduation-diapo-counter" id="graduationDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="graduation-diapo-dots" id="graduationDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="graduationDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
 
-    <div class="graduation-section">
+    <!-- QR CODE -->
+    <div class="graduation-section grad-anim from-right">
         <div class="graduation-section-title">✦ Code d'Accès ✦</div>
         <div class="graduation-qr-wrapper">
             <div class="graduation-qr-box">
@@ -892,8 +1089,9 @@
         </div>
     </div>
 
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="graduation-section">
+        <div class="graduation-section grad-anim from-left">
             <div class="graduation-section-title">🎓 Confirmation 🎓</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -930,8 +1128,9 @@
         </div>
     <?php endif; ?>
 
+    <!-- BOISSONS -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="graduation-section">
+        <div class="graduation-section grad-anim from-right">
             <div class="graduation-section-title">🥂 Réception 🥂</div>
             
             <?php if ($isLocked): ?>
@@ -989,7 +1188,7 @@
         </div>
     <?php endif; ?>
 
-    <footer class="graduation-footer">
+    <footer class="graduation-footer grad-anim">
         <div class="graduation-footer-brand">🎓 <?php echo htmlspecialchars($appName); ?></div>
         <div class="graduation-footer-tagline">Célébrons ensemble vos réussites</div>
         
@@ -1008,32 +1207,111 @@
     </button>
 
     <script>
+        // ================================================================
+        // ANIMATIONS AU SCROLL
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.certificate-card, .graduation-section');
+            const animElements = document.querySelectorAll('.grad-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
                         observer.unobserve(entry.target);
-                    } 
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
+            }, { 
+                threshold: 0.15,
+                rootMargin: '0px 0px -60px 0px'
+            });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
+        // QR
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
                     new QRCode(document.getElementById('qrcode'), {
                         text: '<?php echo addslashes($fullUrl); ?>',
                         width: 180, height: 180,
-                        colorDark: '#0f1a3d', colorLight: '#faf6ee',
+                        colorDark: '#0a1633', colorLight: '#fdfaf3',
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 } catch(e) { console.error(e); }
             }
         });
 
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let graduationDiapoIndex = 0;
+        const graduationSlides = document.querySelectorAll('#graduationDiaporama .slide');
+        const graduationDots = document.querySelectorAll('#graduationDiapoDots span');
+        const graduationCounter = document.getElementById('graduationDiapoCounter');
+        let graduationDiapoInterval = null;
+
+        function graduationUpdateDiapo() {
+            graduationSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === graduationDiapoIndex);
+            });
+            graduationDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === graduationDiapoIndex);
+            });
+            if (graduationCounter) {
+                graduationCounter.textContent = (graduationDiapoIndex + 1) + ' / ' + graduationSlides.length;
+            }
+        }
+
+        function graduationDiapoChange(direction) {
+            graduationDiapoIndex += direction;
+            if (graduationDiapoIndex < 0) graduationDiapoIndex = graduationSlides.length - 1;
+            if (graduationDiapoIndex >= graduationSlides.length) graduationDiapoIndex = 0;
+            graduationUpdateDiapo();
+            resetGraduationDiapoAuto();
+        }
+
+        function graduationDiapoGoTo(index) {
+            graduationDiapoIndex = index;
+            graduationUpdateDiapo();
+            resetGraduationDiapoAuto();
+        }
+
+        function resetGraduationDiapoAuto() {
+            if (graduationDiapoInterval) clearInterval(graduationDiapoInterval);
+            if (graduationSlides.length > 1) {
+                graduationDiapoInterval = setInterval(() => {
+                    graduationDiapoIndex = (graduationDiapoIndex + 1) % graduationSlides.length;
+                    graduationUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (graduationSlides.length > 0) {
+                graduationUpdateDiapo();
+                resetGraduationDiapoAuto();
+                
+                const container = document.getElementById('graduationDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (graduationDiapoInterval) clearInterval(graduationDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetGraduationDiapoAuto);
+                }
+            }
+        });
+
+        // Download
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
@@ -1044,7 +1322,7 @@
                 await new Promise(r => setTimeout(r, 300));
                 const canvas = await html2canvas(hero, {
                     scale: 2.5, useCORS: true,
-                    backgroundColor: '#060e24', logging: false
+                    backgroundColor: '#050b1f', logging: false
                 });
                 const link = document.createElement('a');
                 link.download = `graduation_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
@@ -1059,6 +1337,7 @@
             btn.disabled = false;
         }
 
+        // Boissons
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
         let selectedBoissons = [];
         document.addEventListener('DOMContentLoaded', function() {

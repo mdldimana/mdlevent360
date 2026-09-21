@@ -1,19 +1,23 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : CONFÉRENCE / RÉUNION / SÉMINAIRE
+ * TEMPLATE : CONFÉRENCE / RÉUNION / SÉMINAIRE - v2
  * ============================================================
  * 
- * Design corporate moderne :
- * - Ambiance business professionnelle
- * - Typographie corporate élégante
- * - Grille géométrique subtile
- * - Accents bleu profond + doré
- * - Icônes pro (calendrier, lieu, participants)
- * - Style TED Talk / LinkedIn Pro / Gala Corporate
+ * Nouveautés v2 :
+ * - Suppression du header/navbar
+ * - Diaporama photos plein écran (image entière)
+ * - Affichage du nom de la table
+ * - Définition des variables $hasFond et $hasPhotos
  * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -162,74 +166,7 @@
         }
         
         /* ============================================
-           NAVBAR CORPORATE
-           ============================================ */
-        .corporate-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 16px 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out 2.3s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .corporate-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-family: 'Inter', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--navy);
-            letter-spacing: -0.02em;
-        }
-        .corporate-brand .brand-mark {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--navy), var(--navy-light));
-            color: var(--white);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Playfair Display', serif;
-            font-size: 18px;
-            font-weight: 700;
-        }
-        
-        .corporate-status {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-family: 'Inter', sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.2em;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-        .corporate-status .dot {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--success);
-            animation: recBlink 2s ease-in-out infinite;
-        }
-        @keyframes recBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-        
-        /* ============================================
-           HERO CORPORATE
+           HERO CORPORATE (SANS NAVBAR)
            ============================================ */
         .corporate-hero {
             position: relative;
@@ -238,7 +175,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 120px 20px 80px;
+            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
@@ -591,6 +528,22 @@
             margin-top: 4px;
         }
         
+        /* ⭐ CARTE TABLE */
+        .corporate-table-item {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(201, 169, 97, 0.08)) !important;
+            border: 1.5px solid rgba(37, 99, 235, 0.3) !important;
+        }
+        .corporate-table-item .icon {
+            background: linear-gradient(135deg, var(--blue), var(--blue-light)) !important;
+            color: var(--white) !important;
+            border-color: var(--blue) !important;
+            animation: tableIconPulse 3s ease-in-out infinite;
+        }
+        @keyframes tableIconPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+        }
+        
         /* Bouton itinéraire corporate */
         .corporate-btn-itinerary {
             display: inline-flex;
@@ -689,6 +642,131 @@
             font-size: 22px;
             background: var(--white);
             padding: 0 8px;
+        }
+        
+        /* ============================================
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .corporate-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/10;
+            overflow: hidden;
+            border-radius: 20px;
+            background: var(--navy-dark);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.15);
+        }
+        
+        .corporate-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            background: var(--navy-dark);
+        }
+        
+        .corporate-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .corporate-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--navy-dark);
+            padding: 10px;
+        }
+        
+        /* Flèches navigation */
+        .corporate-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid var(--border);
+            color: var(--navy);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+        }
+        
+        .corporate-diapo-arrow:hover {
+            background: var(--blue);
+            color: white;
+            border-color: var(--blue);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .corporate-diapo-arrow.prev { left: 16px; }
+        .corporate-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .corporate-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .corporate-diapo-arrow.prev { left: 8px; }
+            .corporate-diapo-arrow.next { right: 8px; }
+        }
+        
+        /* Compteur */
+        .corporate-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(10, 37, 64, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            padding: 8px 16px;
+            border-radius: 100px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Points de pagination */
+        .corporate-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(10, 37, 64, 0.85);
+            padding: 10px 20px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .corporate-diapo-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .corporate-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.4);
+            box-shadow: 0 0 12px rgba(201, 169, 97, 0.8);
         }
         
         /* ============================================
@@ -797,60 +875,6 @@
             background: linear-gradient(135deg, var(--blue), var(--blue-light));
             transform: translateY(-2px);
             box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4);
-        }
-        
-        /* ============================================
-           PHOTOS / GALERIE
-           ============================================ */
-        .corporate-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-        }
-        .corporate-photo {
-            position: relative;
-            aspect-ratio: 4/3;
-            overflow: hidden;
-            border-radius: 16px;
-            background: var(--bg-alt);
-            border: 1px solid var(--border);
-            transition: all 0.4s ease;
-        }
-        .corporate-photo:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
-            border-color: var(--blue);
-        }
-        .corporate-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-        .corporate-photo:hover img {
-            transform: scale(1.05);
-        }
-        .corporate-photo::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, 
-                transparent 50%, 
-                rgba(10, 37, 64, 0.8) 100%);
-            pointer-events: none;
-        }
-        .corporate-photo .caption {
-            position: absolute;
-            bottom: 16px;
-            left: 20px;
-            right: 20px;
-            z-index: 2;
-            font-family: 'Inter', sans-serif;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--white);
         }
         
         /* ============================================
@@ -1080,6 +1104,10 @@
                 font-size: 11px;
             }
         }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1101,21 +1129,7 @@
     </div>
 
     <!-- ============================================
-         NAVBAR CORPORATE
-         ============================================ -->
-    <nav class="corporate-navbar">
-        <div class="corporate-brand">
-            <div class="brand-mark">M</div>
-            <?php echo htmlspecialchars(strtoupper($appName)); ?>
-        </div>
-        <div class="corporate-status">
-            <span class="dot"></span>
-            Invitation officielle
-        </div>
-    </nav>
-
-    <!-- ============================================
-         HERO CORPORATE
+         HERO CORPORATE (SANS NAVBAR)
          ============================================ -->
     <section class="corporate-hero">
         <div class="geo-shape circle"></div>
@@ -1208,6 +1222,19 @@
                 </div>
             </div>
             
+            <!-- ⭐ TABLE ASSIGNÉE -->
+            <?php if ($hasTable): ?>
+            <div class="corporate-info-item full corporate-table-item">
+                <div class="icon"><i class="fas fa-chair"></i></div>
+                <div class="content">
+                    <div class="label">Votre table</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            
             <div class="corporate-info-item full">
                 <div class="icon"><i class="fas fa-user-tie"></i></div>
                 <div class="content">
@@ -1234,22 +1261,48 @@
     <?php endif; ?>
 
     <!-- ============================================
-         PHOTOS
+         ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
          ============================================ -->
-    <?php if (!empty($photosHost)): ?>
+    <?php if ($hasPhotos): ?>
         <div class="corporate-section">
             <div class="corporate-section-title">
                 <span class="icon"><i class="fas fa-images"></i></span>
                 Galerie
                 <span class="icon"><i class="fas fa-images"></i></span>
             </div>
-            <div class="corporate-photos-grid">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="corporate-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="caption">Photo <?php echo $index + 1; ?></div>
+            
+            <div class="corporate-diaporama" id="corporateDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Photo ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="corporate-diapo-arrow prev" onclick="corporateDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="corporate-diapo-arrow next" onclick="corporateDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="corporate-diapo-counter" id="corporateDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="corporate-diapo-dots" id="corporateDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="corporateDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
@@ -1443,6 +1496,66 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 } catch(e) { console.error(e); }
+            }
+        });
+
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let corporateDiapoIndex = 0;
+        const corporateSlides = document.querySelectorAll('#corporateDiaporama .slide');
+        const corporateDots = document.querySelectorAll('#corporateDiapoDots span');
+        const corporateCounter = document.getElementById('corporateDiapoCounter');
+        let corporateDiapoInterval = null;
+
+        function corporateUpdateDiapo() {
+            corporateSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === corporateDiapoIndex);
+            });
+            corporateDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === corporateDiapoIndex);
+            });
+            if (corporateCounter) {
+                corporateCounter.textContent = (corporateDiapoIndex + 1) + ' / ' + corporateSlides.length;
+            }
+        }
+
+        function corporateDiapoChange(direction) {
+            corporateDiapoIndex += direction;
+            if (corporateDiapoIndex < 0) corporateDiapoIndex = corporateSlides.length - 1;
+            if (corporateDiapoIndex >= corporateSlides.length) corporateDiapoIndex = 0;
+            corporateUpdateDiapo();
+            resetCorporateDiapoAuto();
+        }
+
+        function corporateDiapoGoTo(index) {
+            corporateDiapoIndex = index;
+            corporateUpdateDiapo();
+            resetCorporateDiapoAuto();
+        }
+
+        function resetCorporateDiapoAuto() {
+            if (corporateDiapoInterval) clearInterval(corporateDiapoInterval);
+            if (corporateSlides.length > 1) {
+                corporateDiapoInterval = setInterval(() => {
+                    corporateDiapoIndex = (corporateDiapoIndex + 1) % corporateSlides.length;
+                    corporateUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (corporateSlides.length > 0) {
+                corporateUpdateDiapo();
+                resetCorporateDiapoAuto();
+                
+                const container = document.getElementById('corporateDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (corporateDiapoInterval) clearInterval(corporateDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetCorporateDiapoAuto);
+                }
             }
         });
 

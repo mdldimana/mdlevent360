@@ -1,18 +1,25 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : INAUGURATION
+ * TEMPLATE : INAUGURATION - v2
  * ============================================================
  * 
- * Design grand opening / lancement officiel :
- * - Ruban rouge à couper animé
- * - Ciseaux dorés
- * - Feux d'artifice / confettis
- * - Style cérémonie officielle
- * - Ambiance VIP grand opening
+ * Nouveautés v2 :
+ * - Photo de fond en background (non floue)
+ * - Nom de la table
+ * - Diaporama photos plein écran
+ * - Animations de sections en cascade
+ * - Suppression du header
  * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+$hasTable = !empty($tableNom) || !empty($tableNumero);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -47,18 +54,58 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
+        /* ============================================
+           PHOTO DE FOND (BACKGROUND PRINCIPAL)
+           ============================================ */
+        html {
+            background: var(--black);
+        }
+        
         body {
             font-family: 'Inter', system-ui, sans-serif;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: var(--black);
+            <?php else: ?>
             background: 
                 radial-gradient(ellipse at top, #1a0a0a 0%, transparent 60%),
                 radial-gradient(ellipse at bottom, #2a1a0a 0%, transparent 60%),
                 var(--black);
-            background-attachment: fixed;
+            <?php endif; ?>
             color: var(--white);
             min-height: 100vh;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             position: relative;
+        }
+        
+        /* Overlay dégradé subtil sur la photo */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(26, 10, 10, 0.6) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(10, 10, 10, 0.7) 0%, 
+                    rgba(26, 10, 10, 0.55) 30%,
+                    rgba(10, 10, 10, 0.75) 70%,
+                    rgba(10, 10, 10, 0.92) 100%);
+            pointer-events: none;
+        }
+        
+        /* Contenu au-dessus de l'overlay */
+        .inauguration-hero,
+        .inauguration-card,
+        .inauguration-section,
+        .inauguration-footer {
+            position: relative;
+            z-index: 2;
         }
         
         /* ============================================
@@ -81,7 +128,6 @@
             100% { opacity: 0; visibility: hidden; pointer-events: none; }
         }
         
-        /* Ruban rouge qui traverse */
         .ribbon {
             position: relative;
             width: 100%;
@@ -104,7 +150,6 @@
             100% { transform: scaleX(1); }
         }
         
-        /* Fissure du ruban au centre */
         .ribbon::before {
             content: '';
             position: absolute;
@@ -124,7 +169,6 @@
             100% { transform: translateX(-50%) scaleY(1.5); }
         }
         
-        /* Ciseaux dorés */
         .scissors {
             position: absolute;
             top: 50%;
@@ -148,7 +192,6 @@
             100% { transform: translate(-50%, -50%) rotate(0deg); }
         }
         
-        /* Éclat quand le ruban est coupé */
         .ribbon-flash {
             position: absolute;
             top: 50%;
@@ -167,7 +210,6 @@
             100% { width: 1500px; height: 1500px; opacity: 0; }
         }
         
-        /* Texte intro */
         .inauguration-text {
             position: relative;
             z-index: 4;
@@ -203,7 +245,7 @@
         }
         
         /* ============================================
-           FEUX D'ARTIFICE / CONFETTIS
+           CONFETTIS
            ============================================ */
         .fireworks-container {
             position: fixed;
@@ -228,62 +270,52 @@
         }
         
         /* ============================================
-           NAVBAR INAUGURATION
+           ANIMATIONS DE SECTIONS EN CASCADE
            ============================================ */
-        .inauguration-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 16px 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(10, 10, 10, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        .inaug-anim {
             opacity: 0;
-            animation: fadeIn 0.8s ease-out 3s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .inauguration-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-family: 'Cinzel', serif;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--gold);
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-        }
-        .inauguration-brand i {
-            font-size: 22px;
+            transform: translateY(60px) scale(0.96);
+            transition: 
+                opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
         }
         
-        .inauguration-status {
-            font-family: 'Inter', sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.3em;
-            color: var(--red-light);
-            text-transform: uppercase;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .inaug-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
-        .inauguration-status::before {
-            content: '●';
-            font-size: 12px;
-            animation: recBlink 1.5s ease-in-out infinite;
+        
+        .inaug-anim.from-left {
+            transform: translateX(-80px);
         }
-        @keyframes recBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        .inaug-anim.from-left.apparue {
+            transform: translateX(0);
         }
+        
+        .inaug-anim.from-right {
+            transform: translateX(80px);
+        }
+        .inaug-anim.from-right.apparue {
+            transform: translateX(0);
+        }
+        
+        .inaug-anim.zoom-in {
+            transform: scale(0.85);
+        }
+        .inaug-anim.zoom-in.apparue {
+            transform: scale(1);
+        }
+        
+        /* Délais en cascade */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO INAUGURATION
+           HERO INAUGURATION (SANS NAVBAR)
            ============================================ */
         .inauguration-hero {
             position: relative;
@@ -292,12 +324,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 120px 20px 80px;
+            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
-        /* Halo lumineux */
         .halo {
             position: absolute;
             top: 50%;
@@ -317,7 +348,6 @@
             50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
         }
         
-        /* Ruban décoratif horizontal */
         .hero-ribbon {
             position: absolute;
             top: 50%;
@@ -351,7 +381,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Étoile dorée pulsante */
         .inauguration-star {
             font-size: 46px;
             color: var(--gold);
@@ -364,7 +393,6 @@
             50% { transform: scale(1.15) rotate(180deg); filter: drop-shadow(0 0 50px rgba(212, 175, 55, 1)); }
         }
         
-        /* Badge grand opening */
         .inauguration-badge {
             display: inline-flex;
             align-items: center;
@@ -385,7 +413,6 @@
             transform: rotate(-2deg);
         }
         
-        /* Nom invité */
         .inauguration-guest {
             font-family: 'Playfair Display', serif;
             font-size: clamp(32px, 6vw, 52px);
@@ -398,7 +425,6 @@
             text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
         }
         
-        /* Séparateur */
         .inauguration-divider {
             display: flex;
             align-items: center;
@@ -422,7 +448,6 @@
             50% { transform: scale(1.2); }
         }
         
-        /* Hôte */
         .inauguration-hosts-intro {
             font-family: 'Inter', sans-serif;
             font-size: 13px;
@@ -483,25 +508,18 @@
             background: linear-gradient(180deg, 
                 rgba(26, 26, 26, 0.95) 0%, 
                 rgba(18, 18, 18, 0.95) 100%);
+            backdrop-filter: blur(10px);
             border: 2px solid var(--gold);
             box-shadow: 
                 0 0 0 6px var(--black),
                 0 0 0 7px var(--red),
                 0 30px 80px rgba(0, 0, 0, 0.7);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
-        }
-        .inauguration-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .inauguration-card { padding: 40px 25px; margin: 60px 15px; }
         }
         
-        /* Coins ornés */
         .inauguration-card::before,
         .inauguration-card::after {
             content: '✦';
@@ -532,7 +550,6 @@
             position: absolute;
             bottom: -12px;
             left: 50%;
-            transform: translateX(-50%);
             width: 12px;
             height: 12px;
             background: var(--red);
@@ -597,7 +614,27 @@
             font-weight: 400;
         }
         
-        /* Bouton itinéraire */
+        /* ⭐ CARTE TABLE */
+        .inauguration-table-item {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(200, 16, 46, 0.08)) !important;
+            border-left: 4px solid var(--gold) !important;
+            animation: tableCardPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes tableCardPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.3); }
+            50% { box-shadow: 0 0 30px 0 rgba(212, 175, 55, 0.5); }
+        }
+        
+        .inauguration-table-item .value {
+            font-size: 28px !important;
+            color: var(--gold) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+        
         .inauguration-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -635,21 +672,15 @@
             margin: 80px auto;
             padding: 60px 55px;
             background: linear-gradient(180deg, 
-                rgba(26, 26, 26, 0.95) 0%, 
-                rgba(18, 18, 18, 0.95) 100%);
+                rgba(26, 26, 26, 0.9) 0%, 
+                rgba(18, 18, 18, 0.9) 100%);
+            backdrop-filter: blur(10px);
             border: 2px solid var(--gold);
             box-shadow: 
                 0 0 0 4px var(--black),
                 0 0 0 5px var(--red),
                 0 20px 60px rgba(0, 0, 0, 0.6);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
-        }
-        .inauguration-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .inauguration-section { padding: 40px 25px; margin: 60px 15px; }
@@ -669,7 +700,131 @@
         }
         
         /* ============================================
-           FORMULAIRES INAUGURATION
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .inauguration-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: var(--black);
+            border: 3px solid var(--gold);
+            box-shadow: 
+                0 0 0 6px var(--black),
+                0 0 0 8px var(--red),
+                0 0 40px rgba(212, 175, 55, 0.3);
+        }
+        
+        .inauguration-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            background: var(--black);
+        }
+        
+        .inauguration-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .inauguration-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--black);
+            padding: 8px;
+        }
+        
+        /* Flèches navigation */
+        .inauguration-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(200, 16, 46, 0.9);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(200, 16, 46, 0.5);
+        }
+        
+        .inauguration-diapo-arrow:hover {
+            background: var(--gold);
+            color: var(--black);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
+        }
+        
+        .inauguration-diapo-arrow.prev { left: 16px; }
+        .inauguration-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .inauguration-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .inauguration-diapo-arrow.prev { left: 8px; }
+            .inauguration-diapo-arrow.next { right: 8px; }
+        }
+        
+        /* Compteur */
+        .inauguration-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            padding: 8px 16px;
+            z-index: 10;
+        }
+        
+        /* Points */
+        .inauguration-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(10, 10, 10, 0.85);
+            padding: 10px 20px;
+            border: 2px solid var(--gold);
+            backdrop-filter: blur(10px);
+        }
+        
+        .inauguration-diapo-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .inauguration-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.4);
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.9);
+        }
+        
+        /* ============================================
+           FORMULAIRES
            ============================================ */
         .inauguration-form-group { margin-bottom: 26px; }
         .inauguration-form-group label {
@@ -788,59 +943,6 @@
             box-shadow: 
                 8px 8px 0 var(--gold),
                 0 0 50px rgba(200, 16, 46, 0.6);
-        }
-        
-        /* ============================================
-           PHOTOS
-           ============================================ */
-        .inauguration-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-            gap: 20px;
-        }
-        .inauguration-photo {
-            position: relative;
-            aspect-ratio: 4/3;
-            overflow: hidden;
-            background: var(--dark-gray);
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            transition: all 0.4s ease;
-        }
-        .inauguration-photo:hover {
-            border-color: var(--gold);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.3);
-            transform: translateY(-4px);
-        }
-        .inauguration-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s ease;
-        }
-        .inauguration-photo:hover img {
-            transform: scale(1.05);
-        }
-        .inauguration-photo::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, 
-                transparent 50%, 
-                rgba(0, 0, 0, 0.85) 100%);
-            pointer-events: none;
-        }
-        .inauguration-photo .caption {
-            position: absolute;
-            bottom: 14px;
-            left: 18px;
-            right: 18px;
-            z-index: 2;
-            font-family: 'Cinzel', serif;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--white);
         }
         
         /* ============================================
@@ -1042,6 +1144,10 @@
                 letter-spacing: 0.1em;
             }
         }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1063,20 +1169,7 @@
     <div class="fireworks-container" id="confettiContainer"></div>
 
     <!-- ============================================
-         NAVBAR INAUGURATION
-         ============================================ -->
-    <nav class="inauguration-navbar">
-        <div class="inauguration-brand">
-            <i class="fas fa-scissors"></i>
-            <?php echo htmlspecialchars(strtoupper($appName)); ?>
-        </div>
-        <div class="inauguration-status">
-            CÉRÉMONIE OFFICIELLE
-        </div>
-    </nav>
-
-    <!-- ============================================
-         HERO INAUGURATION
+         HERO INAUGURATION (SANS NAVBAR)
          ============================================ -->
     <section class="inauguration-hero">
         <div class="halo"></div>
@@ -1114,25 +1207,25 @@
     <!-- ============================================
          CARTE INAUGURATION (Détails)
          ============================================ -->
-    <div class="inauguration-card">
+    <div class="inauguration-card inaug-anim zoom-in">
         
         <div class="inauguration-card-title">Détails de la cérémonie</div>
         
         <div class="inauguration-info-grid">
             
-            <div class="inauguration-info-item">
+            <div class="inauguration-info-item inaug-anim delay-1">
                 <i class="fas fa-calendar-alt icon"></i>
                 <div class="label">DATE</div>
                 <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
             </div>
             
-            <div class="inauguration-info-item">
+            <div class="inauguration-info-item inaug-anim delay-2">
                 <i class="fas fa-clock icon"></i>
                 <div class="label">HEURE</div>
                 <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
             </div>
             
-            <div class="inauguration-info-item" style="grid-column: 1 / -1;">
+            <div class="inauguration-info-item inaug-anim delay-3" style="grid-column: 1 / -1;">
                 <i class="fas fa-map-marker-alt icon"></i>
                 <div class="label">LIEU DE L'INAUGURATION</div>
                 <div class="value">
@@ -1149,7 +1242,18 @@
                 </a>
             </div>
             
-            <div class="inauguration-info-item" style="grid-column: 1 / -1;">
+            <!-- ⭐ TABLE ASSIGNÉE -->
+            <?php if ($hasTable): ?>
+            <div class="inauguration-info-item inauguration-table-item inaug-anim delay-4">
+                <i class="fas fa-chair icon"></i>
+                <div class="label">VOTRE TABLE</div>
+                <div class="value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="inauguration-info-item inaug-anim delay-5" style="grid-column: 1 / -1;">
                 <i class="fas fa-users icon"></i>
                 <div class="label">PLACES RÉSERVÉES</div>
                 <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
@@ -1162,7 +1266,7 @@
          MESSAGES
          ============================================ -->
     <?php if ($message): ?>
-        <div class="inauguration-section apparue">
+        <div class="inauguration-section inaug-anim apparue">
             <div class="inauguration-alert inauguration-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -1171,18 +1275,44 @@
     <?php endif; ?>
 
     <!-- ============================================
-         PHOTOS
+         ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
          ============================================ -->
-    <?php if (!empty($photosHost)): ?>
-        <div class="inauguration-section">
+    <?php if ($hasPhotos): ?>
+        <div class="inauguration-section inaug-anim from-left">
             <div class="inauguration-section-title">Galerie de l'événement</div>
-            <div class="inauguration-photos-grid">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="inauguration-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="caption">Photo <?php echo $index + 1; ?></div>
+            
+            <div class="inauguration-diaporama" id="inaugurationDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Photo ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="inauguration-diapo-arrow prev" onclick="inaugurationDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="inauguration-diapo-arrow next" onclick="inaugurationDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="inauguration-diapo-counter" id="inaugurationDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="inauguration-diapo-dots" id="inaugurationDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="inaugurationDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
@@ -1190,7 +1320,7 @@
     <!-- ============================================
          QR CODE
          ============================================ -->
-    <div class="inauguration-section">
+    <div class="inauguration-section inaug-anim from-right">
         <div class="inauguration-section-title">Badge d'accès</div>
         <div class="inauguration-qr-wrapper">
             <div class="inauguration-qr-box">
@@ -1206,7 +1336,7 @@
          CONFIRMATION
          ============================================ -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="inauguration-section">
+        <div class="inauguration-section inaug-anim from-left">
             <div class="inauguration-section-title">Confirmation de présence</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -1251,7 +1381,7 @@
          BOISSONS
          ============================================ -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="inauguration-section">
+        <div class="inauguration-section inaug-anim from-right">
             <div class="inauguration-section-title">Cocktail de réception</div>
             
             <?php if ($isLocked): ?>
@@ -1312,7 +1442,7 @@
     <!-- ============================================
          FOOTER INAUGURATION
          ============================================ -->
-    <footer class="inauguration-footer">
+    <footer class="inauguration-footer inaug-anim">
         <div class="inauguration-footer-star">✦</div>
         <div class="inauguration-footer-brand"><?php echo htmlspecialchars($appName); ?></div>
         <div class="inauguration-footer-tagline">Célébrons ensemble vos moments d'exception</div>
@@ -1359,24 +1489,38 @@
                 }
             }
             
-            // Première salve
             setTimeout(createConfetti, 2200);
-            // Salves périodiques
             setInterval(createConfetti, 12000);
         });
 
-        // Scroll animations
+        // ================================================================
+        // ANIMATIONS AU SCROLL
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.inauguration-card, .inauguration-section');
+            const animElements = document.querySelectorAll('.inaug-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
                         observer.unobserve(entry.target);
-                    } 
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
+            }, { 
+                threshold: 0.15,
+                rootMargin: '0px 0px -60px 0px'
+            });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
         // QR
@@ -1392,6 +1536,66 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 } catch(e) { console.error(e); }
+            }
+        });
+
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let inaugurationDiapoIndex = 0;
+        const inaugurationSlides = document.querySelectorAll('#inaugurationDiaporama .slide');
+        const inaugurationDots = document.querySelectorAll('#inaugurationDiapoDots span');
+        const inaugurationCounter = document.getElementById('inaugurationDiapoCounter');
+        let inaugurationDiapoInterval = null;
+
+        function inaugurationUpdateDiapo() {
+            inaugurationSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === inaugurationDiapoIndex);
+            });
+            inaugurationDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === inaugurationDiapoIndex);
+            });
+            if (inaugurationCounter) {
+                inaugurationCounter.textContent = (inaugurationDiapoIndex + 1) + ' / ' + inaugurationSlides.length;
+            }
+        }
+
+        function inaugurationDiapoChange(direction) {
+            inaugurationDiapoIndex += direction;
+            if (inaugurationDiapoIndex < 0) inaugurationDiapoIndex = inaugurationSlides.length - 1;
+            if (inaugurationDiapoIndex >= inaugurationSlides.length) inaugurationDiapoIndex = 0;
+            inaugurationUpdateDiapo();
+            resetInaugurationDiapoAuto();
+        }
+
+        function inaugurationDiapoGoTo(index) {
+            inaugurationDiapoIndex = index;
+            inaugurationUpdateDiapo();
+            resetInaugurationDiapoAuto();
+        }
+
+        function resetInaugurationDiapoAuto() {
+            if (inaugurationDiapoInterval) clearInterval(inaugurationDiapoInterval);
+            if (inaugurationSlides.length > 1) {
+                inaugurationDiapoInterval = setInterval(() => {
+                    inaugurationDiapoIndex = (inaugurationDiapoIndex + 1) % inaugurationSlides.length;
+                    inaugurationUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (inaugurationSlides.length > 0) {
+                inaugurationUpdateDiapo();
+                resetInaugurationDiapoAuto();
+                
+                const container = document.getElementById('inaugurationDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (inaugurationDiapoInterval) clearInterval(inaugurationDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetInaugurationDiapoAuto);
+                }
             }
         });
 
