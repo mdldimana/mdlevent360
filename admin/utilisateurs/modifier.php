@@ -1,9 +1,13 @@
 <?php
+// ============================================================
+// MODIFICATION D'UN UTILISATEUR
+// ============================================================
+
 // Inclure l'authentification
 require_once __DIR__ . '/../../includes/auth.php';
 
 // Vérifier les permissions
-requirePermission('utilisateurs.voir', 'index.php');
+requirePermission('utilisateurs.modifier');
 
 // Récupérer les informations de l'utilisateur courant
 $user = getCurrentUser();
@@ -11,53 +15,180 @@ $user = getCurrentUser();
 // Connexion à la base
 $pdo = getDbConnection();
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+// ============================================================
+// RÉCUPÉRATION DE L'UTILISATEUR À MODIFIER
+// ============================================================
+$userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Récupérer l'utilisateur avec ses rôles
-$utilisateur = null;
-try {
-    $stmt = $pdo->prepare("
-        SELECT 
-            u.id,
-            u.nom,
-            u.prenom,
-            u.username,
-            u.email,
-            u.actif,
-            u.last_login,
-            u.created_at,
-            GROUP_CONCAT(r.nom SEPARATOR ', ') as roles
-        FROM utilisateurs u
-        LEFT JOIN utilisateur_roles ur ON u.id = ur.utilisateur_id
-        LEFT JOIN roles r ON ur.role_id = r.id
-        WHERE u.id = ?
-        GROUP BY u.id
-    ");
-    $stmt->execute([$id]);
-    $utilisateur = $stmt->fetch();
-} catch (PDOException $e) {
-    // Ignorer
-}
-
-if (!$utilisateur) {
-    header('Location: index.php');
+if ($userId <= 0) {
+    header('Location: index.php?error=id_manquant');
     exit;
 }
 
-// Récupérer le journal des actions de l'utilisateur
-$activites = [];
+$utilisateur = null;
 try {
     $stmt = $pdo->prepare("
-        SELECT action, module, description, date_action, adresse_ip
-        FROM journal_activites
-        WHERE utilisateur_id = ?
-        ORDER BY date_action DESC
-        LIMIT 20
+        SELECT id, nom, prenom, username, email, mot_de_passe, actif, last_login, created_at
+        FROM utilisateurs
+        WHERE id = ?
     ");
-    $stmt->execute([$id]);
-    $activites = $stmt->fetchAll();
+    $stmt->execute([$userId]);
+    $utilisateur = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log('Erreur chargement utilisateur : ' . $e->getMessage());
+    header('Location: index.php?error=chargement');
+    exit;
+}
+
+if (!$utilisateur) {
+    header('Location: index.php?error=introuvable');
+    exit;
+}
+
+// ============================================================
+// RÉCUPÉRATION DES RÔLES DISPONIBLES
+// ============================================================
+$roles = [];
+try {
+    $stmt = $pdo->query("SELECT id, nom, description FROM roles WHERE actif = 1 ORDER BY nom");
+    $roles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     // Ignorer
+}
+
+// ============================================================
+// RÉCUPÉRATION DU RÔLE ACTUEL DE L'UTILISATEUR
+// ============================================================
+$currentRoleId = '';
+try {
+    $stmt = $pdo->prepare("SELECT role_id FROM utilisateur_roles WHERE utilisateur_id = ? LIMIT 1");
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) $currentRoleId = (int)$row['role_id'];
+} catch (PDOException $e) {
+    // Ignorer
+}
+
+// ============================================================
+// TRAITEMENT DES ACTIONS
+// ============================================================
+$error = '';
+$success = '';
+
+// ---------- SUPPRESSION ----------
+if (isset($_POST['action']) && $_POST['action'] === 'supprimer') {
+    if ((int)$user['id'] === $userId) {
+        $error = 'Vous ne pouvez pas supprimer votre propre compte.';
+    } else {
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("DELETE FROM utilisateur_roles WHERE utilisateur_id = ?");
+            $stmt->execute([$userId]);
+
+            $stmt = $pdo->prepare("DELETE FROM utilisateurs WHERE id = ?");
+            $stmt->execute([$userId]);
+
+            $pdo->commit();
+
+            logAction($user['id'], 'DELETE_USER', 'utilisateurs', "Suppression de l'utilisateur #$userId ({$utilisateur['username']})");
+
+            header('Location: index.php?success=supprime');
+            exit;
+
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            $error = 'Erreur lors de la suppression : ' . $e->getMessage();
+        }
+    }
+}
+
+// ---------- MODIFICATION ----------
+$nom = $utilisateur['nom'];
+$prenom = $utilisateur['prenom'];
+$username = $utilisateur['username'];
+$email = $utilisateur['email'];
+$selectedRole = $currentRoleId;
+$actif = (int)$utilisateur['actif'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST['action'] !== 'supprimer')) {
+    $nom = trim($_POST['nom'] ?? '');
+    $prenom = trim($_POST['prenom'] ?? '');
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $selectedRole = $_POST['role'] ?? '';
+    $actif = isset($_POST['actif']) ? 1 : 0;
+
+    // Validation
+    $errors = [];
+
+    if (empty($nom)) $errors[] = 'Le nom est requis';
+    if (empty($prenom)) $errors[] = 'Le prénom est requis';
+    if (empty($username)) $errors[] = "Le nom d'utilisateur est requis";
+    if (empty($email)) $errors[] = "L'email est requis";
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "L'email n'est pas valide";
+    if (empty($selectedRole)) $errors[] = 'Veuillez sélectionner un rôle';
+
+    // Mot de passe : uniquement si fourni
+    if (!empty($password) && strlen($password) < 6) {
+        $errors[] = 'Le mot de passe doit contenir au moins 6 caractères';
+    }
+
+    // Vérifier l'unicité (sauf pour cet utilisateur)
+    if (empty($errors)) {
+        try {
+            $stmt = $pdo->prepare("SELECT id FROM utilisateurs WHERE (username = ? OR email = ?) AND id != ?");
+            $stmt->execute([$username, $email, $userId]);
+            if ($stmt->fetch()) {
+                $errors[] = "Ce nom d'utilisateur ou cet email est déjà utilisé par un autre compte";
+            }
+        } catch (PDOException $e) {
+            $errors[] = 'Erreur lors de la vérification';
+        }
+    }
+
+    if (empty($errors)) {
+        try {
+            $pdo->beginTransaction();
+
+            if (!empty($password)) {
+                $hashedPassword = hashPassword($password);
+                $stmt = $pdo->prepare("
+                    UPDATE utilisateurs
+                    SET nom = ?, prenom = ?, username = ?, email = ?, mot_de_passe = ?, actif = ?
+                    WHERE id = ?
+                ");
+                $stmt->execute([$nom, $prenom, $username, $email, $hashedPassword, $actif, $userId]);
+            } else {
+                $stmt = $pdo->prepare("
+                    UPDATE utilisateurs
+                    SET nom = ?, prenom = ?, username = ?, email = ?, actif = ?
+                    WHERE id = ?
+                ");
+                $stmt->execute([$nom, $prenom, $username, $email, $actif, $userId]);
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM utilisateur_roles WHERE utilisateur_id = ?");
+            $stmt->execute([$userId]);
+
+            $stmt = $pdo->prepare("INSERT INTO utilisateur_roles (utilisateur_id, role_id) VALUES (?, ?)");
+            $stmt->execute([$userId, $selectedRole]);
+
+            $pdo->commit();
+
+            logAction($user['id'], 'UPDATE_USER', 'utilisateurs', "Modification de l'utilisateur #$userId ({$username})");
+
+            header('Location: index.php?success=modifie');
+            exit;
+
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            $error = 'Erreur lors de la modification : ' . $e->getMessage();
+        }
+    } else {
+        $error = implode('<br>', $errors);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -65,7 +196,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Détails - <?php echo APP_NAME; ?></title>
+    <title>Modifier un utilisateur - <?php echo APP_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -77,14 +208,12 @@ try {
             background: linear-gradient(135deg, #fdfcfb 0%, #fff5e6 100%);
         }
 
-        /* ========== LAYOUT PRINCIPAL ========== */
         .app-container {
             display: flex;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* ========== SIDEBAR ========== */
         .sidebar-wrapper {
             flex-shrink: 0;
             height: 100vh;
@@ -145,7 +274,6 @@ try {
             -webkit-text-fill-color: transparent;
         }
 
-        /* ========== MAIN CONTENT ========== */
         .main-content {
             flex: 1;
             height: 100vh;
@@ -159,6 +287,9 @@ try {
         .main-content::-webkit-scrollbar-thumb {
             background: linear-gradient(135deg, #f7971e, #ffd200);
             border-radius: 10px;
+        }
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #d4880f, #e6b800);
         }
 
         .top-bar {
@@ -178,45 +309,24 @@ try {
             color: #1a1a2e;
             margin: 0;
         }
-        .top-bar .page-title h4 i { color: #f7971e; margin-right: 10px; }
-        .top-bar .page-title small { color: #999; font-size: 13px; display: block; margin-top: 2px; }
-        .top-bar .user-info { display: flex; align-items: center; gap: 20px; }
-        .top-bar .user-info .user-avatar {
-            width: 45px; height: 45px; border-radius: 50%;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700; font-size: 18px;
-            box-shadow: 0 5px 15px rgba(247, 151, 30, 0.3);
+        .top-bar .page-title h4 i {
+            color: #f7971e;
+            margin-right: 10px;
         }
-        .top-bar .user-info .user-name { font-weight: 600; color: #1a1a2e; font-size: 14px; }
-        .top-bar .user-info .user-name small { display: block; color: #aaa; font-weight: 400; font-size: 12px; }
-        .top-bar .user-info .role-badge {
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #1a1a2e; padding: 5px 15px; border-radius: 20px;
-            font-size: 11px; font-weight: 700;
+        .top-bar .page-title small {
+            color: #999;
+            font-size: 13px;
+            display: block;
+            margin-top: 2px;
         }
-
-        .content-section { padding: 25px 30px; }
-
-        .profile-card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.06);
-            border: 1px solid rgba(247, 151, 30, 0.08);
-            max-width: 900px;
-        }
-        .profile-header {
+        .top-bar .user-info {
             display: flex;
             align-items: center;
-            gap: 25px;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px dashed rgba(247, 151, 30, 0.15);
+            gap: 20px;
         }
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
+        .top-bar .user-info .user-avatar {
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             background: linear-gradient(135deg, #f7971e, #ffd200);
             display: flex;
@@ -224,97 +334,91 @@ try {
             justify-content: center;
             color: white;
             font-weight: 700;
-            font-size: 32px;
-            box-shadow: 0 5px 20px rgba(247, 151, 30, 0.3);
-            flex-shrink: 0;
+            font-size: 18px;
+            box-shadow: 0 5px 15px rgba(247, 151, 30, 0.3);
         }
-        .profile-info h4 {
+        .top-bar .user-info .user-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+        .top-bar .user-info .user-name small {
+            display: block;
+            color: #aaa;
+            font-weight: 400;
+            font-size: 12px;
+        }
+        .top-bar .user-info .role-badge {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #1a1a2e;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .content-section {
+            padding: 25px 30px;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(247, 151, 30, 0.08);
+            max-width: 800px;
+        }
+        .form-container .form-title {
             font-weight: 700;
             color: #1a1a2e;
-            margin: 0;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed rgba(247, 151, 30, 0.15);
         }
-        .profile-info .username {
+        .form-container .form-title i {
             color: #f7971e;
-            font-weight: 600;
-        }
-        .profile-info .email {
-            color: #888;
-            font-size: 14px;
-        }
-        .profile-info .status-badge {
-            margin-top: 5px;
-            display: inline-block;
+            margin-right: 10px;
         }
 
-        .info-row {
-            display: flex;
-            padding: 12px 0;
-            border-bottom: 1px solid #f5f5f5;
-        }
-        .info-row:last-child { border-bottom: none; }
-        .info-row .label {
-            width: 160px;
+        .form-label {
             font-weight: 600;
-            color: #888;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-        .info-row .value {
-            flex: 1;
-            color: #1a1a2e;
+            color: #555;
             font-size: 14px;
         }
-
-        .badge-active {
-            background: #d4edda;
-            color: #155724;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 10px 15px;
+            border: 2px solid #e1e5ee;
+            transition: all 0.3s ease;
         }
-        .badge-inactive {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .badge-role {
-            background: linear-gradient(135deg, rgba(247, 151, 30, 0.15), rgba(255, 210, 0, 0.1));
-            color: #1a1a2e;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid rgba(247, 151, 30, 0.15);
+        .form-control:focus, .form-select:focus {
+            border-color: #f7971e;
+            box-shadow: 0 0 0 3px rgba(247, 151, 30, 0.1);
         }
 
-        .btn-edit {
+        .btn-save {
             background: linear-gradient(135deg, #f7971e, #ffd200);
             color: #1a1a2e;
             border: none;
-            font-weight: 600;
-            padding: 8px 20px;
+            font-weight: 700;
+            padding: 10px 30px;
             border-radius: 10px;
             transition: all 0.3s ease;
-            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
-        .btn-edit:hover {
+        .btn-save:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(247, 151, 30, 0.3);
-            color: #1a1a2e;
         }
-        .btn-back {
+        .btn-cancel {
             background: #f8f9fa;
             color: #666;
             border: 1px solid #ddd;
             font-weight: 600;
-            padding: 8px 20px;
+            padding: 10px 30px;
             border-radius: 10px;
             transition: all 0.3s ease;
             text-decoration: none;
@@ -322,35 +426,103 @@ try {
             align-items: center;
             gap: 8px;
         }
-        .btn-back:hover {
+        .btn-cancel:hover {
             background: #e9ecef;
             color: #333;
         }
 
-        .activity-item {
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-delete:hover {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #f5f5f5;
-            font-size: 13px;
+            gap: 10px;
         }
-        .activity-item:last-child { border-bottom: none; }
-        .activity-item .activity-icon {
-            width: 30px;
-            color: #f7971e;
+
+        .role-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border: 2px solid #e1e5ee;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+        }
+        .role-option:hover {
+            border-color: #f7971e;
+            background: rgba(247, 151, 30, 0.05);
+        }
+        .role-option input[type="radio"] {
+            accent-color: #f7971e;
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
         }
-        .activity-item .activity-desc { flex: 1; color: #555; }
-        .activity-item .activity-date { color: #aaa; font-size: 12px; }
+        .role-option .role-option-content {
+            flex: 1;
+        }
+        .role-option .role-option-content .role-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .role-option .role-option-content .role-desc {
+            font-size: 12px;
+            color: #999;
+        }
 
-        /* ========== ANIMATION D'ENTRÉE - CORRIGÉE ========== */
+        .user-meta {
+            background: linear-gradient(135deg, rgba(247, 151, 30, 0.08), rgba(255, 210, 0, 0.05));
+            border: 1px solid rgba(247, 151, 30, 0.2);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        .user-meta .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+        .user-meta .meta-item i {
+            color: #f7971e;
+        }
+        .user-meta .meta-item strong {
+            color: #1a1a2e;
+        }
+
         .fade-in {
             opacity: 1;
             animation: fadeInUp 0.6s ease both;
         }
-
-        .fade-in:nth-child(1) { animation-delay: 0.1s; }
-        .fade-in:nth-child(2) { animation-delay: 0.2s; }
 
         @keyframes fadeInUp {
             from {
@@ -363,7 +535,6 @@ try {
             }
         }
 
-        /* ========== FOOTER ========== */
         .app-footer {
             text-align: center;
             padding: 30px 0 20px;
@@ -375,7 +546,6 @@ try {
             color: #ff6b6b;
         }
 
-        /* ========== SUPPRESSION DES ANIMATIONS POUR LES UTILISATEURS QUI PRÉFÈRENT RÉDUIRE LES MOUVEMENTS ========== */
         @media (prefers-reduced-motion: reduce) {
             .fade-in {
                 animation: none !important;
@@ -389,7 +559,6 @@ try {
             }
         }
 
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 992px) {
             html, body { overflow: visible; }
 
@@ -449,26 +618,19 @@ try {
 
             .content-section { padding: 15px 20px; }
 
-            .profile-card {
+            .form-container {
                 padding: 20px;
                 max-width: 100%;
             }
-            .profile-header {
-                flex-direction: column;
-                text-align: center;
-            }
-            .info-row {
-                flex-direction: column;
-                gap: 5px;
-            }
-            .info-row .label {
+
+            .btn-save, .btn-cancel, .btn-delete {
                 width: 100%;
-            }
-            .profile-info .status-badge {
-                display: flex;
-                flex-wrap: wrap;
                 justify-content: center;
-                gap: 8px;
+            }
+
+            .d-flex.gap-3 {
+                flex-direction: column;
+                gap: 10px !important;
             }
         }
 
@@ -501,42 +663,41 @@ try {
                 font-size: 18px;
             }
 
-            .profile-card {
+            .form-container {
                 padding: 15px;
                 border-radius: 14px;
             }
-            .profile-avatar {
-                width: 64px;
-                height: 64px;
-                font-size: 24px;
-            }
-            .profile-info h4 {
+            .form-container .form-title {
                 font-size: 18px;
+                margin-bottom: 18px;
             }
-            .profile-info .email {
+
+            .form-label {
                 font-size: 13px;
             }
-            .info-row .label {
+            .form-control, .form-select {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+
+            .btn-save, .btn-cancel, .btn-delete {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            .alert-error {
+                font-size: 13px;
+                padding: 12px 15px;
+            }
+
+            .role-option {
+                padding: 10px 12px;
                 font-size: 13px;
             }
-            .info-row .value {
-                font-size: 13px;
-            }
-            .btn-edit, .btn-back {
-                font-size: 13px;
-                padding: 6px 16px;
-                width: 100%;
-                justify-content: center;
-            }
-            .activity-item {
-                font-size: 12px;
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-            .activity-item .activity-date {
+            .role-option .role-option-content .role-desc {
                 font-size: 11px;
-                margin-left: 30px;
             }
+
             .app-footer {
                 font-size: 11px;
                 padding: 20px 0 15px;
@@ -544,17 +705,16 @@ try {
         }
 
         @media (max-width: 400px) {
-            .profile-avatar {
-                width: 56px;
-                height: 56px;
-                font-size: 20px;
-            }
-            .profile-info h4 {
+            .form-container .form-title {
                 font-size: 16px;
             }
-            .btn-edit, .btn-back {
+            .btn-save, .btn-cancel, .btn-delete {
+                font-size: 13px;
+                padding: 8px 16px;
+            }
+            .role-option {
+                padding: 8px 10px;
                 font-size: 12px;
-                padding: 5px 14px;
             }
         }
     </style>
@@ -585,8 +745,8 @@ try {
         <!-- TOP BAR -->
         <div class="top-bar">
             <div class="page-title">
-                <h4><i class="bi bi-person"></i> Détails de l'utilisateur</h4>
-                <small><i class="bi bi-eye"></i> Informations du compte</small>
+                <h4><i class="bi bi-pencil-square"></i> Modifier un utilisateur</h4>
+                <small><i class="bi bi-person"></i> Éditer le compte de <?php echo htmlspecialchars($utilisateur['prenom'] . ' ' . $utilisateur['nom']); ?></small>
             </div>
             <div class="user-info">
                 <span class="role-badge">
@@ -616,121 +776,116 @@ try {
 
         <!-- CONTENU -->
         <div class="content-section">
-            <div class="profile-card fade-in">
+            <div class="form-container fade-in">
 
-                <!-- En-tête du profil -->
-                <div class="profile-header">
-                    <div class="profile-avatar">
-                        <?php 
-                        $init = strtoupper(
-                            substr($utilisateur['prenom'] ?? '', 0, 1) . 
-                            substr($utilisateur['nom'] ?? '', 0, 1)
-                        );
-                        echo $init ?: 'U';
-                        ?>
-                    </div>
-                    <div class="profile-info">
-                        <h4><?php echo htmlspecialchars($utilisateur['prenom'] . ' ' . $utilisateur['nom']); ?></h4>
-                        <div class="username">@<?php echo htmlspecialchars($utilisateur['username']); ?></div>
-                        <div class="email"><i class="bi bi-envelope"></i> <?php echo htmlspecialchars($utilisateur['email']); ?></div>
-                        <div class="status-badge">
-                            <?php if ($utilisateur['actif']): ?>
-                                <span class="badge-active"><i class="bi bi-check-circle"></i> Actif</span>
-                            <?php else: ?>
-                                <span class="badge-inactive"><i class="bi bi-x-circle"></i> Inactif</span>
-                            <?php endif; ?>
-                            <span class="badge-role">
-                                <i class="bi bi-shield"></i>
-                                <?php echo htmlspecialchars($utilisateur['roles'] ?? 'Aucun rôle'); ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                <h5 class="form-title"><i class="bi bi-pencil-square"></i> Modifier l'utilisateur</h5>
 
-                <!-- Informations -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="info-row">
-                            <span class="label"><i class="bi bi-person"></i> Nom complet</span>
-                            <span class="value"><?php echo htmlspecialchars($utilisateur['prenom'] . ' ' . $utilisateur['nom']); ?></span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label"><i class="bi bi-person-badge"></i> Identifiant</span>
-                            <span class="value"><code><?php echo htmlspecialchars($utilisateur['username']); ?></code></span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label"><i class="bi bi-envelope"></i> Email</span>
-                            <span class="value"><?php echo htmlspecialchars($utilisateur['email']); ?></span>
-                        </div>
+                <!-- Métadonnées utilisateur -->
+                <div class="user-meta">
+                    <div class="meta-item">
+                        <i class="bi bi-hash"></i>
+                        ID: <strong>#<?php echo (int)$utilisateur['id']; ?></strong>
                     </div>
-                    <div class="col-md-6">
-                        <div class="info-row">
-                            <span class="label"><i class="bi bi-shield"></i> Rôle</span>
-                            <span class="value">
-                                <span class="badge-role">
-                                    <?php echo htmlspecialchars($utilisateur['roles'] ?? 'Aucun rôle'); ?>
-                                </span>
-                            </span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label"><i class="bi bi-clock-history"></i> Dernière connexion</span>
-                            <span class="value">
-                                <?php 
-                                $lastLogin = $utilisateur['last_login'] ?? null;
-                                echo $lastLogin ? date('d/m/Y à H:i', strtotime($lastLogin)) : 'Jamais';
-                                ?>
-                            </span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label"><i class="bi bi-calendar"></i> Date de création</span>
-                            <span class="value">
-                                <?php echo date('d/m/Y à H:i', strtotime($utilisateur['created_at'])); ?>
-                            </span>
-                        </div>
+                    <div class="meta-item">
+                        <i class="bi bi-calendar-plus"></i>
+                        Créé le <strong><?php echo date('d/m/Y', strtotime($utilisateur['created_at'])); ?></strong>
                     </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="d-flex gap-3 mt-4 pt-3 border-top flex-wrap">
-                    <a href="index.php" class="btn-back">
-                        <i class="bi bi-arrow-left"></i> Retour
-                    </a>
-                    <?php if (hasPermission('utilisateurs.modifier')): ?>
-                        <a href="modifier.php?id=<?php echo $utilisateur['id']; ?>" class="btn-edit">
-                            <i class="bi bi-pencil"></i> Modifier
-                        </a>
-                    <?php endif; ?>
-                    <?php if (hasPermission('utilisateurs.desactiver') && $utilisateur['id'] != $user['id']): ?>
-                        <a href="supprimer.php?id=<?php echo $utilisateur['id']; ?>" 
-                           class="btn-edit" style="background: linear-gradient(135deg, #ff6b6b, #ff4757); color: white;"
-                           onclick="return confirm('Voulez-vous vraiment <?php echo $utilisateur['actif'] ? 'désactiver' : 'activer'; ?> cet utilisateur ?')">
-                            <i class="bi <?php echo $utilisateur['actif'] ? 'bi-person-x' : 'bi-person-check'; ?>"></i>
-                            <?php echo $utilisateur['actif'] ? 'Désactiver' : 'Activer'; ?>
-                        </a>
+                    <?php if (!empty($utilisateur['last_login'])): ?>
+                    <div class="meta-item">
+                        <i class="bi bi-clock-history"></i>
+                        Dernière connexion: <strong><?php echo date('d/m/Y H:i', strtotime($utilisateur['last_login'])); ?></strong>
+                    </div>
                     <?php endif; ?>
                 </div>
-            </div>
 
-            <!-- Dernières activités -->
-            <div class="profile-card mt-4 fade-in" style="max-width: 900px;">
-                <h6 class="mb-3"><i class="bi bi-clock-history"></i> Dernières activités</h6>
-                <?php if (!empty($activites)): ?>
-                    <?php foreach ($activites as $activite): ?>
-                        <div class="activity-item">
-                            <span class="activity-icon"><i class="bi bi-record-circle"></i></span>
-                            <span class="activity-desc">
-                                <strong><?php echo htmlspecialchars($activite['action']); ?></strong>
-                                <?php echo htmlspecialchars($activite['description']); ?>
-                            </span>
-                            <span class="activity-date">
-                                <i class="bi bi-clock"></i>
-                                <?php echo date('d/m/Y H:i', strtotime($activite['date_action'])); ?>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p class="text-muted text-center py-3">Aucune activité enregistrée</p>
+                <?php if ($error): ?>
+                    <div class="alert-error">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <?php echo $error; ?>
+                    </div>
                 <?php endif; ?>
+
+                <form method="POST" action="" id="userForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="bi bi-person"></i> Prénom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="prenom" value="<?php echo htmlspecialchars($prenom); ?>" placeholder="Prénom" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="bi bi-person"></i> Nom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="nom" value="<?php echo htmlspecialchars($nom); ?>" placeholder="Nom" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="bi bi-person-badge"></i> Nom d'utilisateur <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="username" value="<?php echo htmlspecialchars($username); ?>" placeholder="Identifiant unique" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="bi bi-envelope"></i> Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="Email" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label"><i class="bi bi-lock"></i> Nouveau mot de passe</label>
+                            <input type="password" class="form-control" name="password" placeholder="Laisser vide pour ne pas changer">
+                            <small class="text-muted">Minimum 6 caractères • Laisser vide pour conserver le mot de passe actuel</small>
+                        </div>
+                    </div>
+
+                    <!-- SÉLECTION DU RÔLE -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-shield"></i> Rôle <span class="text-danger">*</span></label>
+                        <div class="role-checkboxes">
+                            <?php foreach ($roles as $role): ?>
+                                <label class="role-option">
+                                    <input type="radio" name="role" value="<?php echo $role['id']; ?>" 
+                                           <?php echo $selectedRole == $role['id'] ? 'checked' : ''; ?>
+                                           required>
+                                    <div class="role-option-content">
+                                        <div class="role-name"><?php echo htmlspecialchars($role['nom']); ?></div>
+                                        <?php if (!empty($role['description'])): ?>
+                                            <div class="role-desc"><?php echo htmlspecialchars($role['description']); ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <small class="text-muted">Sélectionnez un rôle pour cet utilisateur</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="actif" id="actif" <?php echo $actif ? 'checked' : ''; ?>>
+                            <label class="form-check-label" for="actif">
+                                <i class="bi bi-check-circle"></i> Actif (peut se connecter)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4 flex-wrap">
+                        <button type="submit" class="btn btn-save">
+                            <i class="bi bi-save"></i> Enregistrer les modifications
+                        </button>
+                        <a href="index.php" class="btn btn-cancel">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        <?php if ((int)$user['id'] !== (int)$utilisateur['id']): ?>
+                        <button type="button" class="btn btn-delete" onclick="confirmDelete()">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
+
+                <!-- Formulaire caché pour suppression -->
+                <form method="POST" action="" id="deleteForm" style="display:none;">
+                    <input type="hidden" name="action" value="supprimer">
+                </form>
+
             </div>
 
             <!-- Footer -->
@@ -770,19 +925,24 @@ try {
     sidebarToggle.addEventListener('click', toggleSidebar);
     sidebarOverlay.addEventListener('click', closeSidebar);
 
-    // Fermer la sidebar en appuyant sur Echap
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && sidebarWrapper.classList.contains('open')) {
             closeSidebar();
         }
     });
 
-    // Fermer la sidebar lors du redimensionnement > 992px
     window.addEventListener('resize', function() {
         if (window.innerWidth > 992 && sidebarWrapper.classList.contains('open')) {
             closeSidebar();
         }
     });
+
+    // ========== CONFIRMATION DE SUPPRESSION ==========
+    function confirmDelete() {
+        if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer cet utilisateur ?\n\nCette action est irréversible.')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
 </script>
 </body>
 </html>
