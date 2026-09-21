@@ -1,19 +1,23 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : DÉFILÉ DE MODE (Fashion Week)
+ * TEMPLATE : DÉFILÉ DE MODE (Fashion Week) - v2
  * ============================================================
  * 
- * Design fashion éditorial :
- * - Projecteurs de podium qui balayent la scène
- * - Flashs de photographes (paparazzi)
- * - Typo Vogue (Didot / Playfair Display)
- * - Bandes rouges "TAPIS ROUGE"
- * - Silhouette de mannequin
- * - Effet magazine avec numéro d'édition
+ * Nouveautés v2 :
+ * - Diaporama photos plein écran
+ * - Animations de sections en cascade
+ * - Nom de la table
  * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+$hasTable = !empty($tableNom) || !empty($tableNumero);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -28,9 +32,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* ============================================
-           VARIABLES FASHION
-           ============================================ */
         :root {
             --black: #000000;
             --near-black: #0a0a0a;
@@ -62,7 +63,7 @@
         }
         
         /* ============================================
-           INTRO : COMPTE À REBOURS FASHION SHOW
+           INTRO FASHION SHOW
            ============================================ */
         .fashion-intro {
             position: fixed;
@@ -81,7 +82,6 @@
             100% { opacity: 0; visibility: hidden; pointer-events: none; }
         }
         
-        /* Projecteurs qui balayent */
         .spotlight {
             position: absolute;
             top: -50%;
@@ -160,7 +160,7 @@
         }
         
         /* ============================================
-           FLASHES DE PAPARAZZI
+           FLASHES PAPARAZZI
            ============================================ */
         .camera-flash {
             position: fixed;
@@ -190,63 +190,48 @@
         }
         
         /* ============================================
-           NAVBAR FASHION
+           ANIMATIONS DE SECTIONS EN CASCADE
            ============================================ */
-        .fashion-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 20px 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(201, 169, 97, 0.2);
+        .fashion-anim {
             opacity: 0;
-            animation: fadeIn 1s ease-out 3s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .fashion-brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            font-family: 'Italiana', serif;
-            font-size: 26px;
-            letter-spacing: 0.2em;
-            color: var(--white);
-            text-transform: uppercase;
-        }
-        .fashion-brand .brand-mark {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 36px;
-            color: var(--gold);
-            line-height: 1;
+            transform: translateY(60px) scale(0.96);
+            transition: 
+                opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
         }
         
-        .fashion-edition {
-            font-family: 'Didact Gothic', sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.4em;
-            color: var(--gold);
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .fashion-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
-        .fashion-edition .dot {
-            width: 6px;
-            height: 6px;
-            background: var(--red);
-            border-radius: 50%;
-            animation: recBlink 1.5s ease-in-out infinite;
+        
+        .fashion-anim.from-left {
+            transform: translateX(-80px);
         }
-        @keyframes recBlink {
-            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--red); }
-            50% { opacity: 0.3; box-shadow: none; }
+        .fashion-anim.from-left.apparue {
+            transform: translateX(0);
         }
+        
+        .fashion-anim.from-right {
+            transform: translateX(80px);
+        }
+        .fashion-anim.from-right.apparue {
+            transform: translateX(0);
+        }
+        
+        .fashion-anim.zoom-in {
+            transform: scale(0.85);
+        }
+        .fashion-anim.zoom-in.apparue {
+            transform: scale(1);
+        }
+        
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
            HERO FASHION
@@ -263,7 +248,6 @@
             overflow: hidden;
         }
         
-        /* Podium illuminé en bas */
         .runway-floor {
             position: absolute;
             bottom: 0;
@@ -290,7 +274,6 @@
             box-shadow: 0 -20px 60px rgba(201, 169, 97, 0.2);
         }
         
-        /* Bandes dorées verticales */
         .gold-stripes {
             position: absolute;
             top: 0; bottom: 0;
@@ -323,7 +306,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Magazine style : numéro d'édition */
         .fashion-issue {
             display: flex;
             align-items: center;
@@ -350,7 +332,6 @@
             text-transform: uppercase;
         }
         
-        /* Invité - grand titre Vogue style */
         .fashion-guest {
             font-family: 'Playfair Display', serif;
             font-size: clamp(48px, 10vw, 120px);
@@ -365,7 +346,6 @@
             animation: fadeInUp 1.2s ease-out 3.7s forwards;
         }
         
-        /* Sous-titre éditorial */
         .fashion-subtitle {
             font-family: 'Didact Gothic', sans-serif;
             font-size: 13px;
@@ -377,7 +357,6 @@
             animation: fadeInUp 1s ease-out 4s forwards;
         }
         
-        /* Séparateur doré */
         .fashion-divider {
             display: flex;
             align-items: center;
@@ -400,7 +379,6 @@
             color: var(--gold);
         }
         
-        /* Hôte - présentation fashion */
         .fashion-hosts-intro {
             font-family: 'Playfair Display', serif;
             font-style: italic;
@@ -442,7 +420,6 @@
             animation: fadeInUp 1s ease-out 4.8s forwards;
         }
         
-        /* Bandeau défilant haut */
         .fashion-marquee {
             position: absolute;
             top: 90px;
@@ -491,20 +468,12 @@
             box-shadow: 
                 0 0 80px rgba(201, 169, 97, 0.1),
                 inset 0 0 80px rgba(201, 169, 97, 0.02);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
-        }
-        .lookbook-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .lookbook-card { padding: 50px 25px; margin: 60px 15px; }
         }
         
-        /* Petits coins dorés */
         .lookbook-card::before,
         .lookbook-card::after {
             content: '';
@@ -522,7 +491,6 @@
             border-left: none; border-top: none;
         }
         
-        /* En-tête avec numéro d'édition */
         .lookbook-header {
             display: flex;
             justify-content: space-between;
@@ -562,7 +530,6 @@
             .lookbook-title { font-size: 26px; }
         }
         
-        /* Grille d'infos style magazine */
         .lookbook-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -628,7 +595,29 @@
             letter-spacing: 0.02em;
         }
         
-        /* Bouton itinéraire fashion */
+        /* ⭐ CARTE TABLE */
+        .lookbook-table-item {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, 
+                rgba(201, 169, 97, 0.15) 0%, 
+                rgba(212, 0, 0, 0.05) 100%) !important;
+            border-left: 4px solid var(--gold) !important;
+            animation: tableCardPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes tableCardPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 97, 0.3); }
+            50% { box-shadow: 0 0 30px 0 rgba(201, 169, 97, 0.5); }
+        }
+        
+        .lookbook-table-item .value {
+            font-size: 28px !important;
+            color: var(--gold) !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 20px rgba(201, 169, 97, 0.4);
+        }
+        
         .fashion-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -674,14 +663,7 @@
             padding: 70px 60px;
             background: var(--near-black);
             border: 1px solid rgba(201, 169, 97, 0.2);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
-        }
-        .editorial-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .editorial-section { padding: 45px 25px; margin: 50px 15px; }
@@ -725,7 +707,123 @@
         }
         
         /* ============================================
-           FORMULAIRES FASHION
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .fashion-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: var(--black);
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 40px rgba(201, 169, 97, 0.3);
+        }
+        
+        .fashion-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            background: var(--black);
+        }
+        
+        .fashion-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .fashion-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--black);
+            padding: 10px;
+        }
+        
+        /* Flèches navigation */
+        .fashion-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background: rgba(201, 169, 97, 0.9);
+            border: 1px solid var(--gold);
+            color: var(--black);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(201, 169, 97, 0.4);
+        }
+        
+        .fashion-diapo-arrow:hover {
+            background: var(--gold-light);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .fashion-diapo-arrow.prev { left: 16px; }
+        .fashion-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .fashion-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .fashion-diapo-arrow.prev { left: 8px; }
+            .fashion-diapo-arrow.next { right: 8px; }
+        }
+        
+        /* Compteur */
+        .fashion-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.3em;
+            padding: 8px 16px;
+            z-index: 10;
+        }
+        
+        /* Points */
+        .fashion-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px 20px;
+            border: 1px solid var(--gold);
+            backdrop-filter: blur(10px);
+        }
+        
+        .fashion-diapo-dots span {
+            width: 10px;
+            height: 10px;
+            background: rgba(201, 169, 97, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .fashion-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.3);
+            box-shadow: 0 0 12px rgba(201, 169, 97, 0.9);
+        }
+        
+        /* ============================================
+           FORMULAIRES
            ============================================ */
         .fashion-form-group { margin-bottom: 30px; }
         .fashion-form-group label {
@@ -847,69 +945,8 @@
             box-shadow: 0 12px 40px rgba(201, 169, 97, 0.5);
             transform: translateY(-2px);
         }
-        
-        /* ============================================
-           PHOTOS LOOKBOOK
-           ============================================ */
-        .lookbook-photos {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-        }
-        .lookbook-photo {
-            position: relative;
-            aspect-ratio: 3/4;
-            overflow: hidden;
-            background: var(--dark-gray);
-            border: 1px solid rgba(201, 169, 97, 0.2);
-            transition: all 0.6s ease;
-        }
-        .lookbook-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%) contrast(1.1);
-            transition: all 0.8s ease;
-        }
-        .lookbook-photo:hover img {
-            filter: grayscale(0%) contrast(1.05);
-            transform: scale(1.05);
-        }
-        .lookbook-photo::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, 
-                transparent 50%, 
-                rgba(0, 0, 0, 0.8) 100%);
-            pointer-events: none;
-        }
-        .lookbook-photo .photo-caption {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 2;
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 18px;
-            color: var(--white);
-            letter-spacing: 0.02em;
-        }
-        .lookbook-photo .photo-num {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 2;
-            font-family: 'Didact Gothic', sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.3em;
-            color: var(--gold);
-            text-transform: uppercase;
-        }
-        
-        /* ============================================
-           BOISSONS - STYLE MENU FASHION
+               /* ============================================
+           BOISSONS
            ============================================ */
         .fashion-boisson-category {
             margin-bottom: 30px;
@@ -1105,6 +1142,10 @@
                 letter-spacing: 0.2em;
             }
         }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1121,27 +1162,13 @@
         <div class="fashion-intro-sub">ÉDITION SPÉCIALE · 2025</div>
     </div>
 
-    <!-- Flashs de photographes -->
+    <!-- Flashs paparazzi -->
     <div class="camera-flash f1"></div>
     <div class="camera-flash f2"></div>
     <div class="camera-flash f3"></div>
     <div class="camera-flash f4"></div>
     <div class="camera-flash f5"></div>
     <div class="camera-flash f6"></div>
-
-    <!-- ============================================
-         NAVBAR FASHION
-         ============================================ -->
-    <nav class="fashion-navbar">
-        <div class="fashion-brand">
-            <span class="brand-mark">✦</span>
-            <?php echo htmlspecialchars(strtoupper($appName)); ?>
-        </div>
-        <div class="fashion-edition">
-            <span class="dot"></span>
-            FASHION WEEK · INVITATION OFFICIELLE
-        </div>
-    </nav>
 
     <!-- ============================================
          HERO FASHION
@@ -1151,7 +1178,6 @@
         <div class="gold-stripes left"></div>
         <div class="gold-stripes right"></div>
         
-        <!-- Bandeau défilant -->
         <div class="fashion-marquee">
             <div class="fashion-marquee-content">
                 <span>Haute Couture</span>
@@ -1201,7 +1227,7 @@
     <!-- ============================================
          LOOKBOOK CARD (Détails)
          ============================================ -->
-    <div class="lookbook-card">
+    <div class="lookbook-card fashion-anim zoom-in">
         
         <div class="lookbook-header">
             <div class="label">FICHE TECHNIQUE</div>
@@ -1212,17 +1238,17 @@
         
         <div class="lookbook-grid">
             
-            <div class="lookbook-item">
+            <div class="lookbook-item fashion-anim delay-1">
                 <div class="label">DATE DU SHOW</div>
                 <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
             </div>
             
-            <div class="lookbook-item">
+            <div class="lookbook-item fashion-anim delay-2">
                 <div class="label">HEURE DE DÉBUT</div>
                 <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
             </div>
             
-            <div class="lookbook-item" style="grid-column: 1 / -1;">
+            <div class="lookbook-item fashion-anim delay-3" style="grid-column: 1 / -1;">
                 <div class="label">LIEU DU PODIUM</div>
                 <div class="value">
                     <?php echo htmlspecialchars($lieuDisplay); ?>
@@ -1238,7 +1264,17 @@
                 </a>
             </div>
             
-            <div class="lookbook-item" style="grid-column: 1 / -1;">
+            <!-- ⭐ TABLE ASSIGNÉE -->
+            <?php if ($hasTable): ?>
+            <div class="lookbook-item lookbook-table-item fashion-anim delay-4">
+                <div class="label">✦ VOTRE PLACE PRIVILÉGIÉE ✦</div>
+                <div class="value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="lookbook-item fashion-anim delay-5" style="grid-column: 1 / -1;">
                 <div class="label">PLACES SUR LE PODIUM</div>
                 <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
             </div>
@@ -1246,9 +1282,6 @@
         </div>
     </div>
 
-    <!-- ============================================
-         MESSAGES
-         ============================================ -->
     <?php if ($message): ?>
         <div class="editorial-section apparue">
             <div class="fashion-alert fashion-alert-<?php echo htmlspecialchars($messageType); ?>">
@@ -1259,19 +1292,44 @@
     <?php endif; ?>
 
     <!-- ============================================
-         PHOTOS
+         ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
          ============================================ -->
-    <?php if (!empty($photosHost)): ?>
-        <div class="editorial-section">
+    <?php if ($hasPhotos): ?>
+        <div class="editorial-section fashion-anim from-left">
             <div class="editorial-section-title" data-num="01">Galerie · Collection</div>
-            <div class="lookbook-photos">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="lookbook-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="photo-num">LOOK <?php echo str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT); ?></div>
-                        <div class="photo-caption">Création originale</div>
+            
+            <div class="fashion-diaporama" id="fashionDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Look ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="fashion-diapo-arrow prev" onclick="fashionDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="fashion-diapo-arrow next" onclick="fashionDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="fashion-diapo-counter" id="fashionDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="fashion-diapo-dots" id="fashionDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="fashionDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
@@ -1279,7 +1337,7 @@
     <!-- ============================================
          QR CODE
          ============================================ -->
-    <div class="editorial-section">
+    <div class="editorial-section fashion-anim from-right">
         <div class="editorial-section-title" data-num="02">Accès privé</div>
         <div class="fashion-qr-wrapper">
             <div class="fashion-qr-box">
@@ -1295,7 +1353,7 @@
          CONFIRMATION
          ============================================ -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="editorial-section">
+        <div class="editorial-section fashion-anim from-left">
             <div class="editorial-section-title" data-num="03">RSVP</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -1337,10 +1395,10 @@
     <?php endif; ?>
 
     <!-- ============================================
-         BOISSONS - STYLE MENU
+         BOISSONS
          ============================================ -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="editorial-section">
+        <div class="editorial-section fashion-anim from-right">
             <div class="editorial-section-title" data-num="04">Bar à cocktails</div>
             
             <?php if ($isLocked): ?>
@@ -1400,7 +1458,7 @@
     <!-- ============================================
          FOOTER
          ============================================ -->
-    <footer class="fashion-footer">
+    <footer class="fashion-footer fashion-anim">
         <div class="fashion-footer-brand">
             <?php echo htmlspecialchars(strtoupper($appName)); ?>
             <span class="accent">✦</span>
@@ -1423,18 +1481,34 @@
     </button>
 
     <script>
-        // Scroll animations
+        // ================================================================
+        // ANIMATIONS AU SCROLL
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.lookbook-card, .editorial-section');
+            const animElements = document.querySelectorAll('.fashion-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
                         observer.unobserve(entry.target);
-                    } 
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
+            }, { 
+                threshold: 0.15,
+                rootMargin: '0px 0px -60px 0px'
+            });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
         // QR
@@ -1450,6 +1524,66 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 } catch(e) { console.error(e); }
+            }
+        });
+
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let fashionDiapoIndex = 0;
+        const fashionSlides = document.querySelectorAll('#fashionDiaporama .slide');
+        const fashionDots = document.querySelectorAll('#fashionDiapoDots span');
+        const fashionCounter = document.getElementById('fashionDiapoCounter');
+        let fashionDiapoInterval = null;
+
+        function fashionUpdateDiapo() {
+            fashionSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === fashionDiapoIndex);
+            });
+            fashionDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === fashionDiapoIndex);
+            });
+            if (fashionCounter) {
+                fashionCounter.textContent = (fashionDiapoIndex + 1) + ' / ' + fashionSlides.length;
+            }
+        }
+
+        function fashionDiapoChange(direction) {
+            fashionDiapoIndex += direction;
+            if (fashionDiapoIndex < 0) fashionDiapoIndex = fashionSlides.length - 1;
+            if (fashionDiapoIndex >= fashionSlides.length) fashionDiapoIndex = 0;
+            fashionUpdateDiapo();
+            resetFashionDiapoAuto();
+        }
+
+        function fashionDiapoGoTo(index) {
+            fashionDiapoIndex = index;
+            fashionUpdateDiapo();
+            resetFashionDiapoAuto();
+        }
+
+        function resetFashionDiapoAuto() {
+            if (fashionDiapoInterval) clearInterval(fashionDiapoInterval);
+            if (fashionSlides.length > 1) {
+                fashionDiapoInterval = setInterval(() => {
+                    fashionDiapoIndex = (fashionDiapoIndex + 1) % fashionSlides.length;
+                    fashionUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (fashionSlides.length > 0) {
+                fashionUpdateDiapo();
+                resetFashionDiapoAuto();
+                
+                const container = document.getElementById('fashionDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (fashionDiapoInterval) clearInterval(fashionDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetFashionDiapoAuto);
+                }
             }
         });
 

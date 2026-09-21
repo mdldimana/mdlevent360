@@ -1,9 +1,24 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : PRINCESSE DISNEY
+ * TEMPLATE : PRINCESSE - v3 (Polices Defile)
+ * ============================================================
+ * 
+ * Polices identiques à defile.php :
+ * - Playfair Display (titres)
+ * - Didact Gothic (textes)
+ * - Inter (détails)
+ * - Italiana (grands noms)
+ * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+$hasTable = !empty($tableNom) || !empty($tableNumero);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -12,7 +27,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invitation - <?php echo htmlspecialchars($invitation['evenement_nom']); ?></title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Great+Vibes&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Didact+Gothic&family=Inter:wght@300;400;500;600;700&family=Italiana&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -35,22 +50,92 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
+        /* ============================================
+           PHOTO DE FOND EN BACKGROUND
+           ============================================ */
+        html {
+            background: #1a0a2e;
+        }
+        
         body {
-            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-family: 'Didact Gothic', sans-serif;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: #1a0a2e;
+            <?php else: ?>
             background: linear-gradient(180deg, 
                 #1a0a2e 0%,
                 #2d1054 30%,
                 #4a1a6e 60%,
                 #7a3a9e 100%);
             background-attachment: fixed;
+            <?php endif; ?>
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(26, 10, 46, 0.7) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(26, 10, 46, 0.75) 0%, 
+                    rgba(45, 16, 84, 0.6) 30%,
+                    rgba(26, 10, 46, 0.8) 70%,
+                    rgba(26, 10, 46, 0.95) 100%);
+            pointer-events: none;
+        }
+        
+        .princess-hero,
+        .princess-card,
+        .princess-section,
+        .princess-footer {
+            position: relative;
+            z-index: 2;
         }
         
         /* ============================================
-           ÉTOILES SCINTILLANTES
+           ANIMATIONS DE SECTIONS
+           ============================================ */
+        .princess-anim {
+            opacity: 0;
+            transform: translateY(60px) scale(0.96);
+            transition: 
+                opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
+        }
+        
+        .princess-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        
+        .princess-anim.from-left { transform: translateX(-80px); }
+        .princess-anim.from-left.apparue { transform: translateX(0); }
+        .princess-anim.from-right { transform: translateX(80px); }
+        .princess-anim.from-right.apparue { transform: translateX(0); }
+        .princess-anim.zoom-in { transform: scale(0.85); }
+        .princess-anim.zoom-in.apparue { transform: scale(1); }
+        
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
+        
+        /* ============================================
+           ÉTOILES
            ============================================ */
         .stars-container {
             position: fixed;
@@ -71,7 +156,7 @@
         }
         
         /* ============================================
-           INTRO : CHÂTEAU QUI APPARAÎT
+           INTRO : CHÂTEAU
            ============================================ */
         .castle-intro {
             position: fixed;
@@ -102,44 +187,6 @@
         }
         
         /* ============================================
-           NAVBAR
-           ============================================ */
-        .princess-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 16px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(26, 10, 46, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
-            opacity: 0;
-            animation: fadeIn 0.8s ease-out 3s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .princess-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--gold);
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-        
-        .princess-status {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 12px;
-            letter-spacing: 0.3em;
-            color: var(--rose-light);
-            text-transform: uppercase;
-        }
-        
-        /* ============================================
            HERO
            ============================================ */
         .princess-hero {
@@ -149,12 +196,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 100px 20px 60px;
+            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
-        /* Lune dorée */
         .princess-moon {
             position: absolute;
             top: 12%;
@@ -196,31 +242,34 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 24px;
+            padding: 10px 26px;
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: #4a1a6e;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.2em;
-            border-radius: 999px;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.4em;
+            border-radius: 4px;
             margin-bottom: 30px;
             box-shadow: 0 8px 30px rgba(255, 215, 0, 0.4);
             text-transform: uppercase;
         }
         
         .princess-guest {
-            font-family: 'Great Vibes', cursive;
+            font-family: 'Playfair Display', serif;
             font-size: clamp(48px, 9vw, 88px);
+            font-weight: 400;
+            font-style: italic;
             line-height: 1;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 0 4px 30px rgba(0,0,0,0.6);
             background: linear-gradient(135deg, var(--gold) 0%, #fff8dc 50%, var(--gold) 100%);
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             animation: goldShimmer 4s ease-in-out infinite;
-            margin-bottom: 30px;
-            filter: drop-shadow(0 4px 20px rgba(255, 215, 0, 0.4));
         }
         @keyframes goldShimmer {
             0%, 100% { background-position: 0% center; }
@@ -241,6 +290,8 @@
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
         }
         .princess-divider .icon {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
             font-size: 24px;
             color: var(--gold);
             animation: sparkle 3s ease-in-out infinite;
@@ -251,38 +302,38 @@
         }
         
         .princess-hosts-intro {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Playfair Display', serif;
             font-style: italic;
             font-size: 18px;
-            letter-spacing: 0.15em;
-            color: var(--rose-light);
+            letter-spacing: 0.05em;
+            color: var(--silver);
             margin-bottom: 20px;
         }
         
         .princess-host-name {
-            font-family: 'Great Vibes', cursive;
-            font-size: clamp(60px, 11vw, 110px);
-            line-height: 0.95;
-            background: linear-gradient(135deg, 
-                #ffd6e7 0%, 
-                #ffd700 50%,
-                #ffd6e7 100%);
-            background-size: 200% auto;
+            font-family: 'Italiana', serif;
+            font-size: clamp(56px, 12vw, 130px);
+            line-height: 0.9;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, 
+                var(--white) 0%, 
+                var(--silver) 50%,
+                var(--gold) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: goldShimmer 6s ease-in-out infinite;
-            filter: drop-shadow(0 6px 30px rgba(255, 215, 0, 0.4));
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 30px rgba(201, 169, 97, 0.3));
         }
         
         .princess-event-type {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 14px;
-            letter-spacing: 0.5em;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 13px;
+            letter-spacing: 0.6em;
             color: var(--gold);
             text-transform: uppercase;
-            text-shadow: 0 0 15px var(--gold);
+            padding-left: 0.6em;
         }
         
         /* ============================================
@@ -294,16 +345,13 @@
             margin: 60px auto;
             padding: 50px 40px;
             background: linear-gradient(180deg, 
-                rgba(255, 245, 248, 0.95) 0%, 
-                rgba(255, 214, 231, 0.95) 100%);
+                rgba(255, 245, 248, 0.97) 0%, 
+                rgba(255, 214, 231, 0.97) 100%);
             border-radius: 20px;
             border: 3px solid var(--gold);
             box-shadow: 
                 0 0 0 8px rgba(74, 26, 110, 0.6),
                 0 0 60px rgba(255, 215, 0, 0.4);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.9s ease;
             z-index: 10;
         }
         .princess-card::before,
@@ -316,23 +364,20 @@
         }
         .princess-card::before { top: -20px; left: 50%; transform: translateX(-50%); }
         .princess-card::after { bottom: -20px; left: 50%; transform: translateX(-50%); }
-        .princess-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
-        }
         @media (max-width: 640px) {
             .princess-card { padding: 40px 22px; margin: 40px 15px; }
         }
         
         .princess-card-title {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 26px;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 28px;
+            font-weight: 400;
             text-align: center;
             margin-bottom: 40px;
             padding-bottom: 24px;
             color: var(--rose-deep);
             border-bottom: 2px dashed var(--rose-medium);
-            letter-spacing: 0.1em;
         }
         
         .princess-info-grid {
@@ -372,28 +417,48 @@
             box-shadow: 0 6px 20px rgba(255, 155, 196, 0.4);
         }
         .princess-info-item .label {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 11px;
-            letter-spacing: 0.25em;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.4em;
             color: var(--rose-deep);
-            font-weight: 700;
             margin-bottom: 10px;
+            text-transform: uppercase;
         }
         .princess-info-item .value {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Playfair Display', serif;
             font-size: 22px;
-            font-weight: 700;
+            font-weight: 400;
             color: var(--text);
             line-height: 1.3;
         }
         .princess-info-item .value .sub {
             display: block;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 15px;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 14px;
             font-style: italic;
             color: var(--text-muted);
             margin-top: 6px;
-            font-weight: 400;
+        }
+        
+        .princess-table-item {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, 
+                rgba(255, 214, 231, 0.8) 0%, 
+                rgba(255, 215, 0, 0.3) 100%) !important;
+            border: 3px solid var(--gold) !important;
+            animation: tableCardPulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes tableCardPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 0 35px 0 rgba(255, 215, 0, 0.7); }
+        }
+        
+        .princess-table-item .value {
+            font-family: 'Italiana', serif !important;
+            font-size: 32px !important;
+            color: var(--rose-deep) !important;
+            letter-spacing: 0.05em;
         }
         
         .princess-btn-itinerary {
@@ -404,14 +469,14 @@
             padding: 14px 28px;
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: #4a1a6e;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.3em;
             text-decoration: none;
-            border-radius: 999px;
+            border-radius: 4px;
             box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4);
             transition: all 0.3s ease;
+            text-transform: uppercase;
         }
         .princess-btn-itinerary:hover {
             transform: translateY(-3px) scale(1.03);
@@ -426,47 +491,160 @@
             margin: 60px auto;
             padding: 50px 40px;
             background: linear-gradient(180deg, 
-                rgba(255, 245, 248, 0.95) 0%, 
-                rgba(255, 214, 231, 0.95) 100%);
+                rgba(255, 245, 248, 0.97) 0%, 
+                rgba(255, 214, 231, 0.97) 100%);
             border-radius: 20px;
             border: 3px solid var(--gold);
             box-shadow: 
                 0 0 0 8px rgba(74, 26, 110, 0.6),
                 0 0 60px rgba(255, 215, 0, 0.3);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s ease;
             z-index: 10;
-        }
-        .princess-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .princess-section { padding: 35px 22px; margin: 40px 15px; }
         }
         
         .princess-section-title {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 24px;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 28px;
+            font-weight: 400;
             text-align: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
             color: var(--rose-deep);
             border-bottom: 2px dashed var(--rose-medium);
-            letter-spacing: 0.1em;
+        }
+        
+        /* ============================================
+           DIAPORAMA PHOTOS
+           ============================================ */
+        .princess-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: #1a0a2e;
+            border-radius: 16px;
+            border: 3px solid var(--gold);
+            box-shadow: 
+                0 0 0 6px rgba(74, 26, 110, 0.6),
+                0 0 40px rgba(255, 215, 0, 0.4);
+        }
+        
+        .princess-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a0a2e;
+        }
+        
+        .princess-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .princess-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #1a0a2e;
+            padding: 10px;
+        }
+        
+        .princess-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            border: 2px solid white;
+            color: #4a1a6e;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.5);
+        }
+        
+        .princess-diapo-arrow:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.8);
+        }
+        
+        .princess-diapo-arrow.prev { left: 16px; }
+        .princess-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .princess-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .princess-diapo-arrow.prev { left: 8px; }
+            .princess-diapo-arrow.next { right: 8px; }
+        }
+        
+        .princess-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(26, 10, 46, 0.9);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            padding: 8px 16px;
+            border-radius: 999px;
+            z-index: 10;
+        }
+        
+        .princess-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(26, 10, 46, 0.85);
+            padding: 10px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .princess-diapo-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .princess-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.4);
+            box-shadow: 0 0 12px var(--gold);
         }
         
         /* Formulaires */
         .princess-form-group { margin-bottom: 24px; }
         .princess-form-group label {
             display: block;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 12px;
-            letter-spacing: 0.2em;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.4em;
             color: var(--rose-deep);
-            font-weight: 700;
             margin-bottom: 10px;
+            text-transform: uppercase;
         }
         .princess-form-group input,
         .princess-form-group textarea {
@@ -476,8 +654,9 @@
             border: 2px solid var(--gold);
             border-radius: 12px;
             color: var(--text);
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Playfair Display', serif;
             font-size: 17px;
+            font-style: italic;
             transition: all 0.3s ease;
         }
         .princess-form-group input:focus,
@@ -506,9 +685,9 @@
             border: 2px solid var(--gold);
             border-radius: 12px;
             background: white;
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Playfair Display', serif;
             font-size: 17px;
-            font-weight: 700;
+            font-style: italic;
             color: var(--text-muted);
             cursor: pointer;
             transition: all 0.3s ease;
@@ -535,11 +714,10 @@
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: #4a1a6e;
             border: none;
-            border-radius: 999px;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
+            border-radius: 4px;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.4em;
             text-transform: uppercase;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -549,47 +727,6 @@
         .princess-btn-submit:hover {
             transform: translateY(-3px);
             box-shadow: 0 16px 40px rgba(255, 215, 0, 0.7);
-        }
-        
-        /* Photos */
-        .princess-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 24px;
-        }
-        .princess-photo {
-            background: white;
-            padding: 14px 14px 50px;
-            border-radius: 12px;
-            box-shadow: 
-                0 10px 32px rgba(74, 26, 110, 0.4),
-                0 0 0 4px var(--gold);
-            transform: rotate(-1deg);
-            transition: all 0.4s ease;
-            position: relative;
-        }
-        .princess-photo:nth-child(even) { transform: rotate(1.5deg); }
-        .princess-photo:hover {
-            transform: rotate(0) scale(1.05);
-            box-shadow: 
-                0 16px 48px rgba(255, 215, 0, 0.5),
-                0 0 0 4px var(--gold);
-            z-index: 5;
-        }
-        .princess-photo img {
-            width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-            border-radius: 6px;
-        }
-        .princess-photo .caption {
-            position: absolute;
-            bottom: 14px;
-            left: 0; right: 0;
-            text-align: center;
-            font-family: 'Great Vibes', cursive;
-            font-size: 22px;
-            color: var(--rose-deep);
         }
         
         /* Boissons */
@@ -604,9 +741,9 @@
             background: white;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Playfair Display', serif;
             font-size: 15px;
-            font-weight: 600;
+            font-style: italic;
             color: var(--text-muted);
         }
         .princess-boisson-item.selected {
@@ -619,12 +756,11 @@
         
         .princess-boisson-category { margin-bottom: 20px; }
         .princess-boisson-category-title {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 16px;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 20px;
             color: var(--rose-deep);
-            font-weight: 700;
             margin-bottom: 12px;
-            letter-spacing: 0.1em;
         }
         
         /* QR */
@@ -663,9 +799,9 @@
             z-index: 10;
         }
         .princess-footer-brand {
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 32px;
-            font-weight: 900;
+            font-family: 'Italiana', serif;
+            font-size: 48px;
+            letter-spacing: 0.2em;
             background: linear-gradient(135deg, var(--gold), #fff8dc, var(--gold));
             background-size: 200% auto;
             -webkit-background-clip: text;
@@ -673,11 +809,12 @@
             background-clip: text;
             animation: goldShimmer 4s ease-in-out infinite;
             margin-bottom: 10px;
-            letter-spacing: 0.1em;
+            text-transform: uppercase;
         }
         .princess-footer-tagline {
-            font-family: 'Great Vibes', cursive;
-            font-size: 22px;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 18px;
             color: var(--rose-light);
             margin-bottom: 30px;
         }
@@ -689,14 +826,14 @@
             padding: 16px 40px;
             background: linear-gradient(135deg, #25d366, #128c7e);
             color: white;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 12px;
+            letter-spacing: 0.3em;
             text-decoration: none;
-            border-radius: 999px;
+            border-radius: 4px;
             box-shadow: 0 12px 32px rgba(37, 211, 102, 0.35);
             transition: all 0.3s ease;
+            text-transform: uppercase;
         }
         .princess-btn-whatsapp:hover {
             transform: translateY(-3px) scale(1.03);
@@ -710,9 +847,9 @@
             display: flex;
             gap: 14px;
             align-items: center;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 16px;
-            font-weight: 600;
+            font-family: 'Playfair Display', serif;
+            font-size: 17px;
+            font-style: italic;
             border-radius: 12px;
         }
         .princess-alert-success { background: #e8f5e9; color: #2d7a45; }
@@ -729,11 +866,11 @@
             background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: #4a1a6e;
             border: none;
-            border-radius: 999px;
-            font-family: 'Cinzel Decorative', cursive;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.15em;
+            border-radius: 4px;
+            font-family: 'Didact Gothic', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
@@ -749,6 +886,10 @@
         }
         @media (max-width: 480px) {
             #downloadBtn { bottom: 12px; right: 12px; padding: 12px 20px; font-size: 10px; }
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -766,40 +907,26 @@
                     <stop offset="100%" stop-color="#ffd700"/>
                 </linearGradient>
             </defs>
-            <!-- Château -->
             <rect x="100" y="150" width="200" height="150" fill="url(#castleGrad)" opacity="0.9"/>
-            <!-- Tourelles -->
             <rect x="70" y="120" width="50" height="180" fill="url(#castleGrad)" opacity="0.9"/>
             <rect x="280" y="120" width="50" height="180" fill="url(#castleGrad)" opacity="0.9"/>
-            <!-- Tours centrales -->
             <polygon points="100,150 150,80 200,150" fill="url(#castleGrad)" opacity="0.95"/>
             <polygon points="200,150 250,80 300,150" fill="url(#castleGrad)" opacity="0.95"/>
-            <!-- Tourelle centrale haute -->
             <rect x="180" y="60" width="40" height="100" fill="url(#castleGrad)"/>
             <polygon points="180,60 200,20 220,60" fill="url(#castleGrad)"/>
-            <!-- Drapeau -->
             <line x1="200" y1="20" x2="200" y2="0" stroke="#ffd700" stroke-width="2"/>
             <polygon points="200,5 230,15 200,25" fill="#e91e63"/>
-            <!-- Fenêtres -->
             <rect x="120" y="180" width="15" height="25" fill="#4a1a6e" rx="7"/>
             <rect x="160" y="180" width="15" height="25" fill="#4a1a6e" rx="7"/>
             <rect x="225" y="180" width="15" height="25" fill="#4a1a6e" rx="7"/>
             <rect x="265" y="180" width="15" height="25" fill="#4a1a6e" rx="7"/>
-            <!-- Porte -->
             <path d="M 185 300 L 185 240 Q 200 220 215 240 L 215 300 Z" fill="#4a1a6e"/>
-            <!-- Étoiles -->
             <text x="50" y="60" font-size="24" fill="#ffd700">✨</text>
             <text x="330" y="80" font-size="20" fill="#ffd700">✨</text>
             <text x="360" y="40" font-size="16" fill="#ffd700">✨</text>
             <text x="30" y="120" font-size="14" fill="#ffd700">✨</text>
         </svg>
     </div>
-
-    <!-- NAVBAR -->
-    <nav class="princess-navbar">
-        <div class="princess-brand">👑 <?php echo htmlspecialchars($appName); ?></div>
-        <div class="princess-status">✦ INVITATION ROYALE ✦</div>
-    </nav>
 
     <!-- HERO -->
     <section class="princess-hero">
@@ -833,23 +960,23 @@
     </section>
 
     <!-- CARTE -->
-    <div class="princess-card">
+    <div class="princess-card princess-anim zoom-in">
         <div class="princess-card-title">✦ DÉTAILS DU BAL ✦</div>
         <div class="princess-info-grid">
             
-            <div class="princess-info-item">
+            <div class="princess-info-item princess-anim delay-1">
                 <div class="icon"><i class="fas fa-calendar-alt"></i></div>
                 <div class="label">DATE</div>
                 <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
             </div>
             
-            <div class="princess-info-item">
+            <div class="princess-info-item princess-anim delay-2">
                 <div class="icon"><i class="fas fa-clock"></i></div>
                 <div class="label">HEURE</div>
                 <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
             </div>
             
-            <div class="princess-info-item" style="grid-column: 1 / -1;">
+            <div class="princess-info-item princess-anim delay-3" style="grid-column: 1 / -1;">
                 <div class="icon"><i class="fas fa-crown"></i></div>
                 <div class="label">CHÂTEAU</div>
                 <div class="value">
@@ -864,7 +991,17 @@
                 </a>
             </div>
             
-            <div class="princess-info-item" style="grid-column: 1 / -1;">
+            <?php if ($hasTable): ?>
+            <div class="princess-info-item princess-table-item princess-anim delay-4">
+                <div class="icon"><i class="fas fa-chair"></i></div>
+                <div class="label">👑 VOTRE TABLE ROYALE 👑</div>
+                <div class="value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="princess-info-item princess-anim delay-5" style="grid-column: 1 / -1;">
                 <div class="icon"><i class="fas fa-users"></i></div>
                 <div class="label">PLACES ROYALES</div>
                 <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
@@ -874,7 +1011,7 @@
     </div>
 
     <?php if ($message): ?>
-        <div class="princess-section apparue">
+        <div class="princess-section princess-anim apparue">
             <div class="princess-alert princess-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -882,34 +1019,60 @@
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($photosHost)): ?>
-        <div class="princess-section">
+    <?php if ($hasPhotos): ?>
+        <div class="princess-section princess-anim from-left">
             <div class="princess-section-title">✦ SOUVENIRS MAGIQUES ✦</div>
-            <div class="princess-photos-grid">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="princess-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="caption">Souvenir n°<?php echo $index + 1; ?></div>
+            
+            <div class="princess-diaporama" id="princessDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Souvenir ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="princess-diapo-arrow prev" onclick="princessDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="princess-diapo-arrow next" onclick="princessDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="princess-diapo-counter" id="princessDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="princess-diapo-dots" id="princessDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="princessDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
 
-    <div class="princess-section">
+    <div class="princess-section princess-anim from-right">
         <div class="princess-section-title">✦ CODE ROYAL ✦</div>
         <div class="princess-qr-wrapper">
             <div class="princess-qr-box">
                 <div id="qrcode"></div>
             </div>
-            <div style="font-family:'Cinzel Decorative',cursive;font-size:14px;color:var(--rose-deep);margin-top:24px;font-weight:700;letter-spacing:0.2em;">
+            <div style="font-family:'Didact Gothic',sans-serif;font-size:13px;color:var(--rose-deep);margin-top:24px;letter-spacing:0.3em;text-transform:uppercase;">
                 <?php echo htmlspecialchars($invitation['code_unique']); ?>
             </div>
         </div>
     </div>
 
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="princess-section">
+        <div class="princess-section princess-anim from-left">
             <div class="princess-section-title">👑 CONFIRMATION 👑</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -947,11 +1110,11 @@
     <?php endif; ?>
 
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="princess-section">
+        <div class="princess-section princess-anim from-right">
             <div class="princess-section-title">✦ BOISSONS ROYALES ✦</div>
             
             <?php if ($isLocked): ?>
-                <div style="text-align:center;color:var(--rose-deep);font-family:'Cinzel Decorative',cursive;font-size:14px;font-weight:700;padding:20px 0;">
+                <div style="text-align:center;color:var(--rose-deep);font-family:'Didact Gothic',sans-serif;font-size:12px;letter-spacing:0.3em;padding:20px 0;text-transform:uppercase;">
                     <i class="fas fa-lock"></i> VOS CHOIX SONT VERROUILLÉS
                 </div>
                 <div class="princess-boisson-grid" style="justify-content:center;">
@@ -969,7 +1132,7 @@
                 <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=preferences" id="preferencesForm">
                     <input type="hidden" name="action" value="preferences">
                     
-                    <p style="text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:var(--text-muted);margin-bottom:24px;">
+                    <p style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:var(--text-muted);margin-bottom:24px;">
                         Choisissez <strong style="color:var(--rose-deep);font-style:normal;">2 boissons</strong> : <span id="selectedCount">0</span>/2
                     </p>
                     
@@ -1005,7 +1168,7 @@
         </div>
     <?php endif; ?>
 
-    <footer class="princess-footer">
+    <footer class="princess-footer princess-anim">
         <div class="princess-footer-brand">👑 <?php echo htmlspecialchars($appName); ?></div>
         <div class="princess-footer-tagline">Des invitations dignes d'un conte de fées</div>
         
@@ -1013,7 +1176,7 @@
             <i class="fab fa-whatsapp"></i> NOUS CONTACTER
         </a>
         
-        <div style="margin-top:30px;padding-top:20px;border-top:1px solid rgba(255, 215, 0, 0.3);font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--rose-light);letter-spacing:0.2em;">
+        <div style="margin-top:30px;padding-top:20px;border-top:1px solid rgba(255, 215, 0, 0.3);font-family:'Didact Gothic',sans-serif;font-size:11px;color:var(--rose-light);letter-spacing:0.3em;text-transform:uppercase;">
             ✦ © <?php echo date('Y'); ?> • TOUS DROITS RÉSERVÉS ✦
         </div>
     </footer>
@@ -1024,7 +1187,6 @@
     </button>
 
     <script>
-        // Étoiles
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('starsContainer');
             for (let i = 0; i < 40; i++) {
@@ -1040,16 +1202,27 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.princess-card, .princess-section');
+            const animElements = document.querySelectorAll('.princess-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
                         observer.unobserve(entry.target);
-                    } 
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
+            }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1062,6 +1235,63 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 } catch(e) { console.error(e); }
+            }
+        });
+
+        let princessDiapoIndex = 0;
+        const princessSlides = document.querySelectorAll('#princessDiaporama .slide');
+        const princessDots = document.querySelectorAll('#princessDiapoDots span');
+        const princessCounter = document.getElementById('princessDiapoCounter');
+        let princessDiapoInterval = null;
+
+        function princessUpdateDiapo() {
+            princessSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === princessDiapoIndex);
+            });
+            princessDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === princessDiapoIndex);
+            });
+            if (princessCounter) {
+                princessCounter.textContent = (princessDiapoIndex + 1) + ' / ' + princessSlides.length;
+            }
+        }
+
+        function princessDiapoChange(direction) {
+            princessDiapoIndex += direction;
+            if (princessDiapoIndex < 0) princessDiapoIndex = princessSlides.length - 1;
+            if (princessDiapoIndex >= princessSlides.length) princessDiapoIndex = 0;
+            princessUpdateDiapo();
+            resetPrincessDiapoAuto();
+        }
+
+        function princessDiapoGoTo(index) {
+            princessDiapoIndex = index;
+            princessUpdateDiapo();
+            resetPrincessDiapoAuto();
+        }
+
+        function resetPrincessDiapoAuto() {
+            if (princessDiapoInterval) clearInterval(princessDiapoInterval);
+            if (princessSlides.length > 1) {
+                princessDiapoInterval = setInterval(() => {
+                    princessDiapoIndex = (princessDiapoIndex + 1) % princessSlides.length;
+                    princessUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (princessSlides.length > 0) {
+                princessUpdateDiapo();
+                resetPrincessDiapoAuto();
+                
+                const container = document.getElementById('princessDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (princessDiapoInterval) clearInterval(princessDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetPrincessDiapoAuto);
+                }
             }
         });
 

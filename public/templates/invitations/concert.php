@@ -1,14 +1,24 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : TICKET
+ * TEMPLATE : TICKET - v2
  * ============================================================
  * 
- * Format ticket de concert/cinéma avec perforations,
- * code-barres, style déchirable. Structure radicalement différente.
+ * Nouveautés v2 :
+ * - Diaporama photos plein écran
+ * - Animations de sections en cascade
+ * - Nom de la table
+ * - Photo de fond en background
  * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+$hasTable = !empty($tableNom) || !empty($tableNumero);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -26,12 +36,28 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
+        /* ============================================
+           PHOTO DE FOND EN BACKGROUND
+           ============================================ */
+        html {
+            background: #1a1a1a;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: #1a1a1a;
+            <?php else: ?>
             background: #1a1a1a;
             background-image: 
                 radial-gradient(circle at 20% 20%, rgba(255, 107, 53, 0.05) 0%, transparent 40%),
                 radial-gradient(circle at 80% 80%, rgba(255, 193, 7, 0.05) 0%, transparent 40%);
+            <?php endif; ?>
             color: #1a1a1a;
             min-height: 100vh;
             display: flex;
@@ -39,6 +65,23 @@
             align-items: center;
             padding: 40px 16px;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+        }
+        
+        /* Overlay dégradé sur la photo */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(26, 26, 26, 0.7) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(26, 26, 26, 0.75) 0%, 
+                    rgba(26, 26, 26, 0.6) 30%,
+                    rgba(26, 26, 26, 0.8) 70%,
+                    rgba(26, 26, 26, 0.95) 100%);
+            pointer-events: none;
         }
         
         .app-wrapper {
@@ -48,7 +91,53 @@
             flex-direction: column;
             align-items: center;
             gap: 60px;
+            position: relative;
+            z-index: 2;
         }
+        
+        /* ============================================
+           ANIMATIONS DE SECTIONS EN CASCADE
+           ============================================ */
+        .ticket-anim {
+            opacity: 0;
+            transform: translateY(60px) scale(0.96);
+            transition: 
+                opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
+        }
+        
+        .ticket-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        
+        .ticket-anim.from-left {
+            transform: translateX(-80px);
+        }
+        .ticket-anim.from-left.apparue {
+            transform: translateX(0);
+        }
+        
+        .ticket-anim.from-right {
+            transform: translateX(80px);
+        }
+        .ticket-anim.from-right.apparue {
+            transform: translateX(0);
+        }
+        
+        .ticket-anim.zoom-in {
+            transform: scale(0.85);
+        }
+        .ticket-anim.zoom-in.apparue {
+            transform: scale(1);
+        }
+        
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
            TICKET FORMAT
@@ -66,7 +155,6 @@
             filter: drop-shadow(0 0 20px rgba(255, 107, 53, 0.15));
         }
         
-        /* Perforations décoratives sur les côtés */
         .ticket::before,
         .ticket::after {
             content: '';
@@ -88,7 +176,6 @@
             transform: translateY(-50%);
         }
         
-        /* Découpe pointillée horizontale au milieu */
         .ticket-cut {
             position: absolute;
             top: 55%;
@@ -101,7 +188,7 @@
         }
         
         /* ============================================
-           EN-TÊTE DU TICKET (fond coloré)
+           EN-TÊTE DU TICKET
            ============================================ */
         .ticket-header {
             background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
@@ -170,13 +257,12 @@
         }
         
         /* ============================================
-           CORPS DU TICKET (fond blanc)
+           CORPS DU TICKET
            ============================================ */
         .ticket-body {
             padding: 24px 24px 20px;
         }
         
-        /* Invité - style "nom sur billet" */
         .ticket-guest {
             margin-bottom: 20px;
             padding-bottom: 16px;
@@ -199,7 +285,6 @@
             line-height: 1;
         }
         
-        /* Grille infos en 2 colonnes */
         .ticket-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -223,8 +308,42 @@
             letter-spacing: 0.02em;
         }
         
+        /* ⭐ CARTE TABLE DANS LE TICKET */
+        .ticket-table-info {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(247, 147, 30, 0.05));
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            margin: 16px 0;
+            animation: tablePulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes tablePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.3); }
+            50% { box-shadow: 0 0 25px 0 rgba(255, 107, 53, 0.5); }
+        }
+        
+        .ticket-table-info .label {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: #ff6b35;
+            margin-bottom: 6px;
+        }
+        
+        .ticket-table-info .value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            color: #1a1a1a;
+            letter-spacing: 0.05em;
+            line-height: 1;
+        }
+        
         /* ============================================
-           SECTION DÉTACHABLE (basse du ticket)
+           SECTION DÉTACHABLE
            ============================================ */
         .ticket-stub {
             padding: 20px 24px 24px;
@@ -266,7 +385,6 @@
             letter-spacing: 0.2em;
         }
         
-        /* QR code dans le stub */
         .ticket-stub-content {
             display: flex;
             gap: 16px;
@@ -294,9 +412,6 @@
             font-weight: 700;
         }
         
-        /* ============================================
-           STATUT RSVP (badge en coin)
-           ============================================ */
         .ticket-status {
             position: absolute;
             top: 20px;
@@ -333,6 +448,117 @@
             text-align: center;
             margin-bottom: 20px;
             text-transform: uppercase;
+        }
+        
+        /* ============================================
+           ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .ticket-diaporama {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: #1a1a1a;
+            border: 3px solid #ff6b35;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+        
+        .ticket-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+        }
+        .ticket-diaporama .slide.active { opacity: 1; z-index: 1; }
+        .ticket-diaporama .slide img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain;
+            background: #1a1a1a;
+            padding: 8px;
+        }
+        
+        /* Flèches */
+        .ticket-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 107, 53, 0.9);
+            border: 2px solid white;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+        .ticket-diapo-arrow:hover {
+            background: #f7931e;
+            transform: translateY(-50%) scale(1.1);
+        }
+        .ticket-diapo-arrow.prev { left: 12px; }
+        .ticket-diapo-arrow.next { right: 12px; }
+        
+        @media (max-width: 480px) {
+            .ticket-diapo-arrow { width: 36px; height: 36px; font-size: 13px; }
+            .ticket-diapo-arrow.prev { left: 8px; }
+            .ticket-diapo-arrow.next { right: 8px; }
+        }
+        
+        /* Compteur */
+        .ticket-diapo-counter {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid #ff6b35;
+            color: #ff6b35;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            padding: 6px 12px;
+            border-radius: 999px;
+            z-index: 10;
+        }
+        
+        /* Points */
+        .ticket-diapo-dots {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+            background: rgba(26, 26, 26, 0.85);
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 107, 53, 0.5);
+        }
+        .ticket-diapo-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .ticket-diapo-dots span.active {
+            background: #ff6b35;
+            transform: scale(1.4);
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.8);
         }
         
         /* Formulaires */
@@ -433,40 +659,7 @@
             margin-top: 10px;
         }
         
-        /* Photos */
-        .diaporama {
-            width: 100%;
-            aspect-ratio: 1/1;
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-            background: #1a1a1a;
-        }
-        .diaporama .slide {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        .diaporama .slide.active { opacity: 1; }
-        .diaporama .slide img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .diapo-nav {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .diapo-nav span {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #ddd;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .diapo-nav span.active { background: #ff6b35; transform: scale(1.3); }
-        
-        /* QR Section */
+        /* QR */
         .qr-wrapper {
             display: flex;
             flex-direction: column;
@@ -574,12 +767,11 @@
         <!-- ========================================== -->
         <!-- TICKET PRINCIPAL                           -->
         <!-- ========================================== -->
-        <div class="ticket section-animee delai-1" id="invitation-card">
+        <div class="ticket ticket-anim zoom-in" id="invitation-card">
             
             <!-- En-tête coloré -->
             <div class="ticket-header">
                 
-                <!-- Statut RSVP -->
                 <div class="ticket-status <?php 
                     echo $invitation['statut'] == 'CONFIRMEE' ? 'confirmed' : 
                         ($invitation['statut'] == 'REFUSEE' ? 'refused' : 'pending'); 
@@ -610,13 +802,11 @@
             <!-- Corps du ticket -->
             <div class="ticket-body">
                 
-                <!-- Invité -->
                 <div class="ticket-guest">
                     <div class="label">Titulaire</div>
                     <div class="name"><?php echo htmlspecialchars(strtoupper($guestName)); ?></div>
                 </div>
                 
-                <!-- Infos -->
                 <div class="ticket-info-grid">
                     <div class="ticket-info-item">
                         <div class="label">Date</div>
@@ -636,7 +826,16 @@
                     </div>
                 </div>
                 
-                <!-- Description -->
+                <!-- ⭐ TABLE ASSIGNÉE -->
+                <?php if ($hasTable): ?>
+                <div class="ticket-table-info">
+                    <div class="label">✦ Votre table ✦</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
                 <?php if (!empty($eventDescription)): ?>
                     <div style="font-family:'Inter',sans-serif;font-size:13px;line-height:1.6;color:#666;padding:12px 0;border-top:1px solid #eee;">
                         <?php echo nl2br(htmlspecialchars(mb_substr($eventDescription, 0, 200))); ?>
@@ -646,19 +845,16 @@
                 
             </div>
             
-            <!-- Découpe pointillée -->
             <div class="ticket-cut"></div>
             
             <!-- Souche détachable -->
             <div class="ticket-stub">
                 
-                <!-- Code-barres -->
                 <div class="ticket-barcode">
                     <div class="bars"></div>
                     <div class="code"><?php echo htmlspecialchars($invitation['code_unique']); ?></div>
                 </div>
                 
-                <!-- QR + info -->
                 <div class="ticket-stub-content">
                     <div class="ticket-qr">
                         <div id="card-qrcode"></div>
@@ -674,25 +870,44 @@
         </div>
 
         <!-- ========================================== -->
-        <!-- DIAPORAMA PHOTOS                           -->
+        <!-- ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN            -->
         <!-- ========================================== -->
-        <?php if (!empty($photosHost)): ?>
-            <div class="section section-animee delai-2">
+        <?php if ($hasPhotos): ?>
+            <div class="section ticket-anim from-left">
                 <div class="section-title">📸 Souvenirs</div>
-                <div class="diaporama" id="diaporama">
-                    <?php foreach ($photosHost as $index => $photo): ?>
-                        <div class="slide <?php echo $index === 0 ? 'active' : ''; ?>" data-index="<?php echo $index; ?>">
+                
+                <div class="ticket-diaporama" id="ticketDiaporama">
+                    <?php 
+                    $photoIndex = 0;
+                    foreach ($photosHost as $index => $photo): 
+                    ?>
+                        <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
                             <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
-                                 alt="" loading="lazy">
+                                 alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Photo ' . ($index + 1)); ?>"
+                                 loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                                 crossorigin="anonymous">
                         </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="diapo-nav" id="diapoIndicators">
-                    <?php foreach ($photosHost as $index => $photo): ?>
-                        <span data-index="<?php echo $index; ?>" 
-                              class="<?php echo $index === 0 ? 'active' : ''; ?>" 
-                              onclick="goToDiapo(<?php echo $index; ?>)"></span>
-                    <?php endforeach; ?>
+                    <?php 
+                        $photoIndex++;
+                    endforeach; 
+                    ?>
+                    
+                    <?php if ($photoIndex > 1): ?>
+                        <button class="ticket-diapo-arrow prev" onclick="ticketDiapoChange(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="ticket-diapo-arrow next" onclick="ticketDiapoChange(1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <div class="ticket-diapo-counter" id="ticketDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                        
+                        <div class="ticket-diapo-dots" id="ticketDiapoDots">
+                            <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                                <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="ticketDiapoGoTo(<?php echo $i; ?>)"></span>
+                            <?php endfor; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
@@ -701,7 +916,7 @@
         <!-- MESSAGES                                   -->
         <!-- ========================================== -->
         <?php if ($message): ?>
-            <div class="section section-animee delai-2">
+            <div class="section ticket-anim apparue">
                 <div class="alert-custom alert-<?php echo htmlspecialchars($messageType); ?>">
                     <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                     <span><?php echo htmlspecialchars($message); ?></span>
@@ -712,7 +927,7 @@
         <!-- ========================================== -->
         <!-- QR CODE                                    -->
         <!-- ========================================== -->
-        <div class="section section-animee delai-3">
+        <div class="section ticket-anim from-right">
             <div class="section-title">Code QR</div>
             <div class="qr-wrapper">
                 <div id="qrcode"></div>
@@ -726,7 +941,7 @@
         <!-- CONFIRMATION                               -->
         <!-- ========================================== -->
         <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-            <div class="section section-animee delai-4">
+            <div class="section ticket-anim from-left">
                 <div class="section-title">Confirmer</div>
                 
                 <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -771,7 +986,7 @@
         <!-- BOISSONS                                   -->
         <!-- ========================================== -->
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-            <div class="section section-animee delai-4">
+            <div class="section ticket-anim from-right">
                 <div class="section-title">🍹 Boissons</div>
                 
                 <?php if ($isLocked): ?>
@@ -818,7 +1033,7 @@
         <!-- ========================================== -->
         <!-- FOOTER                                     -->
         <!-- ========================================== -->
-        <div class="section section-animee delai-5" style="text-align:center;">
+        <div class="section ticket-anim" style="text-align:center;">
             <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.1em;color:#ff6b35;margin-bottom:6px;">
                 <?php echo htmlspecialchars(strtoupper($appName)); ?>
             </div>
@@ -846,18 +1061,34 @@
     </button>
 
     <script>
-        // Animations
+        // ================================================================
+        // ANIMATIONS AU SCROLL
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.section-animee');
+            const animElements = document.querySelectorAll('.ticket-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
+                        observer.unobserve(entry.target);
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
-            setTimeout(() => sections.forEach(s => {
-                if (s.getBoundingClientRect().top < window.innerHeight * 0.85) s.classList.add('apparue');
-            }), 300);
+            }, { 
+                threshold: 0.15,
+                rootMargin: '0px 0px -60px 0px'
+            });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
         // QR
@@ -880,24 +1111,65 @@
             }
         });
 
-        // Diaporama
-        let diapoIndex = 0;
-        const slides = document.querySelectorAll('.slide');
-        const indicators = document.querySelectorAll('#diapoIndicators span');
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let ticketDiapoIndex = 0;
+        const ticketSlides = document.querySelectorAll('#ticketDiaporama .slide');
+        const ticketDots = document.querySelectorAll('#ticketDiapoDots span');
+        const ticketCounter = document.getElementById('ticketDiapoCounter');
+        let ticketDiapoInterval = null;
 
-        function updateDiapo() {
-            slides.forEach((s, i) => s.classList.toggle('active', i === diapoIndex));
-            indicators.forEach((ind, i) => ind.classList.toggle('active', i === diapoIndex));
+        function ticketUpdateDiapo() {
+            ticketSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === ticketDiapoIndex);
+            });
+            ticketDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === ticketDiapoIndex);
+            });
+            if (ticketCounter) {
+                ticketCounter.textContent = (ticketDiapoIndex + 1) + ' / ' + ticketSlides.length;
+            }
         }
-        function goToDiapo(index) { diapoIndex = index; updateDiapo(); }
-        function changerDiapo(dir) {
-            const n = diapoIndex + dir;
-            if (n < 0 || n >= slides.length) return;
-            diapoIndex = n; updateDiapo();
+
+        function ticketDiapoChange(direction) {
+            ticketDiapoIndex += direction;
+            if (ticketDiapoIndex < 0) ticketDiapoIndex = ticketSlides.length - 1;
+            if (ticketDiapoIndex >= ticketSlides.length) ticketDiapoIndex = 0;
+            ticketUpdateDiapo();
+            resetTicketDiapoAuto();
         }
-        if (slides.length > 1) {
-            setInterval(() => { diapoIndex = (diapoIndex + 1) % slides.length; updateDiapo(); }, 5000);
+
+        function ticketDiapoGoTo(index) {
+            ticketDiapoIndex = index;
+            ticketUpdateDiapo();
+            resetTicketDiapoAuto();
         }
+
+        function resetTicketDiapoAuto() {
+            if (ticketDiapoInterval) clearInterval(ticketDiapoInterval);
+            if (ticketSlides.length > 1) {
+                ticketDiapoInterval = setInterval(() => {
+                    ticketDiapoIndex = (ticketDiapoIndex + 1) % ticketSlides.length;
+                    ticketUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (ticketSlides.length > 0) {
+                ticketUpdateDiapo();
+                resetTicketDiapoAuto();
+                
+                const container = document.getElementById('ticketDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (ticketDiapoInterval) clearInterval(ticketDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetTicketDiapoAuto);
+                }
+            }
+        });
 
         // Download
         async function telechargerJPEG() {
