@@ -74,11 +74,16 @@ try {
             c.reponse,
             c.nombre_personnes AS nb_confirme,
             c.commentaire,
-            c.date_confirmation
+            c.date_confirmation,
+            t.nom AS table_nom,
+            t.numero AS table_numero,
+            t.zone AS table_zone
         FROM invitations i
         JOIN invites inv ON i.id_invite = inv.id
         JOIN evenements e ON i.id_evenement = e.id
         LEFT JOIN confirmations c ON i.id = c.id_invitation
+        LEFT JOIN invitations_tables it ON it.id_invitation = i.id
+        LEFT JOIN tables t ON t.id = it.id_table
         WHERE i.code_unique = ?
         AND i.statut != 'ANNULEE'
     ");
@@ -175,7 +180,7 @@ if ($isLocked && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $messageType = 'success';
 
-                // Recharger l'invitation
+                // Recharger l'invitation (avec les infos de table)
                 $stmt = $pdo->prepare("
                     SELECT 
                         i.*,
@@ -193,11 +198,16 @@ if ($isLocked && $_SERVER['REQUEST_METHOD'] === 'POST') {
                         c.reponse,
                         c.nombre_personnes AS nb_confirme,
                         c.commentaire,
-                        c.date_confirmation
+                        c.date_confirmation,
+                        t.nom AS table_nom,
+                        t.numero AS table_numero,
+                        t.zone AS table_zone
                     FROM invitations i
                     JOIN invites inv ON i.id_invite = inv.id
                     JOIN evenements e ON i.id_evenement = e.id
                     LEFT JOIN confirmations c ON i.id = c.id_invitation
+                    LEFT JOIN invitations_tables it ON it.id_invitation = i.id
+                    LEFT JOIN tables t ON t.id = it.id_table
                     WHERE i.id = ?
                 ");
                 $stmt->execute([$invitation['id']]);
@@ -313,7 +323,6 @@ $hostName = preg_replace('/\s*&amp;\s*.*$/', '', $hostName);
 $host1    = trim($hostName);
 
 // Type d'événement
-// Libellés propres pour les types d'événements
 $typesLabels = [
     'mariage_religieux' => 'Mariage Religieux',
     'mariage_civil'     => 'Mariage Civil',
@@ -361,6 +370,14 @@ $pageBackground = !empty($eventImageRaw) ? getFondUrl($eventImageRaw) : '';
 
 // Code unique (utilisé dans les formulaires)
 $code = $invitation['code_unique'];
+
+// ============================================================
+// INFORMATIONS DE LA TABLE (si assignée)
+// ============================================================
+$tableNom     = $invitation['table_nom']    ?? null;
+$tableNumero  = $invitation['table_numero'] ?? null;
+$tableZone    = $invitation['table_zone']   ?? null;
+$hasTable     = !empty($tableNom) || !empty($tableNumero);
 
 // ============================================================
 // STATUTS ET LABELS
@@ -413,7 +430,8 @@ if (!file_exists($templatePath)) {
 //   $lieuDisplay, $adresseDisplay, $eventType, $eventDescription,
 //   $photosHost, $boissons, $boissonsGrouped, $preferencesBoissons,
 //   $isLocked, $message, $messageType, $code, $fullUrl,
-//   $pageBackground, $appName, $statutLabels, $statutColors, ...
+//   $pageBackground, $appName, $statutLabels, $statutColors,
+//   $tableNom, $tableNumero, $tableZone, $hasTable, ...
 //
 // Le template n'a plus qu'à afficher le HTML.
 
