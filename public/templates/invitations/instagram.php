@@ -1,11 +1,13 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : STORY INSTAGRAM
+ * TEMPLATE : STORY INSTAGRAM - v2
  * ============================================================
  * 
- * Format vertical 9:16 plein écran, style story Instagram,
- * barre de progression, anneaux story, swipe up.
+ * Nouveautés v2 :
+ * - Affichage du nom de la table
+ * - Photo de fond utilisée en background
+ * - Diaporama photos plein écran (image entière)
  * 
  * ============================================================
  */
@@ -39,9 +41,10 @@
             body {
                 background: #111;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                padding: 30px;
+                justify-content: flex-start;
+                padding: 40px 20px;
             }
         }
         
@@ -56,6 +59,7 @@
             border-radius: 0;
             display: flex;
             flex-direction: column;
+            margin: 0 auto;
         }
         
         @media (min-width: 768px) {
@@ -65,13 +69,10 @@
                     0 0 0 12px #000,
                     0 0 0 14px #333,
                     0 40px 100px rgba(0,0,0,0.9);
-                max-height: 85vh;
-                aspect-ratio: auto;
-                height: 85vh;
             }
         }
         
-        /* Fond image */
+        /* ⭐ FOND PHOTO */
         .story-bg {
             position: absolute;
             inset: 0;
@@ -84,13 +85,13 @@
             position: absolute;
             inset: 0;
             background: linear-gradient(180deg, 
-                rgba(0,0,0,0.5) 0%, 
-                rgba(0,0,0,0.1) 30%,
-                rgba(0,0,0,0.3) 70%,
-                rgba(0,0,0,0.9) 100%);
+                rgba(0,0,0,0.55) 0%, 
+                rgba(0,0,0,0.15) 30%,
+                rgba(0,0,0,0.35) 70%,
+                rgba(0,0,0,0.92) 100%);
         }
         
-        /* Barre de progression story */
+        /* Barre de progression */
         .story-progress {
             position: relative;
             z-index: 10;
@@ -119,7 +120,7 @@
             to   { width: 100%; }
         }
         
-        /* Header story (avatar + nom + heure) */
+        /* Header story */
         .story-header {
             position: relative;
             z-index: 10;
@@ -197,7 +198,7 @@
             text-align: center;
         }
         
-        /* Sticker "Invitation" en haut */
+        /* Sticker */
         .story-sticker {
             position: absolute;
             top: 80px;
@@ -218,14 +219,14 @@
         
         /* Carte centrale */
         .story-card {
-            background: rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.4);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 24px;
             padding: 24px 20px;
             border: 1px solid rgba(255,255,255,0.2);
             margin-bottom: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         
         .story-label {
@@ -271,7 +272,39 @@
             font-weight: 600;
         }
         
-        /* Infos date/lieu en bas */
+        /* ⭐ TABLE DANS LA STORY */
+        .story-table {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(255,110,199,0.25), rgba(120,115,245,0.25));
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 16px;
+            display: inline-block;
+            animation: tablePulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes tablePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,110,199,0.3); }
+            50% { box-shadow: 0 0 30px 0 rgba(255,110,199,0.5); }
+        }
+        
+        .story-table .label {
+            font-size: 9px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .story-table .value {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        /* Infos date/lieu */
         .story-info-bar {
             display: flex;
             justify-content: center;
@@ -296,7 +329,7 @@
             color: white;
         }
         
-        /* Swipe up indicator */
+        /* Swipe up */
         .story-swipe {
             position: relative;
             z-index: 10;
@@ -317,7 +350,7 @@
             50% { transform: translateY(-6px); opacity: 1; }
         }
         
-        /* Bouton réponse sticker */
+        /* CTA */
         .story-cta {
             position: absolute;
             bottom: 100px;
@@ -348,7 +381,7 @@
         }
         
         /* ============================================
-           SECTIONS HORS STORY (formulaires, boissons, footer)
+           CONTENU SOUS LA STORY
            ============================================ */
         .content-below {
             max-width: 420px;
@@ -357,19 +390,6 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-        }
-        
-        @media (min-width: 768px) {
-            body {
-                flex-direction: column;
-                justify-content: flex-start;
-                padding: 40px 20px;
-            }
-            .story-container {
-                height: auto;
-                aspect-ratio: 9/16;
-                max-height: none;
-            }
         }
         
         .info-card {
@@ -395,7 +415,7 @@
             font-size: 20px;
         }
         
-        /* Formulaires */
+        /* Formulaire */
         .form-group { margin-bottom: 16px; }
         .form-group label {
             display: block;
@@ -472,7 +492,7 @@
             box-shadow: 0 16px 36px rgba(120, 115, 245, 0.6);
         }
         
-        /* Boissons pills */
+        /* Boissons */
         .boisson-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .boisson-item {
             display: inline-flex;
@@ -512,7 +532,7 @@
             align-items: center;
             gap: 12px;
         }
-        #qrcode, #card-qrcode {
+        #qrcode {
             padding: 12px;
             background: white;
             border-radius: 12px;
@@ -556,7 +576,7 @@
         }
         #downloadBtn:hover { transform: translateY(-3px) scale(1.05); }
         
-        /* Photos diaporama */
+        /* ⭐ DIAPORAMA PLEIN ÉCRAN */
         .diaporama {
             width: 100%;
             aspect-ratio: 4/5;
@@ -564,25 +584,81 @@
             overflow: hidden;
             position: relative;
             background: #000;
+            border: 1px solid rgba(255,255,255,0.15);
         }
+        
         .diaporama .slide {
             position: absolute;
             inset: 0;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        
         .diaporama .slide.active { opacity: 1; }
-        .diaporama .slide img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        
+        /* Flèches diaporama */
+        .diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .diapo-arrow:hover {
+            background: rgba(255,110,199,0.8);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .diapo-arrow.prev { left: 12px; }
+        .diapo-arrow.next { right: 12px; }
+        
+        /* Compteur */
+        .diapo-counter {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            padding: 6px 12px;
+            border-radius: 999px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
     </style>
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- STORY FORMAT VERTICAL                       -->
-    <!-- ========================================== -->
+    <!-- STORY VERTICALE -->
     <div class="story-container" id="invitation-card">
         
-        <!-- Fond image -->
+        <!-- ⭐ FOND PHOTO -->
         <div class="story-bg" style="<?php if (!empty($pageBackground)): ?>background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');<?php else: ?>background: linear-gradient(135deg, #1a0033 0%, #000 50%, #33001a 100%);<?php endif; ?>"></div>
         
         <!-- Barre de progression -->
@@ -628,6 +704,14 @@
                 <div class="story-host-name"><?php echo htmlspecialchars($host1); ?></div>
                 <div class="story-event-type"><?php echo htmlspecialchars(strtoupper($eventType)); ?></div>
                 
+                <!-- ⭐ TABLE ASSIGNÉE -->
+                <?php if ($hasTable): ?>
+                <div class="story-table">
+                    <div class="label">Votre table</div>
+                    <div class="value"><?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?></div>
+                </div>
+                <?php endif; ?>
+                
                 <div class="story-info-bar">
                     <div class="item">
                         <div class="label">Date</div>
@@ -647,7 +731,7 @@
             
         </div>
         
-        <!-- CTA pulse -->
+        <!-- CTA -->
         <div class="story-cta">
             <a href="#section-confirmation" class="story-cta-btn">
                 <i class="fas fa-check-circle"></i>
@@ -655,7 +739,7 @@
             </a>
         </div>
         
-        <!-- Swipe indicator -->
+        <!-- Swipe -->
         <div class="story-swipe">
             <i class="fas fa-chevron-up"></i>
             Glisser vers le haut
@@ -663,9 +747,7 @@
         
     </div>
 
-    <!-- ========================================== -->
-    <!-- CONTENU SOUS LA STORY                       -->
-    <!-- ========================================== -->
+    <!-- CONTENU SOUS LA STORY -->
     <div class="content-below">
         
         <?php if ($message): ?>
@@ -675,26 +757,58 @@
             </div>
         <?php endif; ?>
         
-        <!-- Photos -->
+        <!-- ⭐ DIAPORAMA PHOTOS -->
         <?php if (!empty($photosHost)): ?>
             <div class="info-card">
                 <h3><i class="fas fa-images"></i> Souvenirs</h3>
+                
                 <div class="diaporama" id="diaporama">
-                    <?php foreach ($photosHost as $index => $photo): ?>
-                        <div class="slide <?php echo $index === 0 ? 'active' : ''; ?>" data-index="<?php echo $index; ?>">
-                            <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
+                    <?php 
+                    $photoIndex = 0;
+                    foreach ($photosHost as $index => $photo): 
+                    ?>
+                        <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                            <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                                 alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Souvenir ' . ($index + 1)); ?>"
+                                 loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                                 crossorigin="anonymous">
                         </div>
-                    <?php endforeach; ?>
+                    <?php 
+                        $photoIndex++;
+                    endforeach; 
+                    ?>
+                    
+                    <?php if ($photoIndex > 1): ?>
+                        <button class="diapo-arrow prev" onclick="diapoChange(-1)">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="diapo-arrow next" onclick="diapoChange(1)">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <div class="diapo-counter" id="diapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    <?php endif; ?>
                 </div>
+                
                 <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;" id="diapoIndicators">
-                    <?php foreach ($photosHost as $index => $photo): ?>
-                        <span data-index="<?php echo $index; ?>" 
-                              class="<?php echo $index === 0 ? 'active' : ''; ?>" 
-                              onclick="goToDiapo(<?php echo $index; ?>)"
-                              style="width:8px;height:8px;border-radius:50%;background:<?php echo $index === 0 ? '#7873f5' : 'rgba(255,255,255,0.2)'; ?>;cursor:pointer;"></span>
-                    <?php endforeach; ?>
+                    <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                        <span data-index="<?php echo $i; ?>" 
+                              class="<?php echo $i === 0 ? 'active' : ''; ?>" 
+                              onclick="goToDiapo(<?php echo $i; ?>)"
+                              style="width:8px;height:8px;border-radius:50%;background:<?php echo $i === 0 ? '#7873f5' : 'rgba(255,255,255,0.2)'; ?>;cursor:pointer;"></span>
+                    <?php endfor; ?>
                 </div>
             </div>
+        <?php endif; ?>
+        
+        <!-- ⭐ TABLE (carte dédiée) -->
+        <?php if ($hasTable): ?>
+        <div class="info-card" style="text-align:center;">
+            <h3 style="justify-content:center;"><i class="fas fa-chair"></i> Votre table</h3>
+            <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white;padding:8px 0;">
+                <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+            </div>
+        </div>
         <?php endif; ?>
         
         <!-- QR Code -->
@@ -821,27 +935,10 @@
     </button>
 
     <script>
-        // Animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.section-animee');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) entry.target.classList.add('apparue'); 
-                });
-            }, { threshold: 0.1 });
-            sections.forEach(s => observer.observe(s));
-        });
-
         // QR
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
-                    new QRCode(document.getElementById('card-qrcode'), {
-                        text: '<?php echo addslashes($fullUrl); ?>',
-                        width: 100, height: 100,
-                        colorDark: '#1a1a1a', colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
                     new QRCode(document.getElementById('qrcode'), {
                         text: '<?php echo addslashes($fullUrl); ?>',
                         width: 160, height: 160,
@@ -852,10 +949,14 @@
             }
         });
 
-        // Diaporama
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
         let diapoIndex = 0;
-        const slides = document.querySelectorAll('.slide');
+        const slides = document.querySelectorAll('#diaporama .slide');
         const indicators = document.querySelectorAll('#diapoIndicators span');
+        const diapoCounter = document.getElementById('diapoCounter');
+        let diapoInterval = null;
 
         function updateDiapo() {
             slides.forEach((s, i) => s.classList.toggle('active', i === diapoIndex));
@@ -863,11 +964,41 @@
                 ind.classList.toggle('active', i === diapoIndex);
                 ind.style.background = i === diapoIndex ? '#7873f5' : 'rgba(255,255,255,0.2)';
             });
+            if (diapoCounter) {
+                diapoCounter.textContent = (diapoIndex + 1) + ' / ' + slides.length;
+            }
         }
-        function goToDiapo(index) { diapoIndex = index; updateDiapo(); }
-        if (slides.length > 1) {
-            setInterval(() => { diapoIndex = (diapoIndex + 1) % slides.length; updateDiapo(); }, 5000);
+
+        function diapoChange(direction) {
+            diapoIndex += direction;
+            if (diapoIndex < 0) diapoIndex = slides.length - 1;
+            if (diapoIndex >= slides.length) diapoIndex = 0;
+            updateDiapo();
+            resetDiapoAuto();
         }
+
+        function goToDiapo(index) { 
+            diapoIndex = index; 
+            updateDiapo(); 
+            resetDiapoAuto();
+        }
+
+        function resetDiapoAuto() {
+            if (diapoInterval) clearInterval(diapoInterval);
+            if (slides.length > 1) {
+                diapoInterval = setInterval(() => {
+                    diapoIndex = (diapoIndex + 1) % slides.length;
+                    updateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (slides.length > 0) {
+                updateDiapo();
+                resetDiapoAuto();
+            }
+        });
 
         // Download
         async function telechargerJPEG() {

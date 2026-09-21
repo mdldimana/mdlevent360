@@ -1,15 +1,12 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : ANNIVERSAIRE ADULTE (Chic & Lounge)
+ * TEMPLATE : ANNIVERSAIRE ADULTE (Chic & Lounge) - v3
  * ============================================================
  * 
- * Design soirée cocktail adulte :
- * - Coupe de champagne qui pétille
- * - Bulles qui montent en continu
- * - Bougies dorées qui vacillent
- * - Typo chic Playfair Display + Italiana
- * - Ambiance lounge bar VIP
+ * Nouveautés v3 :
+ * - Animations d'affichage des sections (fade + slide + scale)
+ * - Affichage du nom de la table
  * 
  * ============================================================
  */
@@ -81,7 +78,6 @@
             100% { opacity: 0; visibility: hidden; pointer-events: none; }
         }
         
-        /* Coupe de champagne SVG */
         .champagne-glass {
             width: 120px;
             height: auto;
@@ -94,7 +90,6 @@
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
         
-        /* Bulles qui montent */
         .intro-bubbles {
             position: absolute;
             inset: 0;
@@ -153,53 +148,56 @@
         }
         
         /* ============================================
-           NAVBAR LOUNGE
+           ANIMATIONS D'AFFICHAGE DES SECTIONS
            ============================================ */
-        .lounge-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 20px 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(10, 10, 10, 0.75);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+        .lounge-anim {
             opacity: 0;
-            animation: fadeIn 1s ease-out 2.5s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .lounge-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-family: 'Italiana', serif;
-            font-size: 22px;
-            letter-spacing: 0.2em;
-            color: var(--white);
-            text-transform: uppercase;
-        }
-        .lounge-brand i {
-            color: var(--gold);
-            font-size: 20px;
+            transform: translateY(80px) scale(0.95);
+            transition: 
+                opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
         }
         
-        .lounge-status {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 13px;
-            letter-spacing: 0.15em;
-            color: var(--gold);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .lounge-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
-        .lounge-status::before {
-            content: '✦';
-            font-size: 16px;
+        
+        /* Variantes */
+        .lounge-anim.from-left {
+            opacity: 0;
+            transform: translateX(-100px);
         }
+        .lounge-anim.from-left.apparue {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .lounge-anim.from-right {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        .lounge-anim.from-right.apparue {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .lounge-anim.zoom-in {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+        .lounge-anim.zoom-in.apparue {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* Délais en cascade */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
            HERO LOUNGE
@@ -211,12 +209,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 120px 20px 80px;
+            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
-        /* Lumières tamisées */
         .ambient-light {
             position: absolute;
             inset: 0;
@@ -227,7 +224,6 @@
                 radial-gradient(ellipse 400px 300px at 80% 70%, rgba(212, 175, 55, 0.06) 0%, transparent 100%);
         }
         
-        /* Ornements dorés en coins */
         .gold-ornament {
             position: absolute;
             width: 100px;
@@ -236,14 +232,14 @@
             pointer-events: none;
             opacity: 0.4;
         }
-        .gold-ornament.tl { top: 100px; left: 30px; }
-        .gold-ornament.tr { top: 100px; right: 30px; transform: scaleX(-1); }
+        .gold-ornament.tl { top: 30px; left: 30px; }
+        .gold-ornament.tr { top: 30px; right: 30px; transform: scaleX(-1); }
         .gold-ornament.bl { bottom: 30px; left: 30px; transform: scaleY(-1); }
         .gold-ornament.br { bottom: 30px; right: 30px; transform: scale(-1); }
         
         @media (max-width: 768px) {
             .gold-ornament { width: 60px; height: 60px; }
-            .gold-ornament.tl, .gold-ornament.tr { top: 90px; }
+            .gold-ornament.tl, .gold-ornament.tr { top: 20px; }
         }
         
         .lounge-blason {
@@ -259,7 +255,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Étoile dorée en haut */
         .lounge-star {
             font-size: 42px;
             color: var(--gold);
@@ -272,7 +267,6 @@
             50% { transform: scale(1.1) rotate(180deg); filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.8)); }
         }
         
-        /* Badge lounge */
         .lounge-badge {
             display: inline-flex;
             align-items: center;
@@ -296,7 +290,6 @@
             font-size: 12px;
         }
         
-        /* Nom de l'invité */
         .lounge-guest {
             font-family: 'Playfair Display', serif;
             font-size: clamp(38px, 7vw, 64px);
@@ -309,7 +302,6 @@
             text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
         }
         
-        /* Séparateur lounge */
         .lounge-divider {
             display: flex;
             align-items: center;
@@ -333,7 +325,6 @@
             50% { transform: scale(1.15); opacity: 0.7; }
         }
         
-        /* Hôte */
         .lounge-hosts-intro {
             font-family: 'Cormorant Garamond', serif;
             font-style: italic;
@@ -371,7 +362,7 @@
         }
         
         /* ============================================
-           CARTE LOUNGE (Détails)
+           CARTE LOUNGE
            ============================================ */
         .lounge-card {
             position: relative;
@@ -385,20 +376,12 @@
             box-shadow: 
                 0 30px 80px rgba(0, 0, 0, 0.7),
                 inset 0 0 60px rgba(212, 175, 55, 0.02);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
-        }
-        .lounge-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .lounge-card { padding: 40px 25px; margin: 60px 15px; }
         }
         
-        /* Coins ornement */
         .lounge-card::before,
         .lounge-card::after {
             content: '';
@@ -511,7 +494,24 @@
             font-weight: 400;
         }
         
-        /* Bouton itinéraire lounge */
+        /* ⭐ CARTE TABLE */
+        .lounge-table-item {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, 
+                rgba(212, 175, 55, 0.08) 0%, 
+                rgba(212, 175, 55, 0.03) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+        }
+        
+        .lounge-table-item .icon {
+            animation: tableGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes tableGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4)); }
+            50% { filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.9)); }
+        }
+        
         .lounge-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -559,14 +559,7 @@
                 rgba(26, 26, 26, 0.95) 0%, 
                 rgba(18, 18, 18, 0.95) 100%);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
-        }
-        .lounge-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .lounge-section { padding: 40px 25px; margin: 60px 15px; }
@@ -594,6 +587,128 @@
             padding: 0 16px;
             color: var(--gold);
             font-size: 14px;
+        }
+        
+        /* ============================================
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .lounge-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/10;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            box-shadow: 
+                0 0 0 6px var(--black),
+                0 0 0 7px var(--gold),
+                0 20px 60px rgba(212, 175, 55, 0.2);
+        }
+        
+        .lounge-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            background: #000;
+        }
+        
+        .lounge-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .lounge-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+            padding: 12px;
+        }
+        
+        .lounge-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            color: var(--gold);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .lounge-diapo-arrow:hover {
+            background: var(--gold);
+            color: var(--black);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.5);
+        }
+        
+        .lounge-diapo-arrow.prev { left: 16px; }
+        .lounge-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .lounge-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .lounge-diapo-arrow.prev { left: 8px; }
+            .lounge-diapo-arrow.next { right: 8px; }
+        }
+        
+        .lounge-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            color: var(--gold);
+            font-family: 'Playfair Display', serif;
+            font-size: 13px;
+            letter-spacing: 0.15em;
+            padding: 8px 16px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+        
+        .lounge-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 999px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .lounge-diapo-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .lounge-diapo-dots span.active {
+            background: var(--gold);
+            transform: scale(1.4);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
         }
         
         /* ============================================
@@ -716,58 +831,6 @@
         .lounge-btn-submit:hover {
             transform: translateY(-3px);
             box-shadow: 0 16px 50px rgba(212, 175, 55, 0.4);
-        }
-        
-        /* ============================================
-           PHOTOS LOUNGE
-           ============================================ */
-        .lounge-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-            gap: 20px;
-        }
-        .lounge-photo {
-            position: relative;
-            aspect-ratio: 3/4;
-            overflow: hidden;
-            background: var(--dark-gray);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            transition: all 0.5s ease;
-        }
-        .lounge-photo:hover {
-            border-color: var(--gold);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.25);
-            transform: translateY(-4px);
-        }
-        .lounge-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s ease;
-        }
-        .lounge-photo:hover img {
-            transform: scale(1.05);
-        }
-        .lounge-photo::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, 
-                transparent 50%, 
-                rgba(0, 0, 0, 0.9) 100%);
-            pointer-events: none;
-        }
-        .lounge-photo .caption {
-            position: absolute;
-            bottom: 16px;
-            left: 20px;
-            right: 20px;
-            z-index: 2;
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 16px;
-            color: var(--white);
-            letter-spacing: 0.02em;
         }
         
         /* ============================================
@@ -966,13 +1029,15 @@
                 letter-spacing: 0.15em;
             }
         }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- ============================================
-         INTRO : COUPE DE CHAMPAGNE
-         ============================================ -->
+    <!-- INTRO -->
     <div class="champagne-intro">
         <div class="intro-bubbles">
             <span></span><span></span><span></span><span></span>
@@ -990,56 +1055,33 @@
                     <stop offset="100%" stop-color="#d4af37"/>
                 </linearGradient>
             </defs>
-            <!-- Coupe -->
             <path d="M 20 20 L 100 20 Q 100 80 60 100 Q 20 80 20 20 Z" 
                   fill="url(#champGrad)" opacity="0.85" stroke="url(#goldGrad)" stroke-width="2"/>
-            <!-- Éclat de la coupe -->
             <path d="M 30 30 L 55 30 Q 55 65 40 75 Q 30 60 30 30 Z" 
                   fill="white" opacity="0.3"/>
-            <!-- Pied -->
             <rect x="58" y="100" width="4" height="70" fill="url(#goldGrad)"/>
-            <!-- Base -->
             <ellipse cx="60" cy="175" rx="35" ry="6" fill="url(#goldGrad)"/>
-            <!-- Bulles dans la coupe -->
             <circle cx="40" cy="50" r="3" fill="white" opacity="0.7"/>
             <circle cx="75" cy="45" r="2.5" fill="white" opacity="0.6"/>
             <circle cx="55" cy="70" r="2" fill="white" opacity="0.8"/>
             <circle cx="80" cy="65" r="3" fill="white" opacity="0.5"/>
             <circle cx="45" cy="80" r="2.5" fill="white" opacity="0.6"/>
             <circle cx="65" cy="40" r="2" fill="white" opacity="0.7"/>
-            <circle cx="70" cy="80" r="1.5" fill="white" opacity="0.5"/>
         </svg>
     </div>
 
-    <!-- Bulles flottantes persistantes -->
+    <!-- Bulles persistantes -->
     <div class="champagne-bubbles" id="bubblesContainer"></div>
 
-    <!-- ============================================
-         NAVBAR LOUNGE
-         ============================================ -->
-    <nav class="lounge-navbar">
-        <div class="lounge-brand">
-            <i class="fas fa-champagne-glasses"></i>
-            <?php echo htmlspecialchars(strtoupper($appName)); ?>
-        </div>
-        <div class="lounge-status">
-            SOIRÉE VIP · INVITATION PRIVÉE
-        </div>
-    </nav>
-
-    <!-- ============================================
-         HERO LOUNGE
-         ============================================ -->
+    <!-- HERO -->
     <section class="lounge-hero">
         <div class="ambient-light"></div>
         
-        <!-- Ornements dorés en coins -->
         <svg class="gold-ornament tl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <g stroke="#d4af37" stroke-width="1.5" fill="none">
                 <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
                 <circle cx="15" cy="15" r="3" fill="#d4af37"/>
                 <circle cx="40" cy="40" r="2" fill="#d4af37"/>
-                <path d="M 5 20 Q 15 15 20 5" fill="none"/>
             </g>
         </svg>
         <svg class="gold-ornament tr" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -1047,7 +1089,6 @@
                 <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
                 <circle cx="15" cy="15" r="3" fill="#d4af37"/>
                 <circle cx="40" cy="40" r="2" fill="#d4af37"/>
-                <path d="M 5 20 Q 15 15 20 5" fill="none"/>
             </g>
         </svg>
         <svg class="gold-ornament bl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -1064,7 +1105,6 @@
         </svg>
         
         <div class="lounge-blason">
-            
             <div class="lounge-star">✦</div>
             
             <div class="lounge-badge">
@@ -1088,32 +1128,28 @@
             <div class="lounge-event-type">
                 ✦ <?php echo htmlspecialchars(strtoupper($eventType)); ?> ✦
             </div>
-            
         </div>
     </section>
 
-    <!-- ============================================
-         CARTE LOUNGE (Détails)
-         ============================================ -->
-    <div class="lounge-card">
-        
+    <!-- CARTE DÉTAILS (avec animation) -->
+    <div class="lounge-card lounge-anim zoom-in">
         <div class="lounge-card-title">Détails de la soirée</div>
         
         <div class="lounge-info-grid">
             
-            <div class="lounge-info-item">
+            <div class="lounge-info-item lounge-anim delay-1">
                 <i class="fas fa-calendar-alt icon"></i>
                 <div class="label">DATE</div>
                 <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
             </div>
             
-            <div class="lounge-info-item">
+            <div class="lounge-info-item lounge-anim delay-2">
                 <i class="fas fa-clock icon"></i>
                 <div class="label">HEURE</div>
                 <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
             </div>
             
-            <div class="lounge-info-item" style="grid-column: 1 / -1;">
+            <div class="lounge-info-item lounge-anim delay-3" style="grid-column: 1 / -1;">
                 <i class="fas fa-map-marker-alt icon"></i>
                 <div class="label">LIEU</div>
                 <div class="value">
@@ -1130,7 +1166,18 @@
                 </a>
             </div>
             
-            <div class="lounge-info-item" style="grid-column: 1 / -1;">
+            <!-- ⭐ TABLE ASSIGNÉE (sans zone) -->
+            <?php if ($hasTable): ?>
+            <div class="lounge-info-item lounge-table-item lounge-anim delay-4" style="grid-column: 1 / -1;">
+                <i class="fas fa-chair icon"></i>
+                <div class="label">VOTRE TABLE</div>
+                <div class="value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="lounge-info-item lounge-anim delay-5" style="grid-column: 1 / -1;">
                 <i class="fas fa-users icon"></i>
                 <div class="label">PLACES RÉSERVÉES</div>
                 <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
@@ -1139,11 +1186,9 @@
         </div>
     </div>
 
-    <!-- ============================================
-         MESSAGES
-         ============================================ -->
+    <!-- MESSAGES -->
     <?php if ($message): ?>
-        <div class="lounge-section apparue">
+        <div class="lounge-section lounge-anim apparue">
             <div class="lounge-alert lounge-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -1151,27 +1196,49 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         PHOTOS
-         ============================================ -->
+    <!-- DIAPORAMA PHOTOS -->
     <?php if (!empty($photosHost)): ?>
-        <div class="lounge-section">
-            <div class="lounge-section-title">Souvenirs de la soirée</div>
-            <div class="lounge-photos-grid">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="lounge-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="caption">Souvenir n°<?php echo $index + 1; ?></div>
+        <div class="lounge-section lounge-anim from-left">
+            <div class="lounge-section-title">Souvenirs</div>
+            
+            <div class="lounge-diaporama" id="loungeDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Souvenir ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="lounge-diapo-arrow prev" onclick="loungeDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="lounge-diapo-arrow next" onclick="loungeDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="lounge-diapo-counter" id="loungeDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="lounge-diapo-dots" id="loungeDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="loungeDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         QR CODE
-         ============================================ -->
-    <div class="lounge-section">
+    <!-- QR CODE -->
+    <div class="lounge-section lounge-anim from-right">
         <div class="lounge-section-title">Votre accès privé</div>
         <div class="lounge-qr-wrapper">
             <div class="lounge-qr-box">
@@ -1183,11 +1250,9 @@
         </div>
     </div>
 
-    <!-- ============================================
-         CONFIRMATION
-         ============================================ -->
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="lounge-section">
+        <div class="lounge-section lounge-anim from-left">
             <div class="lounge-section-title">Confirmez votre présence</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -1228,11 +1293,9 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         BOISSONS
-         ============================================ -->
+    <!-- BOISSONS -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="lounge-section">
+        <div class="lounge-section lounge-anim from-right">
             <div class="lounge-section-title">Sélection des boissons</div>
             
             <?php if ($isLocked): ?>
@@ -1289,9 +1352,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         FOOTER LOUNGE
-         ============================================ -->
+    <!-- FOOTER -->
     <footer class="lounge-footer">
         <div class="lounge-footer-star">✦</div>
         <div class="lounge-footer-brand"><?php echo htmlspecialchars($appName); ?></div>
@@ -1331,18 +1392,35 @@
             }
         });
 
-        // Scroll animations
+        // ================================================================
+        // ANIMATIONS AU SCROLL (REVEAL)
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.lounge-card, .lounge-section');
+            const animElements = document.querySelectorAll('.lounge-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
                         observer.unobserve(entry.target);
-                    } 
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
+            }, { 
+                threshold: 0.15,
+                rootMargin: '0px 0px -60px 0px'
+            });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            // Fallback : rendre visibles les éléments déjà dans le viewport
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
         // QR
@@ -1358,6 +1436,66 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 } catch(e) { console.error(e); }
+            }
+        });
+
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let loungeDiapoIndex = 0;
+        const loungeSlides = document.querySelectorAll('#loungeDiaporama .slide');
+        const loungeDots = document.querySelectorAll('#loungeDiapoDots span');
+        const loungeCounter = document.getElementById('loungeDiapoCounter');
+        let loungeDiapoInterval = null;
+
+        function loungeUpdateDiapo() {
+            loungeSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === loungeDiapoIndex);
+            });
+            loungeDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === loungeDiapoIndex);
+            });
+            if (loungeCounter) {
+                loungeCounter.textContent = (loungeDiapoIndex + 1) + ' / ' + loungeSlides.length;
+            }
+        }
+
+        function loungeDiapoChange(direction) {
+            loungeDiapoIndex += direction;
+            if (loungeDiapoIndex < 0) loungeDiapoIndex = loungeSlides.length - 1;
+            if (loungeDiapoIndex >= loungeSlides.length) loungeDiapoIndex = 0;
+            loungeUpdateDiapo();
+            resetLoungeDiapoAuto();
+        }
+
+        function loungeDiapoGoTo(index) {
+            loungeDiapoIndex = index;
+            loungeUpdateDiapo();
+            resetLoungeDiapoAuto();
+        }
+
+        function resetLoungeDiapoAuto() {
+            if (loungeDiapoInterval) clearInterval(loungeDiapoInterval);
+            if (loungeSlides.length > 1) {
+                loungeDiapoInterval = setInterval(() => {
+                    loungeDiapoIndex = (loungeDiapoIndex + 1) % loungeSlides.length;
+                    loungeUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (loungeSlides.length > 0) {
+                loungeUpdateDiapo();
+                resetLoungeDiapoAuto();
+                
+                const container = document.getElementById('loungeDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (loungeDiapoInterval) clearInterval(loungeDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetLoungeDiapoAuto);
+                }
             }
         });
 

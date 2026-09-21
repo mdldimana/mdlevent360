@@ -1,9 +1,25 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : OURSON / BABY SHOWER
+ * TEMPLATE : OURSON / BABY SHOWER - v3
+ * ============================================================
+ * 
+ * Nouveautés v3 :
+ * - Suppression du header/navbar
+ * - Affichage du nom de la table
+ * - Animations d'affichage des sections
+ * - Photo de fond comme background (non flou)
+ * - Diaporama photos plein écran
+ * 
  * ============================================================
  */
+
+// ============================================================
+// PRÉPARATION DES VARIABLES
+// ============================================================
+$hasFond = !empty($pageBackground);
+$hasPhotos = !empty($photosHost) && is_array($photosHost);
+$mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo']) : '');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -38,6 +54,9 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
+        /* ============================================
+           PHOTO DE FOND (non floue)
+           ============================================ */
         body {
             font-family: 'Fredoka', system-ui, sans-serif;
             background: linear-gradient(180deg, 
@@ -49,10 +68,38 @@
             min-height: 100vh;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+        }
+        
+        /* Overlay photo de fond */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            <?php endif; ?>
+            opacity: 0.35;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(180deg, 
+                rgba(255, 249, 240, 0.7) 0%, 
+                rgba(252, 228, 236, 0.65) 50%,
+                rgba(212, 234, 240, 0.7) 100%);
+            pointer-events: none;
         }
         
         /* ============================================
-           INTRO : OURS EN PELUCHE QUI APPARAÎT
+           INTRO : OURS EN PELUCHE
            ============================================ */
         .bear-intro {
             position: fixed;
@@ -80,7 +127,6 @@
             100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
         
-        /* Ballons qui montent */
         .balloon {
             position: absolute;
             font-size: 40px;
@@ -102,7 +148,7 @@
         .float-decor {
             position: fixed;
             font-size: 30px;
-            opacity: 0.4;
+            opacity: 0.5;
             pointer-events: none;
             z-index: 1;
             animation: floatUpDown 4s ease-in-out infinite;
@@ -119,45 +165,57 @@
         }
         
         /* ============================================
-           NAVBAR
+           ANIMATIONS D'AFFICHAGE DES SECTIONS
            ============================================ */
-        .bear-navbar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 1000;
-            padding: 16px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 249, 240, 0.9);
-            backdrop-filter: blur(20px);
-            border-bottom: 2px dashed var(--beige-dark);
+        .bear-anim {
             opacity: 0;
-            animation: fadeIn 0.8s ease-out 2.5s forwards;
-        }
-        @keyframes fadeIn { to { opacity: 1; } }
-        
-        .bear-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Baloo 2', cursive;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--brown);
+            transform: translateY(60px) scale(0.96);
+            transition: 
+                opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            will-change: opacity, transform;
         }
         
-        .bear-status {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 12px;
-            letter-spacing: 0.2em;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 500;
+        .bear-anim.apparue {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
+        
+        .bear-anim.from-left {
+            opacity: 0;
+            transform: translateX(-80px);
+        }
+        .bear-anim.from-left.apparue {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .bear-anim.from-right {
+            opacity: 0;
+            transform: translateX(80px);
+        }
+        .bear-anim.from-right.apparue {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .bear-anim.zoom-in {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+        .bear-anim.zoom-in.apparue {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+        .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO
+           HERO (SANS NAVBAR)
            ============================================ */
         .bear-hero {
             position: relative;
@@ -166,7 +224,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 100px 20px 60px;
+            padding: 40px 20px 60px;
             z-index: 10;
         }
         
@@ -183,7 +241,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Cadre photo bébé rond */
         .bear-circle {
             width: 200px;
             height: 200px;
@@ -307,19 +364,13 @@
             max-width: 900px;
             margin: 60px auto;
             padding: 50px 40px;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 40px;
             box-shadow: 
                 0 20px 60px rgba(139, 111, 71, 0.15),
-                0 0 0 8px var(--cream);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.9s ease;
+                0 0 0 8px rgba(255, 249, 240, 0.8);
             z-index: 10;
-        }
-        .bear-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .bear-card { padding: 40px 22px; margin: 40px 15px; }
@@ -397,6 +448,22 @@
             font-weight: 500;
         }
         
+        /* ⭐ CARTE TABLE */
+        .bear-table-item {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--pink-soft), var(--blue-soft)) !important;
+            border-color: var(--pink-baby) !important;
+        }
+        
+        .bear-table-item .icon {
+            animation: tableGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes tableGlow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        
         .bear-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -428,17 +495,11 @@
             max-width: 900px;
             margin: 60px auto;
             padding: 50px 40px;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 40px;
             box-shadow: 0 20px 60px rgba(139, 111, 71, 0.12);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s ease;
             z-index: 10;
-        }
-        .bear-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .bear-section { padding: 35px 22px; margin: 40px 15px; }
@@ -455,6 +516,131 @@
             border-bottom: 3px dashed var(--beige-dark);
         }
         
+        /* ============================================
+           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           ============================================ */
+        .bear-diaporama {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: #000;
+            border-radius: 24px;
+            border: 4px solid var(--beige);
+            box-shadow: 
+                0 0 0 4px white,
+                0 12px 40px rgba(139, 111, 71, 0.2);
+        }
+        
+        .bear-diaporama .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            background: #000;
+        }
+        
+        .bear-diaporama .slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+        
+        .bear-diaporama .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+            padding: 8px;
+        }
+        
+        .bear-diapo-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 249, 240, 0.9);
+            border: 3px solid var(--pink-baby);
+            color: var(--brown);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(139, 111, 71, 0.2);
+        }
+        
+        .bear-diapo-arrow:hover {
+            background: var(--pink-baby);
+            color: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .bear-diapo-arrow.prev { left: 16px; }
+        .bear-diapo-arrow.next { right: 16px; }
+        
+        @media (max-width: 480px) {
+            .bear-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
+            .bear-diapo-arrow.prev { left: 8px; }
+            .bear-diapo-arrow.next { right: 8px; }
+        }
+        
+        .bear-diapo-counter {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(255, 249, 240, 0.95);
+            border: 2px solid var(--pink-baby);
+            color: var(--brown);
+            font-family: 'Baloo 2', cursive;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            padding: 6px 14px;
+            border-radius: 999px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(139, 111, 71, 0.2);
+        }
+        
+        .bear-diapo-dots {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: rgba(255, 249, 240, 0.9);
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 2px solid var(--beige-dark);
+        }
+        
+        .bear-diapo-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--beige-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .bear-diapo-dots span.active {
+            background: var(--pink-baby);
+            transform: scale(1.4);
+            box-shadow: 0 0 8px rgba(245, 198, 214, 0.8);
+        }
+        
+        /* ============================================
+           FORMULAIRES
+           ============================================ */
         .bear-form-group { margin-bottom: 24px; }
         .bear-form-group label {
             display: block;
@@ -551,46 +737,6 @@
             background-position: 100% center;
             transform: translateY(-3px);
             box-shadow: 0 16px 40px rgba(245, 198, 214, 0.6);
-        }
-        
-        /* Photos */
-        .bear-photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 24px;
-        }
-        .bear-photo {
-            background: white;
-            padding: 16px 16px 55px;
-            border-radius: 20px;
-            box-shadow: 0 10px 32px rgba(139, 111, 71, 0.15);
-            border: 3px solid var(--beige);
-            transform: rotate(-2deg);
-            transition: all 0.4s ease;
-            position: relative;
-        }
-        .bear-photo:nth-child(even) { transform: rotate(2deg); }
-        .bear-photo:hover {
-            transform: rotate(0) scale(1.05);
-            box-shadow: 0 16px 48px rgba(139, 111, 71, 0.25);
-            border-color: var(--pink-baby);
-            z-index: 5;
-        }
-        .bear-photo img {
-            width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-            border-radius: 12px;
-        }
-        .bear-photo .caption {
-            position: absolute;
-            bottom: 14px;
-            left: 0; right: 0;
-            text-align: center;
-            font-family: 'Baloo 2', cursive;
-            font-size: 20px;
-            color: var(--brown);
-            font-weight: 700;
         }
         
         /* Boissons */
@@ -747,6 +893,10 @@
         @media (max-width: 480px) {
             #downloadBtn { bottom: 12px; right: 12px; padding: 12px 20px; font-size: 11px; }
         }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -767,13 +917,7 @@
     <div class="float-decor b4">🧸</div>
     <div class="float-decor b5">☁️</div>
 
-    <!-- NAVBAR -->
-    <nav class="bear-navbar">
-        <div class="bear-brand">🧸 <?php echo htmlspecialchars($appName); ?></div>
-        <div class="bear-status">BABY SHOWER</div>
-    </nav>
-
-    <!-- HERO -->
+    <!-- HERO (SANS NAVBAR) -->
     <section class="bear-hero">
         <div class="bear-blason">
             
@@ -806,24 +950,24 @@
         </div>
     </section>
 
-    <!-- CARTE -->
-    <div class="bear-card">
+    <!-- CARTE DÉTAILS -->
+    <div class="bear-card bear-anim zoom-in">
         <div class="bear-card-title">Les détails tendres</div>
         <div class="bear-info-grid">
             
-            <div class="bear-info-item">
+            <div class="bear-info-item bear-anim delay-1">
                 <div class="icon"><i class="fas fa-calendar-heart"></i></div>
                 <div class="label">DATE</div>
                 <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
             </div>
             
-            <div class="bear-info-item">
+            <div class="bear-info-item bear-anim delay-2">
                 <div class="icon"><i class="fas fa-clock"></i></div>
                 <div class="label">HEURE</div>
                 <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
             </div>
             
-            <div class="bear-info-item" style="grid-column: 1 / -1;">
+            <div class="bear-info-item bear-anim delay-3" style="grid-column: 1 / -1;">
                 <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
                 <div class="label">LIEU</div>
                 <div class="value">
@@ -838,7 +982,18 @@
                 </a>
             </div>
             
-            <div class="bear-info-item" style="grid-column: 1 / -1;">
+            <!-- ⭐ TABLE ASSIGNÉE -->
+            <?php if ($hasTable): ?>
+            <div class="bear-info-item bear-table-item bear-anim delay-4" style="grid-column: 1 / -1;">
+                <div class="icon"><i class="fas fa-chair"></i></div>
+                <div class="label">VOTRE TABLE</div>
+                <div class="value">
+                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <div class="bear-info-item bear-anim delay-5" style="grid-column: 1 / -1;">
                 <div class="icon"><i class="fas fa-users"></i></div>
                 <div class="label">PLACES</div>
                 <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
@@ -848,7 +1003,7 @@
     </div>
 
     <?php if ($message): ?>
-        <div class="bear-section apparue">
+        <div class="bear-section bear-anim apparue">
             <div class="bear-alert bear-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -856,21 +1011,49 @@
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($photosHost)): ?>
-        <div class="bear-section">
+    <!-- ⭐ DIAPORAMA PHOTOS -->
+    <?php if ($hasPhotos): ?>
+        <div class="bear-section bear-anim from-left">
             <div class="bear-section-title">📸 Souvenirs</div>
-            <div class="bear-photos-grid">
-                <?php foreach ($photosHost as $index => $photo): ?>
-                    <div class="bear-photo">
-                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" alt="" loading="lazy">
-                        <div class="caption">Photo n°<?php echo $index + 1; ?></div>
+            
+            <div class="bear-diaporama" id="bearDiaporama">
+                <?php 
+                $photoIndex = 0;
+                foreach ($photosHost as $index => $photo): 
+                ?>
+                    <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
+                        <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
+                             alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Souvenir ' . ($index + 1)); ?>"
+                             loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
+                             crossorigin="anonymous">
                     </div>
-                <?php endforeach; ?>
+                <?php 
+                    $photoIndex++;
+                endforeach; 
+                ?>
+                
+                <?php if ($photoIndex > 1): ?>
+                    <button class="bear-diapo-arrow prev" onclick="bearDiapoChange(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="bear-diapo-arrow next" onclick="bearDiapoChange(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <div class="bear-diapo-counter" id="bearDiapoCounter">1 / <?php echo $photoIndex; ?></div>
+                    
+                    <div class="bear-diapo-dots" id="bearDiapoDots">
+                        <?php for ($i = 0; $i < $photoIndex; $i++): ?>
+                            <span class="<?php echo $i === 0 ? 'active' : ''; ?>" onclick="bearDiapoGoTo(<?php echo $i; ?>)"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
 
-    <div class="bear-section">
+    <!-- QR CODE -->
+    <div class="bear-section bear-anim from-right">
         <div class="bear-section-title">🎫 Code d'accès</div>
         <div class="bear-qr-wrapper">
             <div class="bear-qr-box">
@@ -882,8 +1065,9 @@
         </div>
     </div>
 
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
-        <div class="bear-section">
+        <div class="bear-section bear-anim from-left">
             <div class="bear-section-title">🧸 Confirmation</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
@@ -920,8 +1104,9 @@
         </div>
     <?php endif; ?>
 
+    <!-- BOISSONS -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
-        <div class="bear-section">
+        <div class="bear-section bear-anim from-right">
             <div class="bear-section-title">🥤 Boissons</div>
             
             <?php if ($isLocked): ?>
@@ -998,19 +1183,40 @@
     </button>
 
     <script>
+        // ================================================================
+        // ANIMATIONS AU SCROLL
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.bear-card, .bear-section');
+            const animElements = document.querySelectorAll('.bear-anim');
+            
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('apparue');
                         observer.unobserve(entry.target);
-                    } 
+                    }
                 });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
+            }, { 
+                threshold: 0.15,
+                rootMargin: '0px 0px -60px 0px'
+            });
+            
+            animElements.forEach(el => observer.observe(el));
+            
+            // Fallback
+            setTimeout(() => {
+                animElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight && rect.bottom > 0) {
+                        el.classList.add('apparue');
+                    }
+                });
+            }, 500);
         });
 
+        // ================================================================
+        // QR CODE
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
@@ -1024,6 +1230,69 @@
             }
         });
 
+        // ================================================================
+        // DIAPORAMA PHOTOS
+        // ================================================================
+        let bearDiapoIndex = 0;
+        const bearSlides = document.querySelectorAll('#bearDiaporama .slide');
+        const bearDots = document.querySelectorAll('#bearDiapoDots span');
+        const bearCounter = document.getElementById('bearDiapoCounter');
+        let bearDiapoInterval = null;
+
+        function bearUpdateDiapo() {
+            bearSlides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === bearDiapoIndex);
+            });
+            bearDots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === bearDiapoIndex);
+            });
+            if (bearCounter) {
+                bearCounter.textContent = (bearDiapoIndex + 1) + ' / ' + bearSlides.length;
+            }
+        }
+
+        function bearDiapoChange(direction) {
+            bearDiapoIndex += direction;
+            if (bearDiapoIndex < 0) bearDiapoIndex = bearSlides.length - 1;
+            if (bearDiapoIndex >= bearSlides.length) bearDiapoIndex = 0;
+            bearUpdateDiapo();
+            resetBearDiapoAuto();
+        }
+
+        function bearDiapoGoTo(index) {
+            bearDiapoIndex = index;
+            bearUpdateDiapo();
+            resetBearDiapoAuto();
+        }
+
+        function resetBearDiapoAuto() {
+            if (bearDiapoInterval) clearInterval(bearDiapoInterval);
+            if (bearSlides.length > 1) {
+                bearDiapoInterval = setInterval(() => {
+                    bearDiapoIndex = (bearDiapoIndex + 1) % bearSlides.length;
+                    bearUpdateDiapo();
+                }, 5000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (bearSlides.length > 0) {
+                bearUpdateDiapo();
+                resetBearDiapoAuto();
+                
+                const container = document.getElementById('bearDiaporama');
+                if (container) {
+                    container.addEventListener('mouseenter', () => {
+                        if (bearDiapoInterval) clearInterval(bearDiapoInterval);
+                    });
+                    container.addEventListener('mouseleave', resetBearDiapoAuto);
+                }
+            }
+        });
+
+        // ================================================================
+        // TÉLÉCHARGEMENT
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
@@ -1049,6 +1318,9 @@
             btn.disabled = false;
         }
 
+        // ================================================================
+        // BOISSONS
+        // ================================================================
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
         let selectedBoissons = [];
         document.addEventListener('DOMContentLoaded', function() {
