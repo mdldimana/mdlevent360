@@ -446,6 +446,7 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
         <hr class="nav-divider">
 
         <!-- SECTION 4 : SITE PUBLIC -->
+                <hr class="nav-divider">
         <li class="nav-section-title">Site Public</li>
 
         <li class="nav-item">
@@ -475,8 +476,17 @@ $splashUrl = appUrl('public/splash.php' . ($defaultEventIdForSplash > 0 ? '?even
             </a>
         </li>
 
-        <hr class="nav-divider">
+        <!-- ⭐ NOUVEAU : GUIDE UTILISATEUR -->
+        <li class="nav-item">
+            <a class="nav-link" href="<?php echo adminUrl('aide.php'); ?>" target="_blank">
+                <i class="bi bi-book"></i> Guide utilisateur
+                <span class="badge badge-guide">
+                    <i class="bi bi-file-pdf"></i> PDF
+                </span>
+            </a>
+        </li>
 
+        <hr class="nav-divider">
         <!-- SECTION 5 : COMPTE -->
         <li class="nav-section-title">Compte</li>
 
