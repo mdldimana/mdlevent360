@@ -88,12 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ⭐ Option de création automatique d'invitation
     $creer_invitation = isset($_POST['creer_invitation']) ? 1 : 0;
     
-    // ⭐ Statut initial de l'invitation
-    $statut_invitation = trim($_POST['statut_invitation'] ?? 'EN_ATTENTE');
-    $statutsValides = ['EN_ATTENTE', 'CONFIRMEE', 'REFUSEE', 'PRESENTE', 'ANNULEE'];
-    if (!in_array($statut_invitation, $statutsValides)) {
-        $statut_invitation = 'EN_ATTENTE';
-    }
+    // ⭐ Statut FORCÉ à EN_ATTENTE (pas de choix utilisateur)
+    $statut_invitation = 'EN_ATTENTE';
 
     // Validation
     $errors = [];
@@ -246,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $tentatives++;
                 }
                 
-                // Insérer l'invitation
+                // Insérer l'invitation avec statut EN_ATTENTE
                 $stmtInv = $pdo->prepare("
                     INSERT INTO invitations (id_evenement, id_invite, code_unique, statut, created_at)
                     VALUES (?, ?, ?, ?, NOW())
@@ -300,15 +296,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ============================================
 
 $contactPreferences = ['EMAIL', 'WHATSAPP', 'TELEGRAM', 'SMS'];
-
-// Statuts d'invitation disponibles
-$statutsInvitation = [
-    'EN_ATTENTE' => '⏳ En attente',
-    'CONFIRMEE' => '✅ Confirmée',
-    'REFUSEE' => '❌ Refusée',
-    'PRESENTE' => '👤 Présente',
-    'ANNULEE' => '🚫 Annulée'
-];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -558,7 +545,7 @@ $statutsInvitation = [
             align-items: center;
             justify-content: space-between;
             gap: 15px;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             flex-wrap: wrap;
         }
         .invitation-toggle-header .title-wrapper {
@@ -647,53 +634,30 @@ $statutsInvitation = [
             color: #6a5a4a;
         }
 
-        /* Contenu de la section invitation */
-        .invitation-auto-content {
-            display: none;
-            margin-top: 15px;
-            padding-top: 15px;
+        /* ⭐ Info statut automatique */
+        .invitation-auto-info {
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 1px dashed rgba(16, 185, 129, 0.3);
         }
-        .invitation-auto-section:not(.disabled) .invitation-auto-content {
-            display: block;
-        }
-        
-        .statut-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 8px;
-        }
-        .statut-option {
-            position: relative;
-        }
-        .statut-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .statut-option label {
-            display: flex;
+        .info-status-badge {
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 12px;
-            border: 1.5px solid rgba(234, 227, 220, 0.6);
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
             border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
-            font-weight: 600;
-            color: #6a5a4a;
-        }
-        .statut-option label:hover {
-            border-color: #10b981;
-            background: rgba(16, 185, 129, 0.05);
-        }
-        .statut-option input[type="radio"]:checked + label {
-            border-color: #10b981;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
+            font-size: 13px;
             color: #065f46;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        }
+        .info-status-badge i {
+            color: #10b981;
+            font-size: 16px;
+        }
+        .info-status-badge strong {
+            color: #10b981;
+            font-weight: 700;
         }
 
         /* ========== PRÉFÉRENCES DE CONTACT ========== */
@@ -859,7 +823,6 @@ $statutsInvitation = [
             .top-bar .user-info .user-name { display: none; }
             .top-bar .user-info .role-badge { font-size: 9px; padding: 3px 10px; }
             .form-container { padding: 20px; }
-            .statut-options { grid-template-columns: 1fr 1fr; }
         }
 
         @media (max-width: 576px) {
@@ -871,7 +834,6 @@ $statutsInvitation = [
             .form-container { padding: 15px; }
             .form-container .form-title { font-size: 15px; }
             .sidebar-toggle-btn { top: 8px; left: 8px; padding: 6px 10px; font-size: 17px; }
-            .statut-options { grid-template-columns: 1fr; }
             .btn-save, .btn-cancel { width: 100%; justify-content: center; padding: 10px 16px; font-size: 13px; }
             .d-flex.gap-3 { flex-direction: column; gap: 10px !important; }
             .photo-preview { width: 90px; height: 90px; }
@@ -1060,7 +1022,7 @@ $statutsInvitation = [
                         </div>
                     </div>
 
-                    <!-- ⭐ SECTION INVITATION AUTOMATIQUE -->
+                    <!-- ⭐ SECTION INVITATION AUTOMATIQUE (sans choix de statut) -->
                     <div class="invitation-auto-section" id="invitationSection">
                         <div class="invitation-toggle-header">
                             <div class="title-wrapper">
@@ -1078,21 +1040,12 @@ $statutsInvitation = [
                             </label>
                         </div>
 
-                        <div class="invitation-auto-content">
-                            <label class="form-label"><i class="bi bi-shield-check"></i> Statut initial</label>
-                            <div class="statut-options">
-                                <?php foreach ($statutsInvitation as $value => $label): ?>
-                                    <div class="statut-option">
-                                        <input type="radio" 
-                                               name="statut_invitation" 
-                                               value="<?php echo $value; ?>" 
-                                               id="statut_<?php echo $value; ?>"
-                                               <?php echo $value === 'EN_ATTENTE' ? 'checked' : ''; ?>>
-                                        <label for="statut_<?php echo $value; ?>">
-                                            <?php echo $label; ?>
-                                        </label>
-                                    </div>
-                                <?php endforeach; ?>
+                        <!-- ⭐ Statut automatique : EN_ATTENTE -->
+                        <input type="hidden" name="statut_invitation" value="EN_ATTENTE">
+                        <div class="invitation-auto-info">
+                            <div class="info-status-badge">
+                                <i class="bi bi-clock-history"></i>
+                                L'invitation sera créée avec le statut <strong>En attente</strong>
                             </div>
                         </div>
                     </div>

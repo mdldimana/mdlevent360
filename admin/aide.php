@@ -1,10 +1,10 @@
 <?php
 // ============================================================
-// GUIDE UTILISATEUR - MdlEvent
+// GUIDE UTILISATEUR - MdlEvent v2
 // ============================================================
 
 $appName = 'MdlEvent';
-$version = '1.0';
+$version = '2.0';
 $date = date('d/m/Y');
 
 // Détecter BASE_PATH
@@ -63,7 +63,7 @@ if (!function_exists('adminUrl')) {
         }
         
         /* ============================================
-           BOUTONS FIXES (Retour + Impression)
+           BOUTONS FIXES
            ============================================ */
         .fixed-buttons {
             position: fixed;
@@ -75,7 +75,6 @@ if (!function_exists('adminUrl')) {
             z-index: 1000;
         }
 
-        /* Bouton Retour */
         .back-btn {
             padding: 16px 28px;
             background: white;
@@ -102,9 +101,6 @@ if (!function_exists('adminUrl')) {
             box-shadow: 0 15px 40px rgba(247, 151, 30, 0.25);
         }
 
-        .back-btn i { font-size: 16px; }
-
-        /* Bouton Impression */
         .print-btn {
             padding: 16px 30px;
             background: linear-gradient(135deg, var(--orange), var(--orange-light));
@@ -190,10 +186,7 @@ if (!function_exists('adminUrl')) {
             background: radial-gradient(circle, rgba(255, 210, 0, 0.2) 0%, transparent 70%);
         }
         
-        .cover-content {
-            position: relative;
-            z-index: 2;
-        }
+        .cover-content { position: relative; z-index: 2; }
         
         .cover-logo {
             width: 100px;
@@ -293,6 +286,13 @@ if (!function_exists('adminUrl')) {
         }
         
         h3 i { color: var(--orange); font-size: 16px; }
+        
+        h4 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 15px 0 8px;
+        }
         
         p {
             font-size: 14px;
@@ -414,7 +414,7 @@ if (!function_exists('adminUrl')) {
         .info-box.info i { color: var(--info); }
         
         /* ============================================
-           WORKFLOW
+           WORKFLOW (timeline verticale)
            ============================================ */
         .workflow {
             display: flex;
@@ -466,6 +466,103 @@ if (!function_exists('adminUrl')) {
             color: var(--orange);
             font-size: 24px;
             margin: -8px 0;
+        }
+        
+        /* ============================================
+           ÉTAPES DÉTAILLÉES
+           ============================================ */
+        .step-block {
+            background: white;
+            border: 2px solid var(--gray-lighter);
+            border-left: 5px solid var(--orange);
+            border-radius: 12px;
+            padding: 25px 28px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        }
+        
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed var(--gray-lighter);
+        }
+        
+        .step-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-light));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 24px;
+            flex-shrink: 0;
+            box-shadow: 0 6px 20px rgba(247, 151, 30, 0.3);
+        }
+        
+        .step-header h3 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--dark);
+        }
+        
+        .step-header h3 i { color: var(--orange); }
+        
+        /* Grille des champs */
+        .fields-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 15px 0;
+        }
+        
+        .field-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 15px;
+            background: #fafafa;
+            border-radius: 10px;
+            border: 1px solid var(--gray-lighter);
+            font-size: 13px;
+        }
+        
+        .field-item i {
+            color: var(--orange);
+            margin-top: 3px;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .field-item .field-content {
+            flex: 1;
+        }
+        
+        .field-item .field-name {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 2px;
+        }
+        
+        .field-item .field-desc {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        .field-item.required {
+            border-color: rgba(220, 53, 69, 0.3);
+            background: rgba(220, 53, 69, 0.03);
+        }
+        
+        .field-item.optional {
+            border-color: rgba(23, 162, 184, 0.3);
+            background: rgba(23, 162, 184, 0.03);
         }
         
         /* ============================================
@@ -587,6 +684,7 @@ if (!function_exists('adminUrl')) {
             h1 { font-size: 26px; }
             h2 { font-size: 20px; }
             .cards-grid { grid-template-columns: 1fr; }
+            .fields-grid { grid-template-columns: 1fr; }
             
             .fixed-buttons {
                 bottom: 15px;
@@ -607,7 +705,7 @@ if (!function_exists('adminUrl')) {
 <body>
 
 <!-- ============================================ -->
-<!-- BOUTONS FIXES (Retour + Impression)           -->
+<!-- BOUTONS FIXES                                 -->
 <!-- ============================================ -->
 <div class="fixed-buttons no-print">
     <a href="<?php echo adminUrl('dashboard.php'); ?>" class="back-btn">
@@ -647,7 +745,7 @@ if (!function_exists('adminUrl')) {
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 2 : TABLE DES MATIÈRES                    -->
+<!-- PAGE 2 : TABLE DES MATIÈRES + WORKFLOW          -->
 <!-- ============================================ -->
 <div class="page">
     <h1>Bienvenue 👋</h1>
@@ -660,16 +758,13 @@ if (!function_exists('adminUrl')) {
     <div class="toc">
         <h2><i class="fas fa-list"></i> Table des matières</h2>
         <ol>
-            <li>Créer un événement</li>
-            <li>Créer les tables</li>
+            <li>Créer l'événement</li>
             <li>Assigner les boissons</li>
-            <li>Créer les invités</li>
-            <li>Créer les invitations</li>
-            <li>Envoyer les invitations</li>
-            <li>Suivre les confirmations</li>
-            <li>Gérer les présences</li>
-            <li>Consulter les rapports</li>
-            <li>Questions fréquentes</li>
+            <li>Créer les tables</li>
+            <li>Créer l'invité (invitation automatique)</li>
+            <li>Envoyer les invitations en un clic</li>
+            <li>Recevoir les réponses des invités</li>
+            <li>Gérer les présences le jour J</li>
         </ol>
     </div>
     
@@ -682,7 +777,7 @@ if (!function_exists('adminUrl')) {
             <div class="number">1</div>
             <div class="content">
                 <h4>📅 Créer l'événement</h4>
-                <p>Informations générales (nom, date, lieu, type)</p>
+                <p>Nom, type, description, date/heure, lieu, modèle, photo de fond...</p>
             </div>
         </div>
         <div class="workflow-arrow"><i class="fas fa-arrow-down"></i></div>
@@ -690,8 +785,8 @@ if (!function_exists('adminUrl')) {
         <div class="workflow-step">
             <div class="number">2</div>
             <div class="content">
-                <h4>🪑 Créer les tables</h4>
-                <p>Disposition de la salle + capacités</p>
+                <h4>🍹 Assigner les boissons</h4>
+                <p>Sélection des boissons disponibles pour les invités</p>
             </div>
         </div>
         <div class="workflow-arrow"><i class="fas fa-arrow-down"></i></div>
@@ -699,8 +794,8 @@ if (!function_exists('adminUrl')) {
         <div class="workflow-step">
             <div class="number">3</div>
             <div class="content">
-                <h4>🍹 Assigner les boissons</h4>
-                <p>Sélection des boissons disponibles</p>
+                <h4>🪑 Créer les tables</h4>
+                <p>Nom, capacité, type, zone, position X/Y</p>
             </div>
         </div>
         <div class="workflow-arrow"><i class="fas fa-arrow-down"></i></div>
@@ -708,8 +803,8 @@ if (!function_exists('adminUrl')) {
         <div class="workflow-step">
             <div class="number">4</div>
             <div class="content">
-                <h4>👥 Créer les invités</h4>
-                <p>Nom, prénom, email, téléphone, nombre de places</p>
+                <h4>👥 Créer l'invité</h4>
+                <p>Infos personnelles + invitation générée automatiquement</p>
             </div>
         </div>
         <div class="workflow-arrow"><i class="fas fa-arrow-down"></i></div>
@@ -717,8 +812,8 @@ if (!function_exists('adminUrl')) {
         <div class="workflow-step">
             <div class="number">5</div>
             <div class="content">
-                <h4>✉️ Créer les invitations</h4>
-                <p>Lien entre invité et événement + QR code</p>
+                <h4>📤 Envoyer les invitations en 1 clic</h4>
+                <p>WhatsApp et/ou Email en masse</p>
             </div>
         </div>
         <div class="workflow-arrow"><i class="fas fa-arrow-down"></i></div>
@@ -726,8 +821,17 @@ if (!function_exists('adminUrl')) {
         <div class="workflow-step">
             <div class="number">6</div>
             <div class="content">
-                <h4>📤 Envoyer les invitations</h4>
-                <p>Email, WhatsApp ou Telegram</p>
+                <h4>💬 Recevoir les réponses</h4>
+                <p>Confirmation, message, choix des boissons</p>
+            </div>
+        </div>
+        <div class="workflow-arrow"><i class="fas fa-arrow-down"></i></div>
+        
+        <div class="workflow-step">
+            <div class="number">7</div>
+            <div class="content">
+                <h4>📷 Gérer les présences le jour J</h4>
+                <p>Scan QR code + affichage photo sur écran géant</p>
             </div>
         </div>
     </div>
@@ -739,65 +843,117 @@ if (!function_exists('adminUrl')) {
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 3 : ÉTAPES 1 & 2                          -->
+<!-- PAGE 3 : ÉTAPE 1 — CRÉER L'ÉVÉNEMENT          -->
 <!-- ============================================ -->
 <div class="page">
-    <h2><i class="fas fa-calendar-plus"></i> Étape 1 — Créer un événement</h2>
-    
-    <p>
-        L'événement est la base de tout. C'est ici que vous définissez les informations principales 
-        qui seront utilisées dans les invitations.
-    </p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Comment faire</h3>
-    <ol>
-        <li>Allez dans le menu <code>Événements</code></li>
-        <li>Cliquez sur <strong>➕ Ajouter un événement</strong></li>
-        <li>Remplissez les informations demandées</li>
-        <li>Cliquez sur <strong>💾 Enregistrer</strong></li>
-    </ol>
-    
-    <h3><i class="fas fa-info-circle"></i> Informations à remplir</h3>
-    <ul>
-        <li><strong>Nom de l'événement</strong> — Ex: "Mariage de Clara & Junias"</li>
-        <li><strong>Type</strong> — Mariage, anniversaire, baptême, etc.</li>
-        <li><strong>Date et heure</strong></li>
-        <li><strong>Lieu</strong> — Nom de la salle</li>
-        <li><strong>Adresse</strong> — Adresse complète</li>
-        <li><strong>Description</strong> — Message pour les invités</li>
-        <li><strong>Image de fond</strong> — Photo de l'événement</li>
-    </ul>
-    
-    <div class="info-box tip">
-        <i class="fas fa-lightbulb"></i>
-        <div>
-            <strong>Astuce :</strong> Utilisez une belle image de fond — elle sera affichée dans les invitations.
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">1</div>
+            <h3><i class="fas fa-calendar-plus"></i> Créer l'événement</h3>
         </div>
-    </div>
-    
-    <hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--gray-lighter);">
-    
-    <h2><i class="fas fa-chair"></i> Étape 2 — Créer les tables</h2>
-    
-    <p>
-        Les tables représentent la disposition de votre salle. Vous pouvez définir leur capacité 
-        et les organiser par zones.
-    </p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Comment faire</h3>
-    <ol>
-        <li>Allez dans <code>Tables</code></li>
-        <li>Cliquez sur <strong>➕ Ajouter une table</strong></li>
-        <li>Sélectionnez l'événement concerné</li>
-        <li>Indiquez le nom/n° de la table</li>
-        <li>Définissez la capacité (nombre de places)</li>
-        <li>Choisissez une zone (VIP, salle principale...)</li>
-    </ol>
-    
-    <div class="info-box warning">
-        <i class="fas fa-exclamation-triangle"></i>
-        <div>
-            <strong>Important :</strong> Les tables doivent être créées <u>avant</u> d'assigner les invités.
+        
+        <p>
+            L'événement est la base de tout. C'est ici que vous définissez les informations principales 
+            qui seront utilisées dans les invitations.
+        </p>
+        
+        <h4><i class="fas fa-arrow-right" style="color:var(--orange);"></i> Comment faire</h4>
+        <ol>
+            <li>Allez dans le menu <code>Événements</code></li>
+            <li>Cliquez sur <strong>➕ Ajouter un événement</strong></li>
+            <li>Remplissez tous les champs</li>
+            <li>Cliquez sur <strong>💾 Enregistrer</strong></li>
+        </ol>
+        
+        <h4><i class="fas fa-list-check" style="color:var(--orange);"></i> Champs à remplir</h4>
+        
+        <div class="fields-grid">
+            <div class="field-item required">
+                <i class="fas fa-tag"></i>
+                <div class="field-content">
+                    <div class="field-name">Nom de l'événement *</div>
+                    <div class="field-desc">Ex: "Mariage de Clara & Junias"</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-theater-masks"></i>
+                <div class="field-content">
+                    <div class="field-name">Type d'événement *</div>
+                    <div class="field-desc">Mariage, anniversaire, baptême...</div>
+                </div>
+            </div>
+            
+            <div class="field-item required" style="grid-column: 1 / -1;">
+                <i class="fas fa-comment-dots"></i>
+                <div class="field-content">
+                    <div class="field-name">Description *</div>
+                    <div class="field-desc">Message qui s'affichera sur l'invitation</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-calendar-day"></i>
+                <div class="field-content">
+                    <div class="field-name">Date & Heure *</div>
+                    <div class="field-desc">Date et heure de l'événement</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-map-marker-alt"></i>
+                <div class="field-content">
+                    <div class="field-name">Lieu *</div>
+                    <div class="field-desc">Nom de la salle + adresse</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-palette"></i>
+                <div class="field-content">
+                    <div class="field-name">Modèle d'invitation *</div>
+                    <div class="field-desc">Classique, Netflix, Floral...</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-image"></i>
+                <div class="field-content">
+                    <div class="field-name">Photo de fond *</div>
+                    <div class="field-desc">Image principale de l'événement</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-share-alt"></i>
+                <div class="field-content">
+                    <div class="field-name">Moyens de communication</div>
+                    <div class="field-desc">Email, WhatsApp, Telegram</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-user-friends"></i>
+                <div class="field-content">
+                    <div class="field-name">Utilisateurs associés</div>
+                    <div class="field-desc">Qui peut gérer cet événement</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional" style="grid-column: 1 / -1;">
+                <i class="fas fa-camera"></i>
+                <div class="field-content">
+                    <div class="field-name">Photos souvenirs</div>
+                    <div class="field-desc">Photos qui apparaîtront dans l'invitation</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box tip">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+                <strong>Astuce :</strong> Utilisez une belle image de fond de haute qualité — elle sera affichée en plein écran dans les invitations.
+            </div>
         </div>
     </div>
     
@@ -808,68 +964,108 @@ if (!function_exists('adminUrl')) {
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 4 : ÉTAPES 3 & 4                          -->
+<!-- PAGE 4 : ÉTAPE 2 — ASSIGNER LES BOISSONS      -->
 <!-- ============================================ -->
 <div class="page">
-    <h2><i class="fas fa-wine-glass"></i> Étape 3 — Assigner les boissons</h2>
-    
-    <p>
-        Les invités pourront choisir leurs boissons préférées (max 2). Vous devez donc définir 
-        la liste des boissons disponibles pour l'événement.
-    </p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Comment faire</h3>
-    <ol>
-        <li>Allez dans <code>Boissons</code></li>
-        <li>Créez d'abord vos boissons (si ce n'est pas fait)</li>
-        <li>Cliquez sur <strong>🍹 Assigner à un événement</strong></li>
-        <li>Sélectionnez les boissons à rendre disponibles</li>
-        <li>Validez</li>
-    </ol>
-    
-    <div class="info-box tip">
-        <i class="fas fa-lightbulb"></i>
-        <div>
-            <strong>Conseil :</strong> Proposez un mix d'alcools, softs et eaux pour tous les goûts.
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">2</div>
+            <h3><i class="fas fa-wine-glass"></i> Assigner les boissons</h3>
+        </div>
+        
+        <p>
+            Les invités pourront choisir leurs boissons préférées (2 maximum). 
+            Vous devez donc définir la liste des boissons disponibles pour l'événement.
+        </p>
+        
+        <h4><i class="fas fa-arrow-right" style="color:var(--orange);"></i> Comment faire</h4>
+        <ol>
+            <li>Allez dans <code>Boissons</code></li>
+            <li>Créez d'abord vos boissons (si ce n'est pas fait)</li>
+            <li>Cliquez sur <strong>🍹 Assigner à un événement</strong></li>
+            <li>Sélectionnez les boissons à rendre disponibles</li>
+            <li>Validez</li>
+        </ol>
+        
+        <div class="info-box tip">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+                <strong>Conseil :</strong> Proposez un mix d'alcools, softs et eaux pour tous les goûts.
+                <br>Exemple : Champagne, Vin rouge, Coca-Cola, Fanta, Eau plate, Eau gazeuse...
+            </div>
         </div>
     </div>
     
     <hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--gray-lighter);">
     
-    <h2><i class="fas fa-users"></i> Étape 4 — Créer les invités</h2>
-    
-    <p>
-        Les invités sont les personnes à qui vous allez envoyer des invitations. 
-        Chaque invité peut venir avec plusieurs personnes (défini par <em>nombre_personnes</em>).
-    </p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Comment faire</h3>
-    <ol>
-        <li>Allez dans <code>Invités</code></li>
-        <li>Cliquez sur <strong>➕ Ajouter un invité</strong></li>
-        <li>Remplissez :</li>
-    </ol>
-    
-    <ul>
-        <li><strong>Nom + Prénom</strong></li>
-        <li><strong>Email</strong> — pour l'envoi par email</li>
-        <li><strong>Téléphone</strong> — pour WhatsApp (format international)</li>
-        <li><strong>Nombre de personnes</strong> — places réservées</li>
-        <li><strong>Événement</strong> — rattachez l'invité à l'événement</li>
-    </ul>
-    
-    <div class="info-box info">
-        <i class="fas fa-info-circle"></i>
-        <div>
-            <strong>Astuce :</strong> Pour créer plusieurs invités d'un coup, utilisez le bouton 
-            <strong>📥 Importer (CSV)</strong>.
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">3</div>
+            <h3><i class="fas fa-chair"></i> Créer les tables</h3>
         </div>
-    </div>
-    
-    <div class="info-box warning">
-        <i class="fas fa-exclamation-triangle"></i>
-        <div>
-            <strong>Format téléphone :</strong> Utilisez le format international, ex : <code>+243 812 345 678</code> pour la RDC.
+        
+        <p>
+            Les tables représentent la disposition de votre salle. Vous pouvez définir leur capacité 
+            et les organiser par zones.
+        </p>
+        
+        <h4><i class="fas fa-arrow-right" style="color:var(--orange);"></i> Comment faire</h4>
+        <ol>
+            <li>Allez dans <code>Tables</code></li>
+            <li>Cliquez sur <strong>➕ Ajouter une table</strong></li>
+            <li>Sélectionnez l'événement concerné</li>
+            <li>Remplissez les informations</li>
+        </ol>
+        
+        <h4><i class="fas fa-list-check" style="color:var(--orange);"></i> Champs à remplir</h4>
+        
+        <div class="fields-grid">
+            <div class="field-item required">
+                <i class="fas fa-tag"></i>
+                <div class="field-content">
+                    <div class="field-name">Nom de la table *</div>
+                    <div class="field-desc">Ex: Table d'honneur</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-users"></i>
+                <div class="field-content">
+                    <div class="field-name">Capacité min / max *</div>
+                    <div class="field-desc">Ex: 8 à 10 personnes</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-shapes"></i>
+                <div class="field-content">
+                    <div class="field-name">Type de table</div>
+                    <div class="field-desc">Ronde, carrée, rectangulaire...</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-map"></i>
+                <div class="field-content">
+                    <div class="field-name">Zone</div>
+                    <div class="field-desc">VIP, Salle principale, Terrasse...</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-arrows-alt"></i>
+                <div class="field-content">
+                    <div class="field-name">Position X / Y</div>
+                    <div class="field-desc">Coordonnées sur le plan de salle</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Important :</strong> Les tables doivent être créées <u>avant</u> d'assigner les invités.
+            </div>
         </div>
     </div>
     
@@ -880,69 +1076,114 @@ if (!function_exists('adminUrl')) {
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 5 : ÉTAPES 5 & 6                          -->
+<!-- PAGE 5 : ÉTAPE 4 — CRÉER L'INVITÉ             -->
 <!-- ============================================ -->
 <div class="page">
-    <h2><i class="fas fa-envelope"></i> Étape 5 — Créer les invitations</h2>
-    
-    <p>
-        L'invitation fait le lien entre un <strong>invité</strong> et un <strong>événement</strong>. 
-        Un code unique + QR code sont générés automatiquement.
-    </p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Comment faire</h3>
-    <ol>
-        <li>Allez dans <code>Invitations</code></li>
-        <li>Cliquez sur <strong>➕ Créer une invitation</strong></li>
-        <li>Sélectionnez l'invité</li>
-        <li>Sélectionnez l'événement</li>
-        <li>Le <strong>code unique</strong> est généré automatiquement</li>
-    </ol>
-    
-    <div class="info-box tip">
-        <i class="fas fa-lightbulb"></i>
-        <div>
-            <strong>Astuce :</strong> Le code unique (ex: <code>MDL-DEMO-2024</code>) sert à identifier 
-            l'invitation sur la page publique.
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">4</div>
+            <h3><i class="fas fa-user-plus"></i> Créer l'invité</h3>
+        </div>
+        
+        <p>
+            Les invités sont les personnes à qui vous allez envoyer des invitations. 
+            Chaque invité peut venir avec plusieurs personnes (défini par <em>nombre_personnes</em>).
+        </p>
+        
+        <h4><i class="fas fa-arrow-right" style="color:var(--orange);"></i> Comment faire</h4>
+        <ol>
+            <li>Allez dans <code>Invités</code></li>
+            <li>Cliquez sur <strong>➕ Ajouter un invité</strong></li>
+            <li>Remplissez les informations</li>
+            <li>Validez</li>
+        </ol>
+        
+        <h4><i class="fas fa-list-check" style="color:var(--orange);"></i> Champs à remplir</h4>
+        
+        <div class="fields-grid">
+            <div class="field-item required">
+                <i class="fas fa-user"></i>
+                <div class="field-content">
+                    <div class="field-name">Prénom & Nom *</div>
+                    <div class="field-desc">Identité de l'invité</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-address-book"></i>
+                <div class="field-content">
+                    <div class="field-name">Email ou Téléphone *</div>
+                    <div class="field-desc">Au moins un moyen de contact</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-tags"></i>
+                <div class="field-content">
+                    <div class="field-name">Catégorie</div>
+                    <div class="field-desc">Famille, Amis, Collègues...</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-map-marker-alt"></i>
+                <div class="field-content">
+                    <div class="field-name">Adresse</div>
+                    <div class="field-desc">Optionnel</div>
+                </div>
+            </div>
+            
+            <div class="field-item required">
+                <i class="fas fa-users"></i>
+                <div class="field-content">
+                    <div class="field-name">Nombre de personnes *</div>
+                    <div class="field-desc">Places réservées (1 à 100)</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional">
+                <i class="fas fa-comment"></i>
+                <div class="field-content">
+                    <div class="field-name">Préférences de contact</div>
+                    <div class="field-desc">Email, WhatsApp, Telegram, SMS</div>
+                </div>
+            </div>
+            
+            <div class="field-item optional" style="grid-column: 1 / -1;">
+                <i class="fas fa-camera"></i>
+                <div class="field-content">
+                    <div class="field-name">Photo de l'invité</div>
+                    <div class="field-desc">Optionnel — utilisée lors du check-in le jour J</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box info">
+            <i class="fas fa-magic"></i>
+            <div>
+                <strong>🎉 Important :</strong> Une fois l'invité créé, une <strong>invitation en son nom est générée automatiquement</strong>.
+                <br>
+                Vous pouvez la voir immédiatement dans l'onglet <code>Invitations</code>.
+                <br>
+                Un <strong>code unique + QR code</strong> sont créés automatiquement avec le statut <strong>En attente</strong>.
+            </div>
+        </div>
+        
+        <div class="info-box warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Format téléphone :</strong> Utilisez le format international, ex : <code>+243 812 345 678</code> pour la RDC.
+            </div>
+        </div>
+        
+        <div class="info-box tip">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+                <strong>Astuce :</strong> Pour créer plusieurs invités d'un coup, utilisez le bouton 
+                <strong>📥 Importer (CSV)</strong> dans la liste des invités.
+            </div>
         </div>
     </div>
-    
-    <hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--gray-lighter);">
-    
-    <h2><i class="fas fa-paper-plane"></i> Étape 6 — Envoyer les invitations</h2>
-    
-    <p>Vous pouvez envoyer les invitations par 3 canaux :</p>
-    
-    <div class="cards-grid">
-        <div class="card-guide">
-            <div class="card-icon"><i class="fas fa-envelope"></i></div>
-            <h4>📧 Email</h4>
-            <p>Envoi automatique par email avec le lien de l'invitation.</p>
-        </div>
-        <div class="card-guide">
-            <div class="card-icon"><i class="fab fa-whatsapp"></i></div>
-            <h4>💬 WhatsApp</h4>
-            <p>Envoi via l'API WhatsApp Business avec message personnalisé.</p>
-        </div>
-        <div class="card-guide">
-            <div class="card-icon"><i class="fab fa-telegram"></i></div>
-            <h4>📨 Telegram</h4>
-            <p>Envoi via un bot Telegram aux utilisateurs.</p>
-        </div>
-        <div class="card-guide">
-            <div class="card-icon"><i class="fas fa-link"></i></div>
-            <h4>🔗 Lien direct</h4>
-            <p>Copiez le lien de l'invitation et partagez-le manuellement.</p>
-        </div>
-    </div>
-    
-    <h3><i class="fas fa-arrow-right"></i> Envoi en masse</h3>
-    <ol>
-        <li>Allez dans <code>Notifications</code></li>
-        <li>Choisissez le canal (Email / WhatsApp / Telegram)</li>
-        <li>Sélectionnez les invitations à envoyer</li>
-        <li>Cliquez sur <strong>📤 Envoyer</strong></li>
-    </ol>
     
     <div class="page-footer">
         <span class="brand"><?php echo $appName; ?></span>
@@ -951,60 +1192,50 @@ if (!function_exists('adminUrl')) {
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 6 : SUIVI ET RAPPORTS                     -->
+<!-- PAGE 6 : ÉTAPE 5 — ENVOYER LES INVITATIONS    -->
 <!-- ============================================ -->
 <div class="page">
-    <h2><i class="fas fa-chart-line"></i> Étape 7 — Suivre les confirmations</h2>
-    
-    <p>
-        Une fois les invitations envoyées, les invités vont confirmer ou refuser leur présence. 
-        Vous pouvez suivre tout ça en temps réel.
-    </p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Tableau de bord</h3>
-    <p>Le <strong>Tableau de bord</strong> affiche en direct :</p>
-    <ul>
-        <li>Nombre d'invitations envoyées</li>
-        <li>Nombre de confirmations</li>
-        <li>Nombre de refus</li>
-        <li>Nombre de présences enregistrées</li>
-    </ul>
-    
-    <hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--gray-lighter);">
-    
-    <h2><i class="fas fa-qrcode"></i> Étape 8 — Gérer les présences</h2>
-    
-    <p>Le jour J, scannez le QR code de chaque invité à l'entrée pour enregistrer sa présence.</p>
-    
-    <h3><i class="fas fa-arrow-right"></i> Comment faire</h3>
-    <ol>
-        <li>Allez dans <code>Présences</code></li>
-        <li>Utilisez la caméra pour scanner le QR code</li>
-        <li>La présence est enregistrée automatiquement</li>
-        <li>Ou saisissez manuellement le code unique</li>
-    </ol>
-    
-    <div class="info-box tip">
-        <i class="fas fa-lightbulb"></i>
-        <div>
-            <strong>Astuce :</strong> Utilisez un smartphone ou une tablette à l'entrée pour un check-in rapide.
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">5</div>
+            <h3><i class="fas fa-paper-plane"></i> Envoyer les invitations en 1 clic</h3>
+        </div>
+        
+        <p>
+            C'est l'étape la plus rapide ! Vous sélectionnez les invités et vous cliquez sur envoyer — 
+            <strong>tout le monde reçoit son invitation instantanément</strong>.
+        </p>
+        
+        <h3><i class="fas fa-paper-plane" style="color:var(--orange);"></i> Par WhatsApp</h3>
+        <ol>
+            <li>Allez dans <code>Notifications → WhatsApp</code></li>
+            <li>Sélectionnez les invités à qui envoyer</li>
+            <li>Cliquez sur <strong>📤 Envoyer</strong></li>
+            <li>Chaque invité reçoit son invitation par WhatsApp</li>
+        </ol>
+        
+        <h3><i class="fas fa-envelope" style="color:var(--orange);"></i> Par Email</h3>
+        <ol>
+            <li>Allez dans <code>Notifications → Emails</code></li>
+            <li>Sélectionnez les invitations à envoyer</li>
+            <li>Cliquez sur <strong>📤 Envoyer</strong></li>
+            <li>Chaque invité reçoit un email avec le lien de son invitation</li>
+        </ol>
+        
+        <h3><i class="fas fa-link" style="color:var(--orange);"></i> Ou par lien direct</h3>
+        <p>
+            Vous pouvez aussi copier le lien de l'invitation depuis <code>Invitations</code> 
+            et le partager manuellement.
+        </p>
+        
+        <div class="info-box tip">
+            <i class="fas fa-rocket"></i>
+            <div>
+                <strong>Envoi en masse :</strong> Un seul clic suffit pour envoyer à tous vos invités 
+                en même temps. Plus besoin de le faire un par un !
+            </div>
         </div>
     </div>
-    
-    <hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--gray-lighter);">
-    
-    <h2><i class="fas fa-file-alt"></i> Étape 9 — Consulter les rapports</h2>
-    
-    <p>Tous les rapports sont disponibles dans <code>Rapports</code> :</p>
-    
-    <ul>
-        <li>📊 <strong>Statistiques globales</strong></li>
-        <li>👥 <strong>Liste des invités</strong></li>
-        <li>✅ <strong>Confirmations</strong></li>
-        <li>🎯 <strong>Présences</strong></li>
-        <li>🍹 <strong>Préférences boissons</strong></li>
-        <li>📤 <strong>Export PDF</strong></li>
-    </ul>
     
     <div class="page-footer">
         <span class="brand"><?php echo $appName; ?></span>
@@ -1013,12 +1244,164 @@ if (!function_exists('adminUrl')) {
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 7 : FAQ                                  -->
+<!-- PAGE 7 : ÉTAPE 6 — LES INVITÉS RÉPONDENT      -->
+<!-- ============================================ -->
+<div class="page">
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">6</div>
+            <h3><i class="fas fa-comments"></i> Les invités reçoivent et répondent</h3>
+        </div>
+        
+        <p>
+            Une fois l'invitation reçue, l'invité peut interagir avec elle depuis son téléphone. 
+            Voici ce qu'il peut faire :
+        </p>
+        
+        <h3><i class="fas fa-check-circle" style="color:var(--orange);"></i> 1. Confirmer sa présence</h3>
+        <p>
+            L'invité clique sur le bouton <strong>"Confirmer ma présence"</strong> et indique 
+            le nombre de personnes qui viendront.
+        </p>
+        
+        <h3><i class="fas fa-comment-dots" style="color:var(--orange);"></i> 2. Laisser un message aux hôtes</h3>
+        <p>
+            Il peut écrire un message personnel (vœux, souvenirs, encouragement...) 
+            qui sera enregistré et visible par les organisateurs.
+        </p>
+        
+        <h3><i class="fas fa-wine-glass" style="color:var(--orange);"></i> 3. Choisir ses préférences de boissons</h3>
+        <p>
+            Il sélectionne jusqu'à <strong>2 boissons</strong> parmi celles que vous avez définies.
+            Cela vous permet d'anticiper les quantités.
+        </p>
+        
+        <div class="info-box info">
+            <i class="fas fa-chart-line"></i>
+            <div>
+                <strong>Tout est visible dans l'onglet <code>Rapports</code></strong> :
+                <ul style="margin-top: 8px; margin-bottom: 0;">
+                    <li>✅ Confirmations reçues</li>
+                    <li>💬 Messages des invités</li>
+                    <li>🍹 Préférences de boissons</li>
+                    <li>📊 Statistiques globales</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="info-box tip">
+            <i class="fas fa-bell"></i>
+            <div>
+                <strong>Astuce :</strong> Suivez les réponses en temps réel depuis le <strong>Tableau de bord</strong> 
+                pour connaître à tout moment le nombre de confirmations.
+            </div>
+        </div>
+    </div>
+    
+    <div class="page-footer">
+        <span class="brand"><?php echo $appName; ?></span>
+        <span>Page 7</span>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 8 : ÉTAPE 7 — GÉRER LES PRÉSENCES        -->
+<!-- ============================================ -->
+<div class="page">
+    <div class="step-block">
+        <div class="step-header">
+            <div class="step-badge">7</div>
+            <h3><i class="fas fa-qrcode"></i> Gérer les présences le jour J</h3>
+        </div>
+        
+        <p>
+            C'est le moment magique ! Le jour de l'événement, l'invité se présente à l'entrée 
+            avec son invitation (papier ou téléphone). Le contrôleur scanne son QR code.
+        </p>
+        
+        <h3><i class="fas fa-mobile-alt" style="color:var(--orange);"></i> Procédure de check-in</h3>
+        <ol>
+            <li>L'invité arrive à l'entrée</li>
+            <li>Le contrôleur ouvre <code>Présences</code> sur son téléphone ou tablette</li>
+            <li>Il scanne le QR code de l'invitation</li>
+            <li>La présence est enregistrée automatiquement</li>
+        </ol>
+        
+        <h3><i class="fas fa-tv" style="color:var(--orange);"></i> Affichage sur écran géant</h3>
+        <p>
+            Une fois la présence détectée, voici ce qui se passe :
+        </p>
+        <ul>
+            <li>📸 <strong>La photo de l'invité s'affiche</strong> en grand sur l'écran géant</li>
+            <li>👤 <strong>Son nom apparaît</strong> en lettres majuscules</li>
+            <li>🎉 <strong>Un message de bienvenue personnalisé</strong> s'affiche</li>
+            <li>✨ Une animation d'accueil s'enclenche</li>
+        </ul>
+        
+        <div class="info-box tip">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+                <strong>Astuce :</strong> Utilisez une grande TV ou un vidéoprojecteur connecté à un ordinateur 
+                pour afficher l'écran de bienvenue. Effet garanti auprès de vos invités !
+            </div>
+        </div>
+        
+        <div class="info-box warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Prévoyez :</strong> Un smartphone ou une tablette pour le contrôleur, 
+                avec une bonne connexion internet pour synchroniser les présences en temps réel.
+            </div>
+        </div>
+        
+        <h3><i class="fas fa-chart-bar" style="color:var(--orange);"></i> Suivi en temps réel</h3>
+        <p>
+            Depuis votre téléphone, vous pouvez voir à tout moment :
+        </p>
+        <ul>
+            <li>Le nombre d'invités déjà arrivés</li>
+            <li>Le nombre d'invités attendus</li>
+            <li>La liste des présences enregistrées</li>
+        </ul>
+    </div>
+    
+    <div class="page-footer">
+        <span class="brand"><?php echo $appName; ?></span>
+        <span>Page 8</span>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 9 : FAQ                                  -->
 <!-- ============================================ -->
 <div class="page">
     <h1>Questions fréquentes ❓</h1>
     
     <h2><i class="fas fa-question-circle"></i> FAQ</h2>
+    
+    <div class="faq-item">
+        <div class="question">
+            <i class="fas fa-comments"></i>
+            Une invitation est-elle créée automatiquement quand je crée un invité ?
+        </div>
+        <div class="answer">
+            <strong>Oui !</strong> Dès que vous créez un invité, une invitation en son nom est 
+            générée automatiquement avec un code unique et un QR code. 
+            Vous pouvez la voir immédiatement dans <code>Invitations</code>.
+        </div>
+    </div>
+    
+    <div class="faq-item">
+        <div class="question">
+            <i class="fas fa-comments"></i>
+            Comment envoyer les invitations à tout le monde en même temps ?
+        </div>
+        <div class="answer">
+            Allez dans <code>Notifications → WhatsApp</code> ou <code>Notifications → Emails</code>, 
+            sélectionnez tous les invités, puis cliquez sur <strong>📤 Envoyer</strong>. 
+            Un seul clic suffit !
+        </div>
+    </div>
     
     <div class="faq-item">
         <div class="question">
@@ -1045,33 +1428,23 @@ if (!function_exists('adminUrl')) {
     <div class="faq-item">
         <div class="question">
             <i class="fas fa-comments"></i>
-            Comment créer plusieurs invitations en une seule fois ?
+            Où voir les messages laissés par les invités ?
         </div>
         <div class="answer">
-            Utilisez la fonction <strong>📥 Importer CSV</strong> dans <code>Invités</code>. 
-            Un modèle de fichier est disponible au téléchargement.
+            Tous les messages sont visibles dans <code>Rapports → Messages</code> ou 
+            directement dans <code>Invitations</code>.
         </div>
     </div>
     
     <div class="faq-item">
         <div class="question">
             <i class="fas fa-comments"></i>
-            Que se passe-t-il si un invité ne reçoit pas son invitation ?
+            Comment fonctionne l'affichage sur écran géant ?
         </div>
         <div class="answer">
-            Vérifiez que l'email/téléphone est correct, puis renvoyez manuellement depuis 
-            <code>Invitations → 📤 Envoyer</code>.
-        </div>
-    </div>
-    
-    <div class="faq-item">
-        <div class="question">
-            <i class="fas fa-comments"></i>
-            Puis-je annuler une invitation ?
-        </div>
-        <div class="answer">
-            Oui. Dans <code>Invitations</code>, cliquez sur <strong>🚫 Annuler</strong>. 
-            L'invitation ne sera plus accessible via son code.
+            Quand un invité arrive et que son QR code est scanné, sa photo et son nom s'affichent 
+            automatiquement sur l'écran géant avec un message de bienvenue. 
+            Ouvrez simplement la page d'affichage sur l'écran avant l'événement.
         </div>
     </div>
     
@@ -1108,12 +1481,12 @@ if (!function_exists('adminUrl')) {
     
     <div class="page-footer">
         <span class="brand"><?php echo $appName; ?></span>
-        <span>Page 7</span>
+        <span>Page 9</span>
     </div>
 </div>
 
 <!-- ============================================ -->
-<!-- PAGE 8 : RÉCAPITULATIF                         -->
+<!-- PAGE 10 : RÉCAPITULATIF                        -->
 <!-- ============================================ -->
 <div class="page">
     <h1>Récapitulatif 🎯</h1>
@@ -1125,14 +1498,7 @@ if (!function_exists('adminUrl')) {
             <div class="number">✓</div>
             <div class="content">
                 <h4>Événement créé</h4>
-                <p>Nom, date, lieu et description renseignés</p>
-            </div>
-        </div>
-        <div class="workflow-step">
-            <div class="number">✓</div>
-            <div class="content">
-                <h4>Tables configurées</h4>
-                <p>Capacité et zones définies</p>
+                <p>Nom, type, description, date, lieu, modèle, photo de fond</p>
             </div>
         </div>
         <div class="workflow-step">
@@ -1145,22 +1511,36 @@ if (!function_exists('adminUrl')) {
         <div class="workflow-step">
             <div class="number">✓</div>
             <div class="content">
-                <h4>Invités créés</h4>
-                <p>Nom, email, téléphone et nombre de places</p>
+                <h4>Tables configurées</h4>
+                <p>Nom, capacité, type, zone, position</p>
             </div>
         </div>
         <div class="workflow-step">
             <div class="number">✓</div>
             <div class="content">
-                <h4>Invitations générées</h4>
-                <p>Codes uniques et QR codes créés</p>
+                <h4>Invités créés</h4>
+                <p>Invitations générées automatiquement</p>
             </div>
         </div>
         <div class="workflow-step">
             <div class="number">✓</div>
             <div class="content">
                 <h4>Invitations envoyées</h4>
-                <p>Email, WhatsApp ou Telegram</p>
+                <p>WhatsApp / Email en 1 clic</p>
+            </div>
+        </div>
+        <div class="workflow-step">
+            <div class="number">✓</div>
+            <div class="content">
+                <h4>Réponses reçues</h4>
+                <p>Confirmations, messages, boissons</p>
+            </div>
+        </div>
+        <div class="workflow-step">
+            <div class="number">✓</div>
+            <div class="content">
+                <h4>Présences le jour J</h4>
+                <p>Scan QR code + affichage écran géant</p>
             </div>
         </div>
     </div>
@@ -1169,7 +1549,7 @@ if (!function_exists('adminUrl')) {
         <i class="fas fa-trophy"></i>
         <div>
             <strong>Félicitations !</strong> Vous êtes prêt pour votre événement. 
-            Bonne organisation et profitez bien de ce moment ! 🎉
+            Bonne organisation et profitez bien de ce moment inoubliable ! 🎉
         </div>
     </div>
     
@@ -1184,7 +1564,7 @@ if (!function_exists('adminUrl')) {
     
     <div class="page-footer">
         <span class="brand"><?php echo $appName; ?></span>
-        <span>Page 8 — Fin du guide</span>
+        <span>Page 10 — Fin du guide</span>
     </div>
 </div>
 

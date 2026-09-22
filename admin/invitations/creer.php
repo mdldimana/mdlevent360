@@ -14,13 +14,11 @@ $pdo = getDbConnection();
 // ============================================
 // ⭐ RÉCUPÉRATION DES ÉVÉNEMENTS ACCESSIBLES
 // ============================================
-
 $evenements = getEvenementsPourSelect($pdo);
 
 // ============================================
 // VARIABLES
 // ============================================
-
 $error = '';
 $success = '';
 $id_evenement = isset($_GET['evenement']) ? (int)$_GET['evenement'] : 0;
@@ -29,7 +27,6 @@ $selected_invites = [];
 // ============================================
 // ⭐ RÉCUPÉRATION DES INVITÉS ACCESSIBLES (filtrés par événement)
 // ============================================
-
 $invites = [];
 $invites_existants = [];
 
@@ -64,18 +61,17 @@ if ($id_evenement > 0) {
     }
 } else {
     // Pas d'événement sélectionné → on ne charge pas les invités
-    // (pour forcer la sélection d'un événement d'abord)
     $invites = [];
 }
 
 // ============================================
 // TRAITEMENT DU FORMULAIRE
 // ============================================
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_evenement = (int)($_POST['id_evenement'] ?? 0);
     $selected_invites = $_POST['invites'] ?? [];
-    $statut = $_POST['statut'] ?? 'EN_ATTENTE';
+    // ⭐ Statut forcé à EN_ATTENTE (pas de choix utilisateur)
+    $statut = 'EN_ATTENTE';
 
     $errors = [];
 
@@ -173,14 +169,6 @@ if ($id_evenement > 0 && empty($invites)) {
         $invites_existants = $stmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (PDOException $e) {}
 }
-
-$statuts = ['EN_ATTENTE', 'CONFIRMEE', 'REFUSEE', 'ANNULEE'];
-$statutLabels = [
-    'EN_ATTENTE' => 'En attente',
-    'CONFIRMEE' => 'Confirmée',
-    'REFUSEE' => 'Refusée',
-    'ANNULEE' => 'Annulée'
-];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -322,6 +310,30 @@ $statutLabels = [
             background: white;
         }
         .form-text { font-size: 12px; color: #9a8a7f; margin-top: 4px; }
+
+        /* ⭐ Info statut badge */
+        .info-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(193, 124, 96, 0.08);
+            border: 1px solid rgba(193, 124, 96, 0.2);
+            border-radius: 10px;
+            font-size: 13px;
+            color: #6a5a4a;
+            margin-bottom: 18px;
+        }
+
+        .info-status-badge i {
+            color: #c17c60;
+            font-size: 16px;
+        }
+
+        .info-status-badge strong {
+            color: #c17c60;
+            font-weight: 700;
+        }
 
         /* ========== BOUTONS ========== */
         .btn-save {
@@ -723,17 +735,11 @@ $statutLabels = [
                                 Sélectionnez les invités
                             </div>
 
-                            <!-- Statut par défaut -->
-                            <div class="mb-3">
-                                <label class="form-label"><i class="bi bi-shield-check"></i> Statut par défaut</label>
-                                <select class="form-select" name="statut">
-                                    <?php foreach ($statuts as $s): ?>
-                                        <option value="<?php echo $s; ?>">
-                                            <?php echo $statutLabels[$s] ?? $s; ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text">Statut initial des invitations créées.</div>
+                            <!-- ⭐ Statut automatique : EN_ATTENTE -->
+                            <input type="hidden" name="statut" value="EN_ATTENTE">
+                            <div class="info-status-badge">
+                                <i class="bi bi-clock-history"></i>
+                                Les invitations seront créées avec le statut <strong>En attente</strong>.
                             </div>
 
                             <!-- Barre d'action -->
