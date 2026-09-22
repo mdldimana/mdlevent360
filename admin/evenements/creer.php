@@ -23,7 +23,7 @@ if (!defined('APP_URL')) {
     define('APP_URL', $protocol.'://'.$host.$projectFolder);
 }
 
-requirePermission('evenements.ajouter');
+requirePermission('evenements.creer');
 
 $user = getCurrentUser();
 $pdo = getDbConnection();
