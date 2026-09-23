@@ -1,16 +1,23 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : STORY INSTAGRAM - v2
+ * TEMPLATE : STORY INSTAGRAM - v7 FIX QR BASE64
  * ============================================================
- * 
- * Nouveautés v2 :
- * - Affichage du nom de la table
- * - Photo de fond utilisée en background
- * - Diaporama photos plein écran (image entière)
- * 
+ * Fix: QR en base64 côté PHP pour que html2canvas le capture
  * ============================================================
  */
+
+// FIX QR - Génération en base64 pour capture garantie
+if (!empty($fullUrl)) {
+    $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=330x330&data=" . urlencode($fullUrl) . "&color=1a1a1a&bgcolor=ffffff&margin=1&qzone=1";
+    $qrDataUri = $qrApiUrl;
+    $qrContent = @file_get_contents($qrApiUrl);
+    if ($qrContent !== false && strlen($qrContent) > 100) {
+        $qrDataUri = "data:image/png;base64," . base64_encode($qrContent);
+    }
+} else {
+    $qrDataUri = "";
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -21,7 +28,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -36,7 +42,6 @@
             -webkit-font-smoothing: antialiased;
         }
         
-        /* Phone frame en desktop */
         @media (min-width: 768px) {
             body {
                 background: #111;
@@ -48,7 +53,6 @@
             }
         }
         
-        /* Container story 9:16 */
         .story-container {
             position: relative;
             width: 100%;
@@ -72,7 +76,6 @@
             }
         }
         
-        /* ⭐ FOND PHOTO */
         .story-bg {
             position: absolute;
             inset: 0;
@@ -87,17 +90,17 @@
             background: linear-gradient(180deg, 
                 rgba(0,0,0,0.55) 0%, 
                 rgba(0,0,0,0.15) 30%,
-                rgba(0,0,0,0.35) 70%,
-                rgba(0,0,0,0.92) 100%);
+                rgba(0,0,0,0.4) 70%,
+                rgba(0,0,0,0.95) 100%);
         }
         
-        /* Barre de progression */
         .story-progress {
             position: relative;
             z-index: 10;
             display: flex;
             gap: 4px;
             padding: 12px 12px 0;
+            flex-shrink: 0;
         }
         .story-progress .bar {
             flex: 1;
@@ -120,7 +123,6 @@
             to   { width: 100%; }
         }
         
-        /* Header story */
         .story-header {
             position: relative;
             z-index: 10;
@@ -128,6 +130,7 @@
             align-items: center;
             gap: 10px;
             padding: 12px 16px;
+            flex-shrink: 0;
         }
         .story-avatar {
             width: 38px;
@@ -150,11 +153,6 @@
             font-weight: 700;
             font-size: 14px;
             color: white;
-            overflow: hidden;
-        }
-        .story-avatar-inner img {
-            width: 100%; height: 100%;
-            object-fit: cover;
         }
         .story-info {
             flex: 1;
@@ -186,19 +184,19 @@
             line-height: 1;
         }
         
-        /* Contenu central story */
         .story-content {
             position: relative;
             z-index: 5;
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px 24px 100px;
-            text-align: center;
+            justify-content: center;
+            padding: 10px 20px 20px;
+            overflow-y: auto;
+            scrollbar-width: none;
         }
+        .story-content::-webkit-scrollbar { display: none; }
         
-        /* Sticker */
         .story-sticker {
             position: absolute;
             top: 80px;
@@ -206,9 +204,9 @@
             transform: translateX(-50%) rotate(-3deg);
             background: linear-gradient(135deg, #ff6ec7, #7873f5);
             color: white;
-            padding: 8px 18px;
+            padding: 6px 16px;
             border-radius: 24px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -217,34 +215,34 @@
             border: 2px solid rgba(255,255,255,0.3);
         }
         
-        /* Carte centrale */
         .story-card {
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.45);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 24px;
-            padding: 24px 20px;
+            padding: 20px 18px;
             border: 1px solid rgba(255,255,255,0.2);
-            margin-bottom: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+            width: 100%;
         }
         
         .story-label {
-            font-size: 10px;
+            font-size: 9px;
             letter-spacing: 0.3em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.6);
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         
         .story-guest-name {
             font-family: 'Playfair Display', serif;
-            font-size: 36px;
+            font-size: 26px;
             font-weight: 700;
             font-style: italic;
             line-height: 1.1;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             color: white;
             text-shadow: 0 2px 20px rgba(0,0,0,0.5);
         }
@@ -253,96 +251,131 @@
             width: 40px;
             height: 1px;
             background: rgba(255,255,255,0.4);
-            margin: 0 auto 16px;
+            margin: 0 auto 12px;
         }
         
         .story-host-name {
             font-family: 'Playfair Display', serif;
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             color: white;
             line-height: 1.2;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .story-event-type {
-            font-size: 11px;
+            font-size: 9px;
             letter-spacing: 0.25em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.7);
             font-weight: 600;
         }
         
-        /* ⭐ TABLE DANS LA STORY */
         .story-table {
-            margin-top: 20px;
-            padding: 12px 16px;
+            margin-top: 12px;
+            padding: 8px 14px;
             background: linear-gradient(135deg, rgba(255,110,199,0.25), rgba(120,115,245,0.25));
             border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 16px;
+            border-radius: 14px;
             display: inline-block;
-            animation: tablePulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes tablePulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255,110,199,0.3); }
-            50% { box-shadow: 0 0 30px 0 rgba(255,110,199,0.5); }
         }
         
         .story-table .label {
-            font-size: 9px;
+            font-size: 8px;
             letter-spacing: 0.3em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.7);
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         
         .story-table .value {
             font-family: 'Playfair Display', serif;
-            font-size: 22px;
+            font-size: 16px;
             font-weight: 700;
             color: white;
         }
         
-        /* Infos date/lieu */
         .story-info-bar {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-            padding-top: 16px;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 1px solid rgba(255,255,255,0.15);
         }
         .story-info-bar .item {
             text-align: center;
+            flex: 1;
         }
         .story-info-bar .label {
-            font-size: 9px;
+            font-size: 7px;
             letter-spacing: 0.2em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.5);
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .story-info-bar .value {
-            font-size: 13px;
+            font-size: 10px;
             font-weight: 700;
             color: white;
         }
         
-        /* Swipe up */
+        /* QR CODE */
+        .story-qr-section {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed rgba(255,255,255,0.2);
+        }
+        
+        .story-qr-label {
+            font-size: 8px;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .story-qr-box {
+            display: inline-block;
+            padding: 6px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            min-width: 122px;
+            min-height: 122px;
+            line-height: 0;
+        }
+        
+        .story-qr-box img {
+            display: block !important;
+            width: 110px !important;
+            height: 110px !important;
+            margin: 0 auto;
+        }
+        
+        .story-qr-code {
+            font-size: 8px;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.6);
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        
         .story-swipe {
             position: relative;
             z-index: 10;
             text-align: center;
-            padding-bottom: 30px;
-            font-size: 12px;
+            padding-bottom: 20px;
+            font-size: 11px;
             color: rgba(255,255,255,0.7);
             letter-spacing: 0.1em;
             animation: swipeUp 2s ease-in-out infinite;
+            flex-shrink: 0;
         }
         .story-swipe i {
             display: block;
-            font-size: 20px;
+            font-size: 18px;
             margin-bottom: 4px;
         }
         @keyframes swipeUp {
@@ -350,19 +383,18 @@
             50% { transform: translateY(-6px); opacity: 1; }
         }
         
-        /* CTA */
-        .story-cta {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 15;
+        .story-cta-below {
+            max-width: 420px;
+            margin: 20px auto 0;
+            text-align: center;
+            padding: 0 20px;
         }
+        
         .story-cta-btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 14px 28px;
+            gap: 10px;
+            padding: 14px 32px;
             background: linear-gradient(135deg, #ff6ec7, #7873f5);
             color: white;
             border-radius: 999px;
@@ -372,17 +404,15 @@
             text-transform: uppercase;
             text-decoration: none;
             box-shadow: 0 12px 32px rgba(120, 115, 245, 0.5);
-            animation: pulseCTA 2.5s ease-in-out infinite;
             border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
         }
-        @keyframes pulseCTA {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .story-cta-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 16px 40px rgba(120, 115, 245, 0.7);
+            color: white;
         }
         
-        /* ============================================
-           CONTENU SOUS LA STORY
-           ============================================ */
         .content-below {
             max-width: 420px;
             margin: 0 auto;
@@ -415,7 +445,6 @@
             font-size: 20px;
         }
         
-        /* Formulaire */
         .form-group { margin-bottom: 16px; }
         .form-group label {
             display: block;
@@ -487,12 +516,7 @@
             transition: all 0.3s ease;
             box-shadow: 0 12px 28px rgba(120, 115, 245, 0.4);
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 16px 36px rgba(120, 115, 245, 0.6);
-        }
         
-        /* Boissons */
         .boisson-grid { display: flex; flex-wrap: wrap; gap: 8px; }
         .boisson-item {
             display: inline-flex;
@@ -525,20 +549,6 @@
             margin-bottom: 10px;
         }
         
-        /* QR */
-        .qr-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-        }
-        #qrcode {
-            padding: 12px;
-            background: white;
-            border-radius: 12px;
-        }
-        
-        /* Alert */
         .alert-custom {
             padding: 14px 18px;
             border-radius: 12px;
@@ -552,7 +562,6 @@
         .alert-danger  { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.3);  color: #fca5a5; }
         .alert-warning { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
         
-        /* Bouton download */
         #downloadBtn {
             position: fixed;
             bottom: 24px;
@@ -576,7 +585,6 @@
         }
         #downloadBtn:hover { transform: translateY(-3px) scale(1.05); }
         
-        /* ⭐ DIAPORAMA PLEIN ÉCRAN */
         .diaporama {
             width: 100%;
             aspect-ratio: 4/5;
@@ -606,7 +614,6 @@
             background: #000;
         }
         
-        /* Flèches diaporama */
         .diapo-arrow {
             position: absolute;
             top: 50%;
@@ -627,15 +634,9 @@
             backdrop-filter: blur(10px);
         }
         
-        .diapo-arrow:hover {
-            background: rgba(255,110,199,0.8);
-            transform: translateY(-50%) scale(1.1);
-        }
-        
         .diapo-arrow.prev { left: 12px; }
         .diapo-arrow.next { right: 12px; }
         
-        /* Compteur */
         .diapo-counter {
             position: absolute;
             bottom: 12px;
@@ -649,26 +650,24 @@
             padding: 6px 12px;
             border-radius: 999px;
             z-index: 10;
-            backdrop-filter: blur(10px);
         }
     </style>
 </head>
 <body>
 
-    <!-- STORY VERTICALE -->
+    <!-- ============================================ -->
+    <!-- STORY AVEC QR INTÉGRÉ EN BASE64              -->
+    <!-- ============================================ -->
     <div class="story-container" id="invitation-card">
         
-        <!-- ⭐ FOND PHOTO -->
         <div class="story-bg" style="<?php if (!empty($pageBackground)): ?>background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');<?php else: ?>background: linear-gradient(135deg, #1a0033 0%, #000 50%, #33001a 100%);<?php endif; ?>"></div>
         
-        <!-- Barre de progression -->
         <div class="story-progress">
             <div class="bar active"></div>
             <div class="bar"></div>
             <div class="bar"></div>
         </div>
         
-        <!-- Header -->
         <div class="story-header">
             <div class="story-avatar">
                 <div class="story-avatar-inner">
@@ -682,12 +681,10 @@
             <button class="story-close">×</button>
         </div>
         
-        <!-- Sticker -->
         <div class="story-sticker">
             ✨ Invitation exclusive
         </div>
         
-        <!-- Contenu central -->
         <div class="story-content">
             
             <div class="story-card">
@@ -697,14 +694,13 @@
                 
                 <div class="story-divider"></div>
                 
-                <div style="font-size:12px;color:rgba(255,255,255,0.7);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:12px;">
+                <div style="font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px;">
                     Vous êtes invité par
                 </div>
                 
                 <div class="story-host-name"><?php echo htmlspecialchars($host1); ?></div>
                 <div class="story-event-type"><?php echo htmlspecialchars(strtoupper($eventType)); ?></div>
                 
-                <!-- ⭐ TABLE ASSIGNÉE -->
                 <?php if ($hasTable): ?>
                 <div class="story-table">
                     <div class="label">Votre table</div>
@@ -723,28 +719,42 @@
                     </div>
                     <div class="item">
                         <div class="label">Lieu</div>
-                        <div class="value" style="font-size:11px;"><?php echo htmlspecialchars(mb_substr($lieuDisplay, 0, 15)); ?></div>
+                        <div class="value" style="font-size:9px;"><?php echo htmlspecialchars(mb_substr($lieuDisplay, 0, 10)); ?></div>
                     </div>
+                </div>
+                
+                <!-- ✅ QR CODE EN BASE64 - CAPTURE GARANTIE -->
+                <div class="story-qr-section">
+                    <div class="story-qr-label">Scannez pour confirmer</div>
+                    <div class="story-qr-box">
+                        <img 
+                            id="qrImage"
+                            src="<?php echo $qrDataUri; ?>"
+                            alt="QR Code"
+                            width="110"
+                            height="110"
+                        >
+                    </div>
+                    <div class="story-qr-code"><?php echo htmlspecialchars($invitation['code_unique']); ?></div>
                 </div>
                 
             </div>
             
         </div>
         
-        <!-- CTA -->
-        <div class="story-cta">
-            <a href="#section-confirmation" class="story-cta-btn">
-                <i class="fas fa-check-circle"></i>
-                Répondre
-            </a>
-        </div>
-        
-        <!-- Swipe -->
         <div class="story-swipe">
             <i class="fas fa-chevron-up"></i>
             Glisser vers le haut
         </div>
         
+    </div>
+
+    <!-- BOUTON RÉPONDRE SOUS LA STORY -->
+    <div class="story-cta-below">
+        <a href="#section-confirmation" class="story-cta-btn">
+            <i class="fas fa-check-circle"></i>
+            Répondre à l'invitation
+        </a>
     </div>
 
     <!-- CONTENU SOUS LA STORY -->
@@ -757,7 +767,7 @@
             </div>
         <?php endif; ?>
         
-        <!-- ⭐ DIAPORAMA PHOTOS -->
+        <!-- DIAPORAMA PHOTOS -->
         <?php if (!empty($photosHost)): ?>
             <div class="info-card">
                 <h3><i class="fas fa-images"></i> Souvenirs</h3>
@@ -770,8 +780,7 @@
                         <div class="slide <?php echo $photoIndex === 0 ? 'active' : ''; ?>" data-index="<?php echo $photoIndex; ?>">
                             <img src="<?php echo htmlspecialchars(getPhotoUrl($photo['photo'])); ?>" 
                                  alt="<?php echo htmlspecialchars($photo['titre'] ?? 'Souvenir ' . ($index + 1)); ?>"
-                                 loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>"
-                                 crossorigin="anonymous">
+                                 loading="<?php echo $photoIndex === 0 ? 'eager' : 'lazy'; ?>">
                         </div>
                     <?php 
                         $photoIndex++;
@@ -800,27 +809,6 @@
                 </div>
             </div>
         <?php endif; ?>
-        
-        <!-- ⭐ TABLE (carte dédiée) -->
-        <?php if ($hasTable): ?>
-        <div class="info-card" style="text-align:center;">
-            <h3 style="justify-content:center;"><i class="fas fa-chair"></i> Votre table</h3>
-            <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white;padding:8px 0;">
-                <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
-            </div>
-        </div>
-        <?php endif; ?>
-        
-        <!-- QR Code -->
-        <div class="info-card">
-            <h3><i class="fas fa-qrcode"></i> Code QR</h3>
-            <div class="qr-wrapper">
-                <div id="qrcode"></div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.1em;">
-                    <?php echo htmlspecialchars($invitation['code_unique']); ?>
-                </div>
-            </div>
-        </div>
         
         <!-- Confirmation -->
         <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
@@ -935,22 +923,8 @@
     </button>
 
     <script>
-        // QR
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof QRCode !== 'undefined') {
-                try {
-                    new QRCode(document.getElementById('qrcode'), {
-                        text: '<?php echo addslashes($fullUrl); ?>',
-                        width: 160, height: 160,
-                        colorDark: '#1a1a1a', colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } catch(e) { console.error(e); }
-            }
-        });
-
         // ================================================================
-        // DIAPORAMA PHOTOS
+        // DIAPORAMA
         // ================================================================
         let diapoIndex = 0;
         const slides = document.querySelectorAll('#diaporama .slide');
@@ -1000,29 +974,69 @@
             }
         });
 
-        // Download
+        // ================================================================
+        // TÉLÉCHARGEMENT FIX QR BASE64
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
             const card = document.getElementById('invitation-card');
+            
+            if (!card) return;
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
+                await new Promise(r => setTimeout(r, 600));
+                
                 const canvas = await html2canvas(card, {
-                    scale: 3, useCORS: true,
-                    backgroundColor: '#000', logging: false
+                    scale: 3,
+                    useCORS: false,
+                    allowTaint: false,
+                    backgroundColor: '#000000',
+                    logging: false,
+                    imageTimeout: 0,
+                    foreignObjectRendering: false,
+                    onclone: function(clonedDoc) {
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                            el.style.transition = 'none';
+                        });
+                        // S'assurer que le QR reste visible dans le clone
+                        const qrBox = clonedDoc.querySelector('.story-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.background = 'white';
+                            qrBox.style.padding = '6px';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                        const qrImg = clonedDoc.getElementById('qrImage');
+                        if (qrImg) {
+                            qrImg.style.display = 'block';
+                            qrImg.style.width = '110px';
+                            qrImg.style.height = '110px';
+                            qrImg.style.visibility = 'visible';
+                            qrImg.style.opacity = '1';
+                        }
+                    }
                 });
+                
                 const link = document.createElement('a');
-                link.download = `story_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
+                link.download = `story_<?php echo htmlspecialchars($host1); ?>.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ Téléchargé';
                 setTimeout(() => btnText.textContent = 'Story', 3000);
             } catch(e) {
+                console.error(e);
+                alert('Erreur capture: ' + e.message);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Story', 3000);
             }
+            
             btn.disabled = false;
         }
 
@@ -1051,7 +1065,8 @@
             updateCount();
         }
         function updateCount() {
-            document.getElementById('selectedCount').textContent = selectedBoissons.length;
+            const el = document.getElementById('selectedCount');
+            if(el) el.textContent = selectedBoissons.length;
         }
         <?php endif; ?>
     </script>

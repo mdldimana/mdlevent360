@@ -1,24 +1,16 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : FLORAL / SAVE THE DATE — Design romantique v2
+ * TEMPLATE : FLORAL / SAVE THE DATE — v4
  * ============================================================
  * 
- * Nouveautés v2 :
- * - Fleurs SVG professionnelles (roses, pivoines, feuilles)
- * - Guirlandes florales sur les cartes
- * - Papillons animés
- * - Particules dorées flottantes
- * - Branches de laurier autour des titres
- * - Rubans décoratifs
- * - Filigranes floraux en arrière-plan
+ * Nouveautés v4 :
+ * - QR code INTÉGRÉ dans la carte principale
+ * - Téléchargement = 1 seule carte (infos + QR)
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 
@@ -81,9 +73,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             position: relative;
         }
         
-        /* ============================================
-           FILIGRANE FLORAL EN ARRIÈRE-PLAN
-           ============================================ */
         .bg-ornaments {
             position: fixed;
             inset: 0;
@@ -103,7 +92,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         .bg-flower.f3 { top: 60%; left: 2%; font-size: 160px; transform: rotate(-30deg); }
         .bg-flower.f4 { bottom: 5%; right: 3%; font-size: 200px; transform: rotate(15deg); }
         
-        /* Papillons flottants */
         .butterfly {
             position: fixed;
             z-index: 1;
@@ -130,7 +118,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             66% { transform: translate(20px, 40px) rotate(8deg); }
         }
         
-        /* Particules dorées */
         .gold-particle {
             position: fixed;
             width: 6px;
@@ -152,9 +139,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             50% { transform: translate(20px, -30px) scale(1.4); opacity: 0.7; }
         }
         
-        /* ============================================
-           TRANSITION D'OUVERTURE
-           ============================================ */
         .std-loader {
             position: fixed;
             inset: 0;
@@ -239,7 +223,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             z-index: 1;
         }
         
-        /* Guirlande florale du hero */
         .hero-floral-garland {
             position: absolute;
             left: 0;
@@ -268,9 +251,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             color: white;
             line-height: 1;
             margin-bottom: 40px;
-            text-shadow: 
-                0 4px 20px rgba(0, 0, 0, 0.6),
-                0 0 60px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 0, 0, 0.4);
             opacity: 0;
             animation: heroNameIn 1.5s ease-out 2.5s forwards;
         }
@@ -391,9 +372,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             50% { transform: translateX(-50%) translateY(10px); }
         }
         
-        /* ============================================
-           TRANSITIONS AU SCROLL
-           ============================================ */
         .std-reveal {
             opacity: 0;
             transform: translateY(50px);
@@ -407,8 +385,13 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         }
         
         /* ============================================
-           SECTIONS FLORALES
+           WRAPPER TÉLÉCHARGEMENT (une seule carte)
            ============================================ */
+        #stdDownloadCard {
+            position: relative;
+            padding: 40px 0;
+        }
+        
         .std-section {
             position: relative;
             padding: 80px 24px;
@@ -441,7 +424,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         }
         
         /* ============================================
-           CARTE PRINCIPALE — DESIGN FLORAL AMÉLIORÉ
+           CARTE PRINCIPALE (avec QR intégré)
            ============================================ */
         .std-card {
             background: rgba(255, 255, 255, 0.92);
@@ -464,7 +447,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             .std-card { padding: 55px 22px 45px; }
         }
         
-        /* Guirlande florale en haut de la carte */
         .card-garland-top {
             position: absolute;
             top: -8px;
@@ -479,7 +461,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             z-index: 2;
         }
         
-        /* Guirlande florale en bas de la carte */
         .card-garland-bottom {
             position: absolute;
             bottom: -8px;
@@ -494,7 +475,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             z-index: 2;
         }
         
-        /* Coins floraux améliorés */
         .std-corner-floral {
             position: absolute;
             width: 160px;
@@ -514,7 +494,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             .std-corner-floral { width: 90px; height: 90px; opacity: 0.5; }
         }
         
-        /* Fleur centrale en filigrane */
         .card-watermark-flower {
             position: absolute;
             top: 50%;
@@ -550,9 +529,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             text-shadow: 0 2px 8px rgba(201, 139, 143, 0.3);
         }
         
-        /* ============================================
-           DESTINATAIRE
-           ============================================ */
         .std-recipient {
             text-align: center;
             margin-bottom: 30px;
@@ -582,9 +558,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         .std-recipient-name::before { left: -30px; }
         .std-recipient-name::after { right: -30px; }
         
-        /* ============================================
-           ORNEMENT FLORAL (SÉPARATEUR)
-           ============================================ */
         .std-ornament {
             display: flex;
             align-items: center;
@@ -601,31 +574,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             height: 50px;
         }
         
-        /* Ruban décoratif */
-        .std-ribbon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            margin: 24px 0;
-        }
-        
-        .std-ribbon .line {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--rose-dark), transparent);
-            max-width: 100px;
-        }
-        
-        .std-ribbon .bow {
-            color: var(--rose-dark);
-            font-size: 20px;
-            opacity: 0.8;
-        }
-        
-        /* ============================================
-           MESSAGE
-           ============================================ */
         .std-message {
             font-family: 'Cormorant Garamond', serif;
             font-size: 17px;
@@ -640,9 +588,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             color: var(--text);
         }
         
-        /* ============================================
-           TABLE
-           ============================================ */
         .std-table {
             text-align: center;
             margin: 30px 0;
@@ -683,6 +628,74 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             font-weight: 700;
             color: var(--text);
             letter-spacing: 0.05em;
+        }
+        
+        /* ============================================
+           SECTION QR INTÉGRÉE (dans la même carte)
+           ============================================ */
+        .std-qr-inline {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px dashed rgba(232, 180, 184, 0.5);
+            text-align: center;
+        }
+        
+        .std-qr-inline-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .std-qr-inline-title::before,
+        .std-qr-inline-title::after {
+            content: '❦';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--rose-dark);
+            font-size: 16px;
+            opacity: 0.5;
+        }
+        .std-qr-inline-title::before { left: -30px; }
+        .std-qr-inline-title::after { right: -30px; }
+        
+        .std-qr-wrapper { text-align: center; }
+        
+        .std-qr-box {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border: 1px solid rgba(232, 180, 184, 0.5);
+            border-radius: 12px;
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.08),
+                0 0 0 8px rgba(232, 180, 184, 0.15);
+            position: relative;
+        }
+        
+        .std-qr-box::before,
+        .std-qr-box::after {
+            content: '❀';
+            position: absolute;
+            color: var(--rose-dark);
+            font-size: 24px;
+            opacity: 0.6;
+        }
+        
+        .std-qr-box::before { top: -16px; left: -12px; }
+        .std-qr-box::after { bottom: -16px; right: -12px; }
+        
+        .std-qr-label {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            margin-top: 20px;
         }
         
         /* ============================================
@@ -968,9 +981,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             font-weight: 700;
         }
         
-        /* ============================================
-           SECTION MESSAGE
-           ============================================ */
         .std-message-intro {
             text-align: center;
             font-family: 'Cormorant Garamond', serif;
@@ -986,7 +996,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             font-weight: 700;
         }
         
-        /* Message existant */
         .std-message-existing {
             background: linear-gradient(135deg, rgba(232, 180, 184, 0.12), rgba(232, 180, 184, 0.06));
             border-left: 3px solid var(--rose-dark);
@@ -1118,43 +1127,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             background: var(--rose-dark);
             transform: scale(1.3);
             box-shadow: 0 0 8px rgba(201, 139, 143, 0.5);
-        }
-        
-        /* ============================================
-           QR CODE
-           ============================================ */
-        .std-qr-wrapper { text-align: center; }
-        
-        .std-qr-box {
-            display: inline-block;
-            padding: 20px;
-            background: white;
-            border: 1px solid rgba(232, 180, 184, 0.5);
-            border-radius: 12px;
-            box-shadow: 
-                0 8px 24px rgba(0, 0, 0, 0.08),
-                0 0 0 8px rgba(232, 180, 184, 0.15);
-            position: relative;
-        }
-        
-        .std-qr-box::before,
-        .std-qr-box::after {
-            content: '❀';
-            position: absolute;
-            color: var(--rose-dark);
-            font-size: 24px;
-            opacity: 0.6;
-        }
-        
-        .std-qr-box::before { top: -16px; left: -12px; }
-        .std-qr-box::after { bottom: -16px; right: -12px; }
-        
-        .std-qr-label {
-            font-family: 'Playfair Display', serif;
-            font-size: 14px;
-            letter-spacing: 0.2em;
-            color: var(--text-muted);
-            margin-top: 20px;
         }
         
         /* ============================================
@@ -1293,9 +1265,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             }
         }
         
-        /* ============================================
-           BOUTON SCROLL TOP
-           ============================================ */
         #stdScrollTop {
             position: fixed;
             bottom: 24px;
@@ -1339,7 +1308,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
 </head>
 <body>
 
-    <!-- FILIGRANES FLORAUX EN ARRIÈRE-PLAN -->
     <div class="bg-ornaments">
         <div class="bg-flower f1"><i class="fas fa-fan"></i></div>
         <div class="bg-flower f2"><i class="fas fa-spa"></i></div>
@@ -1347,18 +1315,15 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         <div class="bg-flower f4"><i class="fas fa-spa"></i></div>
     </div>
     
-    <!-- PAPILLONS FLOTTANTS -->
     <div class="butterfly b1"><i class="fas fa-feather-alt"></i></div>
     <div class="butterfly b2"><i class="fas fa-leaf"></i></div>
     <div class="butterfly b3"><i class="fas fa-feather-alt"></i></div>
     
-    <!-- PARTICULES DORÉES -->
     <div class="gold-particle p1"></div>
     <div class="gold-particle p2"></div>
     <div class="gold-particle p3"></div>
     <div class="gold-particle p4"></div>
 
-    <!-- LOADER -->
     <div class="std-loader">
         <svg class="loader-wreath" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
             <ellipse cx="50" cy="50" rx="35" ry="35" opacity="0.3"/>
@@ -1376,10 +1341,8 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         <div class="std-hero-bg"></div>
         <div class="std-hero-overlay"></div>
         
-        <!-- Guirlande florale du haut -->
         <svg class="hero-floral-garland top" viewBox="0 0 1200 120" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M 0 60 Q 100 20 200 60 T 400 60 T 600 60 T 800 60 T 1000 60 T 1200 60" opacity="0.6"/>
-            <!-- Roses et feuilles -->
             <?php for ($i = 0; $i < 12; $i++): $x = 50 + ($i * 100); ?>
                 <g transform="translate(<?php echo $x; ?>, 60)">
                     <ellipse cx="0" cy="-15" rx="8" ry="5" fill="currentColor" opacity="0.7"/>
@@ -1390,7 +1353,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             <?php endfor; ?>
         </svg>
         
-        <!-- Guirlande florale du bas -->
         <svg class="hero-floral-garland bottom" viewBox="0 0 1200 120" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M 0 60 Q 100 20 200 60 T 400 60 T 600 60 T 800 60 T 1000 60 T 1200 60" opacity="0.6"/>
             <?php for ($i = 0; $i < 12; $i++): $x = 50 + ($i * 100); ?>
@@ -1410,18 +1372,15 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
                 <svg class="std-wreath-svg" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
                     <ellipse cx="100" cy="100" rx="85" ry="85" opacity="0.4"/>
                     <ellipse cx="100" cy="100" rx="80" ry="80" opacity="0.6"/>
-                    
                     <?php for ($i = 0; $i < 24; $i++): $angle = $i * 15; ?>
                         <g transform="rotate(<?php echo $angle; ?> 100 100)">
                             <path d="M 100 12 Q 106 20 100 30 Q 94 20 100 12 Z" fill="currentColor" opacity="0.85"/>
                             <path d="M 100 15 L 100 28" stroke="currentColor" stroke-width="0.5" opacity="0.6"/>
                         </g>
                     <?php endfor; ?>
-                    
                     <?php for ($i = 0; $i < 12; $i++): $angle = $i * 30 + 15; ?>
                         <circle cx="100" cy="20" r="2.5" fill="currentColor" opacity="0.7" transform="rotate(<?php echo $angle; ?> 100 100)"/>
                     <?php endfor; ?>
-                    
                     <ellipse cx="100" cy="100" rx="72" ry="72" opacity="0.3" stroke-dasharray="2 4"/>
                 </svg>
                 
@@ -1442,7 +1401,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         <div class="std-scroll"><i class="fas fa-chevron-down"></i></div>
     </section>
 
-    <!-- MESSAGES -->
     <?php if ($message): ?>
         <div class="std-alert std-alert-<?php echo htmlspecialchars($messageType); ?> std-reveal">
             <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
@@ -1450,138 +1408,153 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         </div>
     <?php endif; ?>
 
-    <!-- CARTE D'INVITATION PRINCIPALE -->
-    <section class="std-section std-reveal" id="stdDetails">
-        <div class="std-section-content">
-            
-            <div class="std-card" id="stdCard">
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (UNE SEULE CARTE)          -->
+    <!-- ============================================ -->
+    <div id="stdDownloadCard">
+
+        <section class="std-section std-reveal" id="stdDetails">
+            <div class="std-section-content">
                 
-                <div class="std-card-heart">♥</div>
-                
-                <!-- Filigrane de fleur au centre -->
-                <div class="card-watermark-flower"><i class="fas fa-fan"></i></div>
-                
-                <!-- Guirlande florale en haut -->
-                <svg class="card-garland-top" viewBox="0 0 600 100" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 50 50 Q 150 10 300 50 T 550 50" opacity="0.6"/>
-                    <?php for ($i = 0; $i < 9; $i++): $x = 40 + ($i * 65); ?>
-                        <g transform="translate(<?php echo $x; ?>, 50)">
-                            <ellipse cx="-12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(-30)"/>
-                            <ellipse cx="12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(30)"/>
-                            <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.8"/>
-                            <circle cx="0" cy="0" r="2" fill="white" opacity="0.6"/>
-                        </g>
-                    <?php endfor; ?>
-                </svg>
-                
-                <!-- Guirlande florale en bas -->
-                <svg class="card-garland-bottom" viewBox="0 0 600 100" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 50 50 Q 150 10 300 50 T 550 50" opacity="0.6"/>
-                    <?php for ($i = 0; $i < 9; $i++): $x = 40 + ($i * 65); ?>
-                        <g transform="translate(<?php echo $x; ?>, 50)">
-                            <ellipse cx="-12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(-30)"/>
-                            <ellipse cx="12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(30)"/>
-                            <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.8"/>
-                            <circle cx="0" cy="0" r="2" fill="white" opacity="0.6"/>
-                        </g>
-                    <?php endfor; ?>
-                </svg>
-                
-                <!-- Coins floraux -->
-                <svg class="std-corner-floral tl" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
-                    <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
-                    <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
-                    <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
-                    <circle cx="35" cy="70" r="4" fill="currentColor" opacity="0.5"/>
-                </svg>
-                <svg class="std-corner-floral tr" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
-                    <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
-                    <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
-                    <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
-                </svg>
-                <svg class="std-corner-floral bl" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
-                    <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
-                    <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
-                    <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
-                </svg>
-                <svg class="std-corner-floral br" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
-                    <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
-                    <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
-                    <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
-                </svg>
-                
-                <div class="std-recipient">
-                    <div class="std-recipient-name"><?php echo htmlspecialchars($guestName); ?></div>
-                </div>
-                
-                <div class="std-ornament">
-                    <svg viewBox="0 0 500 50" fill="none" stroke="currentColor" stroke-width="1.2">
-                        <path d="M 0 25 L 140 25"/>
-                        <path d="M 360 25 L 500 25"/>
-                        <path d="M 160 25 Q 170 10 180 25 Q 190 40 200 25 Q 210 10 220 25 Q 230 40 240 25 Q 250 10 260 25 Q 270 40 280 25 Q 290 10 300 25 Q 310 40 320 25 Q 330 10 340 25"/>
-                        <ellipse cx="170" cy="17" rx="3" ry="6" transform="rotate(-30 170 17)" fill="currentColor" opacity="0.6"/>
-                        <ellipse cx="220" cy="17" rx="3" ry="6" transform="rotate(-30 220 17)" fill="currentColor" opacity="0.6"/>
-                        <ellipse cx="280" cy="17" rx="3" ry="6" transform="rotate(30 280 17)" fill="currentColor" opacity="0.6"/>
-                        <ellipse cx="330" cy="17" rx="3" ry="6" transform="rotate(30 330 17)" fill="currentColor" opacity="0.6"/>
-                        <circle cx="160" cy="25" r="3.5" fill="currentColor"/>
-                        <circle cx="340" cy="25" r="3.5" fill="currentColor"/>
-                        <circle cx="250" cy="25" r="5" fill="currentColor"/>
+                <div class="std-card" id="stdCard">
+                    
+                    <div class="std-card-heart">♥</div>
+                    
+                    <div class="card-watermark-flower"><i class="fas fa-fan"></i></div>
+                    
+                    <svg class="card-garland-top" viewBox="0 0 600 100" fill="none" stroke="currentColor" stroke-width="1.2">
+                        <path d="M 50 50 Q 150 10 300 50 T 550 50" opacity="0.6"/>
+                        <?php for ($i = 0; $i < 9; $i++): $x = 40 + ($i * 65); ?>
+                            <g transform="translate(<?php echo $x; ?>, 50)">
+                                <ellipse cx="-12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(-30)"/>
+                                <ellipse cx="12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(30)"/>
+                                <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.8"/>
+                                <circle cx="0" cy="0" r="2" fill="white" opacity="0.6"/>
+                            </g>
+                        <?php endfor; ?>
                     </svg>
-                </div>
-                
-                <div class="std-message">
-                    C'est avec une immense joie que <strong><?php echo htmlspecialchars($host1); ?></strong> vous convient à célébrer leur <strong><?php echo htmlspecialchars(strtolower($eventType)); ?></strong> le <strong><?php echo htmlspecialchars($eventDate); ?></strong>
-                </div>
-                
-                <?php if (!empty($eventDescription)): ?>
-                    <?php 
-                    $paragraphs = explode("\n", $eventDescription);
-                    foreach ($paragraphs as $p):
-                        if (trim($p) === '') continue;
-                    ?>
-                        <div class="std-message"><?php echo nl2br(htmlspecialchars(trim($p))); ?></div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div class="std-message">Cet événement si spécial marquera l'union de deux âmes qui se sont trouvées et qui souhaitent partager leur bonheur avec vous.</div>
-                    <div class="std-message"><strong><?php echo htmlspecialchars($lieuDisplay); ?></strong><?php if ($adresseDisplay): ?>, <?php echo htmlspecialchars($adresseDisplay); ?><?php endif; ?></div>
-                    <div class="std-message">Au plaisir de vous retrouver pour cette occasion spéciale.</div>
-                <?php endif; ?>
-                
-                <div class="std-message" style="font-style: italic; margin-top: 30px;">Avec tout notre amour,</div>
-                <div style="font-family: 'Great Vibes', cursive; font-size: 32px; text-align: center; color: var(--text); margin-bottom: 20px;">
-                    <?php echo htmlspecialchars($invitation['evenement_nom']); ?> <i class="fas fa-heart" style="color: #e07a7e; font-size: 20px;"></i>
-                </div>
-                
-                <?php if ($hasTable): ?>
-                <div style="text-align: center;">
-                    <div class="std-table">
-                        <div class="std-table-label">Table</div>
-                        <div class="std-table-value"><?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?></div>
+                    
+                    <svg class="card-garland-bottom" viewBox="0 0 600 100" fill="none" stroke="currentColor" stroke-width="1.2">
+                        <path d="M 50 50 Q 150 10 300 50 T 550 50" opacity="0.6"/>
+                        <?php for ($i = 0; $i < 9; $i++): $x = 40 + ($i * 65); ?>
+                            <g transform="translate(<?php echo $x; ?>, 50)">
+                                <ellipse cx="-12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(-30)"/>
+                                <ellipse cx="12" cy="-8" rx="6" ry="4" fill="currentColor" opacity="0.5" transform="rotate(30)"/>
+                                <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.8"/>
+                                <circle cx="0" cy="0" r="2" fill="white" opacity="0.6"/>
+                            </g>
+                        <?php endfor; ?>
+                    </svg>
+                    
+                    <svg class="std-corner-floral tl" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
+                        <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
+                        <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
+                        <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
+                        <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
+                    </svg>
+                    <svg class="std-corner-floral tr" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
+                        <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
+                        <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
+                        <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
+                        <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
+                    </svg>
+                    <svg class="std-corner-floral bl" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
+                        <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
+                        <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
+                        <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
+                        <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
+                    </svg>
+                    <svg class="std-corner-floral br" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
+                        <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
+                        <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
+                        <ellipse cx="70" cy="45" rx="8" ry="14" transform="rotate(-20 70 45)" fill="currentColor" opacity="0.4"/>
+                        <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
+                    </svg>
+                    
+                    <div class="std-recipient">
+                        <div class="std-recipient-name"><?php echo htmlspecialchars($guestName); ?></div>
                     </div>
-                </div>
-                <?php endif; ?>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="std-btn-download" onclick="stdDownload()">
-                        Télécharger <i class="fas fa-download"></i>
-                    </button>
-                </div>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                       target="_blank" rel="noopener" class="std-btn-address">
-                        Afficher la carte d'adresse <i class="fas fa-map-marker-alt"></i>
-                    </a>
+                    
+                    <div class="std-ornament">
+                        <svg viewBox="0 0 500 50" fill="none" stroke="currentColor" stroke-width="1.2">
+                            <path d="M 0 25 L 140 25"/>
+                            <path d="M 360 25 L 500 25"/>
+                            <path d="M 160 25 Q 170 10 180 25 Q 190 40 200 25 Q 210 10 220 25 Q 230 40 240 25 Q 250 10 260 25 Q 270 40 280 25 Q 290 10 300 25 Q 310 40 320 25 Q 330 10 340 25"/>
+                            <ellipse cx="170" cy="17" rx="3" ry="6" transform="rotate(-30 170 17)" fill="currentColor" opacity="0.6"/>
+                            <ellipse cx="220" cy="17" rx="3" ry="6" transform="rotate(-30 220 17)" fill="currentColor" opacity="0.6"/>
+                            <ellipse cx="280" cy="17" rx="3" ry="6" transform="rotate(30 280 17)" fill="currentColor" opacity="0.6"/>
+                            <ellipse cx="330" cy="17" rx="3" ry="6" transform="rotate(30 330 17)" fill="currentColor" opacity="0.6"/>
+                            <circle cx="160" cy="25" r="3.5" fill="currentColor"/>
+                            <circle cx="340" cy="25" r="3.5" fill="currentColor"/>
+                            <circle cx="250" cy="25" r="5" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="std-message">
+                        C'est avec une immense joie que <strong><?php echo htmlspecialchars($host1); ?></strong> vous convient à célébrer leur <strong><?php echo htmlspecialchars(strtolower($eventType)); ?></strong> le <strong><?php echo htmlspecialchars($eventDate); ?></strong>
+                    </div>
+                    
+                    <?php if (!empty($eventDescription)): ?>
+                        <?php 
+                        $paragraphs = explode("\n", $eventDescription);
+                        foreach ($paragraphs as $p):
+                            if (trim($p) === '') continue;
+                        ?>
+                            <div class="std-message"><?php echo nl2br(htmlspecialchars(trim($p))); ?></div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="std-message">Cet événement si spécial marquera l'union de deux âmes qui se sont trouvées et qui souhaitent partager leur bonheur avec vous.</div>
+                        <div class="std-message"><strong><?php echo htmlspecialchars($lieuDisplay); ?></strong><?php if ($adresseDisplay): ?>, <?php echo htmlspecialchars($adresseDisplay); ?><?php endif; ?></div>
+                        <div class="std-message">Au plaisir de vous retrouver pour cette occasion spéciale.</div>
+                    <?php endif; ?>
+                    
+                    <div class="std-message" style="font-style: italic; margin-top: 30px;">Avec tout notre amour,</div>
+                    <div style="font-family: 'Great Vibes', cursive; font-size: 32px; text-align: center; color: var(--text); margin-bottom: 20px;">
+                        <?php echo htmlspecialchars($invitation['evenement_nom']); ?> <i class="fas fa-heart" style="color: #e07a7e; font-size: 20px;"></i>
+                    </div>
+                    
+                    <?php if ($hasTable): ?>
+                    <div style="text-align: center;">
+                        <div class="std-table">
+                            <div class="std-table-label">Table</div>
+                            <div class="std-table-value"><?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?></div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <!-- ============================================ -->
+                    <!-- QR CODE INTÉGRÉ DANS LA MÊME CARTE          -->
+                    <!-- ============================================ -->
+                    <div class="std-qr-inline">
+                        <div class="std-qr-inline-title">Code d'accès</div>
+                        <div class="std-qr-wrapper">
+                            <div class="std-qr-box">
+                                <div id="stdQrcode"></div>
+                            </div>
+                            <div class="std-qr-label"><?php echo htmlspecialchars($invitation['code_unique']); ?></div>
+                        </div>
+                    </div>
+                    
+                   
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                           target="_blank" rel="noopener" class="std-btn-address">
+                            Afficher la carte d'adresse <i class="fas fa-map-marker-alt"></i>
+                        </a>
+                    </div>
+                    
                 </div>
                 
             </div>
-            
-        </div>
-    </section>
+        </section>
+
+    </div>
+    <!-- FIN WRAPPER -->
+
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
 
     <!-- DIAPORAMA PHOTOS -->
     <?php if ($hasPhotos && count($photosHost) > 1): ?>
@@ -1600,7 +1573,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
                     <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
                 </svg>
                 
-                <div class="std-drinks-title" style="text-align: center; margin-bottom: 30px;">Nos souvenirs</div>
+                <div class="std-drinks-title" style="text-align: center; margin-bottom: 30px; display: block;">Nos souvenirs</div>
                 
                 <div class="std-diaporama" id="stdDiaporama">
                     <?php 
@@ -1634,7 +1607,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
     </section>
     <?php endif; ?>
 
-    <!-- CONFIRMATION + MESSAGE FUSIONNÉS -->
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE' || !empty($invitationMessage)): ?>
     <section class="std-section std-reveal" id="stdConfirm">
         <div class="std-section-content">
@@ -1651,27 +1624,21 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
                     <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
                 </svg>
                 
-                <!-- En-tête ornemental -->
                 <div class="std-ornament" style="margin-top: 0; margin-bottom: 16px;">
                     <svg viewBox="0 0 500 50" fill="none" stroke="currentColor" stroke-width="1.2">
                         <path d="M 0 25 L 180 25"/>
                         <path d="M 320 25 L 500 25"/>
                         <path d="M 200 25 Q 210 10 220 25 Q 230 40 240 25 Q 250 10 260 25 Q 270 40 280 25 Q 290 10 300 25"/>
-                        <ellipse cx="210" cy="17" rx="3" ry="6" transform="rotate(-30 210 17)" fill="currentColor" opacity="0.6"/>
-                        <ellipse cx="250" cy="17" rx="3" ry="6" transform="rotate(-30 250 17)" fill="currentColor" opacity="0.6"/>
-                        <ellipse cx="290" cy="17" rx="3" ry="6" transform="rotate(30 290 17)" fill="currentColor" opacity="0.6"/>
                         <circle cx="200" cy="25" r="3.5" fill="currentColor"/>
                         <circle cx="300" cy="25" r="3.5" fill="currentColor"/>
                         <circle cx="250" cy="25" r="5" fill="currentColor"/>
                     </svg>
                 </div>
                 
-                <!-- Titre -->
-                <div class="std-drinks-title" style="text-align: center; margin-bottom: 8px;">
+                <div class="std-drinks-title" style="text-align: center; margin-bottom: 8px; display: block;">
                     <?php echo $invitation['statut'] == 'EN_ATTENTE' ? 'Confirmez votre présence' : 'Votre réponse'; ?>
                 </div>
                 
-                <!-- Sous-titre -->
                 <div class="std-message-intro" style="margin-bottom: 30px;">
                     <strong>Un mot doux nous ferait chaud au cœur.</strong><br>
                     Votre message sera enregistré en même temps que votre réponse.
@@ -1707,9 +1674,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
                         <div class="std-form-group">
                             <label><i class="fas fa-heart" style="color: var(--rose-dark);"></i> Votre message pour les mariés</label>
                             <textarea name="message_invite" rows="5" placeholder="Écrivez ici un vœu, un souvenir, un conseil... Chaque mot compte pour nous."></textarea>
-                            <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; font-style: italic; color: var(--text-muted); margin-top: 8px; text-align: center;">
-                                <i class="fas fa-info-circle"></i> Vous pourrez le modifier plus tard si vous le souhaitez
-                            </div>
                         </div>
                         
                         <div style="text-align: center;">
@@ -1746,15 +1710,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
                             </div>
                         </form>
                     <?php endif; ?>
-                    
-                    <div style="text-align: center; margin-top: 20px;">
-                        <div class="std-table">
-                            <div class="std-table-label">Votre réponse</div>
-                            <div class="std-table-value" style="color: <?php echo $rsvpClass === 'confirmed' ? '#2d7a45' : ($rsvpClass === 'refused' ? 'var(--rose-deep)' : 'var(--text-muted)'); ?>;">
-                                <?php echo htmlspecialchars($rsvpLabel); ?>
-                            </div>
-                        </div>
-                    </div>
                 <?php endif; ?>
                 
             </div>
@@ -1840,34 +1795,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
     </section>
     <?php endif; ?>
 
-    <!-- QR CODE -->
-    <section class="std-section std-reveal" id="stdQR">
-        <div class="std-section-content">
-            <div class="std-card">
-                
-                <svg class="std-corner-floral tl" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
-                    <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
-                    <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
-                </svg>
-                <svg class="std-corner-floral br" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2">
-                    <path d="M 10 10 Q 60 15 80 50 Q 90 70 100 80" opacity="0.7"/>
-                    <ellipse cx="40" cy="30" rx="10" ry="16" transform="rotate(-45 40 30)" fill="currentColor" opacity="0.5"/>
-                    <circle cx="55" cy="55" r="6" fill="currentColor" opacity="0.6"/>
-                </svg>
-                
-                <div class="std-drinks-title" style="text-align: center; margin-bottom: 30px;">Code d'accès</div>
-                <div class="std-qr-wrapper">
-                    <div class="std-qr-box">
-                        <div id="stdQrcode"></div>
-                    </div>
-                    <div class="std-qr-label"><?php echo htmlspecialchars($invitation['code_unique']); ?></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
     <footer class="std-footer">
         <div class="std-footer-ornament">
             <div class="line"></div>
@@ -1889,19 +1816,16 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         </div>
     </footer>
 
-    <!-- BOUTON TÉLÉCHARGEMENT FLOTTANT -->
     <button id="stdDownloadFloat" onclick="stdDownload()">
         <i class="fas fa-download"></i>
         <span>Télécharger</span>
     </button>
 
-    <!-- BOUTON SCROLL TOP -->
     <button id="stdScrollTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
         <i class="fas fa-arrow-up"></i>
     </button>
 
     <script>
-        // QR CODE
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
@@ -1915,7 +1839,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             }
         });
 
-        // REVEAL
         document.addEventListener('DOMContentLoaded', function() {
             const reveals = document.querySelectorAll('.std-reveal');
             const observer = new IntersectionObserver((entries) => {
@@ -1939,7 +1862,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             }, 500);
         });
 
-        // SCROLL TOP + BOUTON TÉLÉCHARGEMENT FLOTTANT
         window.addEventListener('scroll', function() {
             const scrollBtn = document.getElementById('stdScrollTop');
             const dlBtn = document.getElementById('stdDownloadFloat');
@@ -1953,7 +1875,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             }
         });
 
-        // DIAPORAMA
         let stdDiapoIndex = 0;
         const stdSlides = document.querySelectorAll('#stdDiaporama .slide');
         const stdDots = document.querySelectorAll('#stdDiapoDots span');
@@ -1997,7 +1918,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             }
         });
 
-        // BOISSONS
         let stdSelectedDrinks = [];
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -2046,16 +1966,70 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             });
         }
 
-        // TÉLÉCHARGEMENT
+        // ================================================================
+        // TÉLÉCHARGEMENT — CAPTURE LA CARTE UNIQUE (infos + QR)
+        // ================================================================
         async function stdDownload() {
             const card = document.getElementById('stdCard');
             
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             try {
+                await new Promise(r => setTimeout(r, 1000));
+                
+                for (let i = 0; i < 10; i++) {
+                    const qrCanvas = document.querySelector('#stdQrcode canvas');
+                    const qrImg = document.querySelector('#stdQrcode img');
+                    if (qrCanvas || qrImg) break;
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                card.querySelectorAll('.std-reveal').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                });
+                
                 await new Promise(r => setTimeout(r, 300));
                 
                 const canvas = await html2canvas(card, {
-                    scale: 2.5, useCORS: true, allowTaint: true,
-                    backgroundColor: '#faf6f1', logging: false
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#faf6f1',
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('stdCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                        }
+                        
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        const qrBox = clonedDoc.querySelector('.std-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                    }
                 });
                 
                 const link = document.createElement('a');

@@ -1,9 +1,26 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : ROYAL v2 — Palais doré en 3D
+ * TEMPLATE : ROYAL v3 — Palais doré en 3D
+ * ============================================================
+ * 
+ * Nouveautés v3 :
+ * - Téléchargement = 1 seule carte (Hero + Détails + QR)
+ * - QR en base64 côté PHP (capture garantie)
+ * - Correction affichage
+ * 
  * ============================================================
  */
+
+// ============================================================
+// QR CODE EN BASE64 (pour éviter les problèmes CORS avec html2canvas)
+// ============================================================
+$qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=330x330&data=" . urlencode($fullUrl) . "&color=0a0505&bgcolor=f5e6c8&margin=1&qzone=1";
+$qrDataUri = $qrApiUrl;
+$qrContent = @file_get_contents($qrApiUrl);
+if ($qrContent !== false && strlen($qrContent) > 100) {
+    $qrDataUri = "data:image/png;base64," . base64_encode($qrContent);
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -14,7 +31,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -75,18 +91,13 @@
             100% { transform: translateX(100%); opacity: 0; visibility: hidden; }
         }
         
-        /* Franges dorées en bas des rideaux */
         .curtain-left::after, .curtain-right::after {
             content: '';
             position: absolute;
             bottom: 0;
             left: 0; right: 0;
             height: 30px;
-            background: 
-                repeating-linear-gradient(90deg,
-                    var(--gold) 0px, var(--gold) 3px,
-                    transparent 3px, transparent 8px
-                );
+            background: repeating-linear-gradient(90deg, var(--gold) 0px, var(--gold) 3px, transparent 3px, transparent 8px);
         }
         
         /* ============================================
@@ -100,9 +111,7 @@
             z-index: 9998;
             color: var(--gold);
             font-size: 120px;
-            text-shadow: 
-                0 0 40px var(--gold),
-                0 0 80px rgba(212, 175, 55, 0.6);
+            text-shadow: 0 0 40px var(--gold), 0 0 80px rgba(212, 175, 55, 0.6);
             animation: crownDescend 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s forwards;
         }
         @keyframes crownDescend {
@@ -154,23 +163,29 @@
         }
         
         /* ============================================
-           SECTION HERO ROYALE
+           WRAPPER DE TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            background: 
+                radial-gradient(ellipse at center, rgba(107, 20, 20, 0.4) 0%, transparent 60%),
+                linear-gradient(180deg, var(--black-royal) 0%, #1a0a0a 50%, var(--black-royal) 100%);
+            padding-bottom: 20px;
+        }
+        
+        /* ============================================
+           HERO ROYAL
            ============================================ */
         .royal-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 80px 20px;
-            background: 
-                radial-gradient(ellipse at center, rgba(107, 20, 20, 0.4) 0%, transparent 60%),
-                linear-gradient(180deg, var(--black-royal) 0%, #1a0a0a 50%, var(--black-royal) 100%);
             overflow: hidden;
         }
         
-        /* Colonnes dorées latérales */
         .royal-column {
             position: absolute;
             top: 0;
@@ -206,7 +221,6 @@
             .royal-column.right { right: 10px; }
         }
         
-        /* Blason central */
         .royal-blason {
             position: relative;
             z-index: 2;
@@ -219,7 +233,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Ornement du haut */
         .royal-ornament {
             margin-bottom: 30px;
             color: var(--gold);
@@ -227,7 +240,6 @@
             letter-spacing: 0.5em;
         }
         
-        /* Petite couronne */
         .royal-crown-small {
             font-size: 60px;
             color: var(--gold);
@@ -240,7 +252,6 @@
             50% { transform: scale(1.08); filter: drop-shadow(0 0 50px rgba(212, 175, 55, 0.9)); }
         }
         
-        /* Label */
         .royal-label {
             font-family: 'Cinzel', serif;
             font-size: 12px;
@@ -250,7 +261,6 @@
             opacity: 0.8;
         }
         
-        /* Nom invité */
         .royal-guest {
             font-family: 'Cinzel', serif;
             font-size: clamp(28px, 6vw, 52px);
@@ -258,12 +268,9 @@
             color: white;
             letter-spacing: 0.08em;
             margin-bottom: 40px;
-            text-shadow: 
-                0 2px 20px rgba(0,0,0,0.8),
-                0 0 60px rgba(212, 175, 55, 0.3);
+            text-shadow: 0 2px 20px rgba(0,0,0,0.8), 0 0 60px rgba(212, 175, 55, 0.3);
         }
         
-        /* Séparateur */
         .royal-separator {
             display: flex;
             align-items: center;
@@ -282,7 +289,6 @@
             font-size: 14px;
         }
         
-        /* Hôte */
         .royal-hosts-intro {
             font-family: 'Cormorant Garamond', serif;
             font-style: italic;
@@ -320,7 +326,7 @@
         }
         
         /* ============================================
-           PARCHEMIN CENTRAL (Infos)
+           PARCHEMIN CENTRAL (Infos + QR intégré)
            ============================================ */
         .royal-scroll {
             position: relative;
@@ -336,16 +342,8 @@
                 0 0 0 8px var(--black-royal),
                 0 0 0 9px var(--gold-dark),
                 0 30px 80px rgba(0,0,0,0.8);
-            opacity: 0;
-            transform: translateY(60px);
-            transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        .royal-scroll.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         
-        /* Coins ornés */
         .royal-scroll::before, .royal-scroll::after {
             content: '❦';
             position: absolute;
@@ -356,7 +354,6 @@
         .royal-scroll::before { top: -12px; left: -12px; }
         .royal-scroll::after { bottom: -12px; right: -12px; }
         
-        /* Titre parchemin */
         .royal-scroll-title {
             font-family: 'Cinzel', serif;
             font-size: 20px;
@@ -368,7 +365,6 @@
             border-bottom: 1px solid rgba(212, 175, 55, 0.3);
         }
         
-        /* Infos en grille */
         .royal-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -384,12 +380,6 @@
             padding: 20px;
             border: 1px solid rgba(212, 175, 55, 0.2);
             background: rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-        }
-        .royal-info-item:hover {
-            border-color: var(--gold);
-            background: rgba(212, 175, 55, 0.08);
-            transform: translateY(-4px);
         }
         
         .royal-info-item .icon {
@@ -413,7 +403,6 @@
             line-height: 1.4;
         }
         
-        /* Bouton itinéraire royal */
         .royal-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -429,23 +418,14 @@
             letter-spacing: 0.2em;
             text-transform: uppercase;
             text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .royal-btn-itinerary:hover {
-            background: var(--gold);
-            color: var(--black-royal);
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
-            transform: translateY(-2px);
         }
         
-        /* ============================================
-           SCEAU DE CIRE ANIMÉ
-           ============================================ */
+        /* Sceau de cire */
         .royal-seal {
             position: relative;
             width: 120px;
             height: 120px;
-            margin: 40px auto;
+            margin: 40px auto 0;
             opacity: 0;
             animation: sealAppear 1s cubic-bezier(0.34, 1.56, 0.64, 1) 4s forwards;
         }
@@ -462,10 +442,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 
-                0 8px 24px rgba(0,0,0,0.6),
-                inset -8px -8px 20px rgba(0,0,0,0.5),
-                inset 8px 8px 20px rgba(255,255,255,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset -8px -8px 20px rgba(0,0,0,0.5), inset 8px 8px 20px rgba(255,255,255,0.1);
             position: relative;
         }
         .royal-seal-inner::before {
@@ -482,8 +459,65 @@
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS ROYAL
+           QR CODE INTÉGRÉ
            ============================================ */
+        .royal-qr-inline {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            text-align: center;
+        }
+        
+        .royal-qr-inline-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            letter-spacing: 0.4em;
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .royal-qr-wrapper {
+            text-align: center;
+        }
+        .royal-qr-box {
+            display: inline-block;
+            padding: 16px;
+            background: var(--cream);
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 0 6px var(--black-royal), 0 0 0 8px var(--gold-dark), 0 0 40px rgba(212, 175, 55, 0.4);
+            position: relative;
+        }
+        .royal-qr-box::before, .royal-qr-box::after {
+            content: '❦';
+            position: absolute;
+            color: var(--gold);
+            font-size: 24px;
+        }
+        .royal-qr-box::before { top: -8px; left: -8px; }
+        .royal-qr-box::after { bottom: -8px; right: -8px; }
+        
+        .royal-qr-box img {
+            display: block;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto;
+        }
+        
+        /* ============================================
+           SECTIONS HORS CAPTURE
+           ============================================ */
+        .royal-form-section {
+            max-width: 800px;
+            margin: 60px auto;
+            padding: 50px 40px;
+            background: linear-gradient(135deg, #1a0f0f, #2a1515);
+            border: 1px solid var(--gold);
+        }
+        @media (max-width: 640px) {
+            .royal-form-section { padding: 35px 20px; margin: 40px 15px; }
+        }
+        
         .royal-photos-section {
             max-width: 1000px;
             margin: 60px auto;
@@ -514,10 +548,7 @@
             width: 100%;
             aspect-ratio: 16/9;
             border: 3px solid var(--gold);
-            box-shadow: 
-                0 0 0 8px var(--black-royal),
-                0 0 0 9px var(--gold-dark),
-                0 30px 60px rgba(0,0,0,0.8);
+            box-shadow: 0 0 0 8px var(--black-royal), 0 0 0 9px var(--gold-dark), 0 30px 60px rgba(0,0,0,0.8);
             overflow: hidden;
         }
         
@@ -533,30 +564,7 @@
             object-fit: cover;
         }
         
-        /* ============================================
-           SECTIONS FORMULAIRE
-           ============================================ */
-        .royal-form-section {
-            max-width: 800px;
-            margin: 60px auto;
-            padding: 50px 40px;
-            background: linear-gradient(135deg, #1a0f0f, #2a1515);
-            border: 1px solid var(--gold);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s ease;
-        }
-        .royal-form-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        @media (max-width: 640px) {
-            .royal-form-section { padding: 35px 20px; margin: 40px 15px; }
-        }
-        
-        .royal-form-group {
-            margin-bottom: 24px;
-        }
+        .royal-form-group { margin-bottom: 24px; }
         .royal-form-group label {
             display: block;
             font-family: 'Cinzel', serif;
@@ -575,13 +583,6 @@
             color: white;
             font-family: 'Cormorant Garamond', serif;
             font-size: 16px;
-            transition: all 0.3s ease;
-        }
-        .royal-form-group input:focus,
-        .royal-form-group textarea:focus {
-            outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
         }
         
         .royal-options-grid {
@@ -608,13 +609,7 @@
             font-weight: 700;
             letter-spacing: 0.15em;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-transform: uppercase;
-        }
-        .royal-option-label:hover {
-            border-color: var(--gold);
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
         }
         .royal-option-radio:checked + .royal-option-label {
             border-color: var(--gold);
@@ -639,29 +634,11 @@
             letter-spacing: 0.3em;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 
-                0 0 0 3px var(--black-royal),
-                0 0 0 5px var(--gold-dark),
-                0 12px 30px rgba(212, 175, 55, 0.3);
             margin-top: 20px;
-        }
-        .royal-btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 
-                0 0 0 3px var(--black-royal),
-                0 0 0 5px var(--gold),
-                0 18px 40px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 0 3px var(--black-royal), 0 0 0 5px var(--gold-dark), 0 12px 30px rgba(212, 175, 55, 0.3);
         }
         
-        /* ============================================
-           BOISSONS ROYAL
-           ============================================ */
-        .royal-boisson-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
+        .royal-boisson-grid { display: flex; flex-wrap: wrap; gap: 12px; }
         .royal-boisson-item {
             display: inline-flex;
             align-items: center;
@@ -674,7 +651,6 @@
             font-size: 12px;
             letter-spacing: 0.1em;
             cursor: pointer;
-            transition: all 0.3s ease;
         }
         .royal-boisson-item.selected {
             border-color: var(--gold);
@@ -685,9 +661,7 @@
         .royal-boisson-item .check { opacity: 0; transition: opacity 0.3s ease; color: var(--gold); }
         .royal-boisson-item.selected .check { opacity: 1; }
         
-        .royal-boisson-category {
-            margin-bottom: 24px;
-        }
+        .royal-boisson-category { margin-bottom: 24px; }
         .royal-boisson-category-title {
             font-family: 'Cinzel', serif;
             font-size: 14px;
@@ -700,48 +674,17 @@
             gap: 10px;
         }
         
-        /* ============================================
-           QR CODE ROYAL
-           ============================================ */
-        .royal-qr-wrapper {
-            text-align: center;
-            padding: 20px;
-        }
-        .royal-qr-box {
-            display: inline-block;
-            padding: 20px;
-            background: var(--cream);
-            border: 3px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px var(--black-royal),
-                0 0 0 8px var(--gold-dark),
-                0 0 40px rgba(212, 175, 55, 0.4);
-            position: relative;
-        }
-        .royal-qr-box::before, .royal-qr-box::after {
-            content: '❦';
-            position: absolute;
-            color: var(--gold);
-            font-size: 24px;
-        }
-        .royal-qr-box::before { top: -8px; left: -8px; }
-        .royal-qr-box::after { bottom: -8px; right: -8px; }
-        
-        /* ============================================
-           FOOTER ROYAL
-           ============================================ */
+        /* FOOTER */
         .royal-footer {
             padding: 60px 40px 40px;
             background: linear-gradient(180deg, transparent 0%, var(--black-royal) 100%);
             text-align: center;
             border-top: 1px solid rgba(212, 175, 55, 0.2);
         }
-        
         .royal-footer-crest {
             font-size: 48px;
             color: var(--gold);
             margin-bottom: 16px;
-            filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.5));
         }
         .royal-footer-name {
             font-family: 'Cinzel', serif;
@@ -772,17 +715,9 @@
             letter-spacing: 0.3em;
             text-transform: uppercase;
             text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .royal-btn-whatsapp:hover {
-            background: #25d366;
-            color: white;
-            box-shadow: 0 0 30px rgba(37, 211, 102, 0.5);
         }
         
-        /* ============================================
-           ALERTES
-           ============================================ */
+        /* ALERTES */
         .royal-alert {
             padding: 16px 24px;
             margin-bottom: 20px;
@@ -796,9 +731,9 @@
             align-items: center;
         }
         .royal-alert-success { border-left-color: #46d369; background: rgba(70, 211, 105, 0.1); color: #a3e8b8; }
-        .royal-alert-danger  { border-left-color: var(--nf-red); background: rgba(229,9,20,0.1); color: #fca5a5; }
+        .royal-alert-danger { border-left-color: #d40000; background: rgba(212,0,0,0.1); color: #fca5a5; }
         
-        /* Download btn */
+        /* Download */
         #downloadBtn {
             position: fixed;
             bottom: 24px;
@@ -815,22 +750,18 @@
             text-transform: uppercase;
             cursor: pointer;
             box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 10px;
             opacity: 0;
             animation: fadeIn 0.8s ease-out 4s forwards;
         }
-        #downloadBtn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6); }
         @media (max-width: 480px) { #downloadBtn { bottom: 12px; right: 12px; padding: 12px 18px; font-size: 10px; } }
     </style>
 </head>
 <body>
 
-    <!-- ============================================
-         RIDEAUX D'INTRO
-         ============================================ -->
+    <!-- RIDEAUX D'INTRO -->
     <div class="royal-curtains">
         <div class="curtain-left"></div>
         <div class="curtain-right"></div>
@@ -839,9 +770,7 @@
     <!-- Couronne qui descend -->
     <div class="royal-crown-intro">♛</div>
 
-    <!-- ============================================
-         NAVBAR ROYALE
-         ============================================ -->
+    <!-- NAVBAR ROYALE -->
     <nav class="royal-navbar">
         <div class="royal-crest">
             <div class="emblem">M</div>
@@ -852,98 +781,130 @@
         </div>
     </nav>
 
-    <!-- ============================================
-         HERO ROYAL
-         ============================================ -->
-    <section class="royal-hero">
-        <div class="royal-column left"></div>
-        <div class="royal-column right"></div>
-        
-        <div class="royal-blason">
-            
-            <div class="royal-ornament">✦ ❦ ✦</div>
-            
-            <div class="royal-crown-small">♛</div>
-            
-            <div class="royal-label">INVITATION PERSONNELLE</div>
-            
-            <div class="royal-guest"><?php echo htmlspecialchars(strtoupper($guestName)); ?></div>
-            
-            <div class="royal-separator">
-                <div class="line"></div>
-                <div class="diamond">◆</div>
-                <div class="line"></div>
-            </div>
-            
-            <div class="royal-hosts-intro">Vous êtes convié(e) à célébrer</div>
-            <div class="royal-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="royal-event-type"><?php echo htmlspecialchars(strtoupper($eventType)); ?></div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (Hero + Parchemin + QR)    -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- ============================================
-         PARCHEMIN CENTRAL (Détails)
-         ============================================ -->
-    <div class="royal-scroll" id="scrollDetails">
-        
-        <div class="royal-scroll-title">✦ DÉTAILS DE LA CÉRÉMONIE ✦</div>
-        
-        <div class="royal-info-grid">
+        <!-- HERO ROYAL -->
+        <section class="royal-hero">
+            <div class="royal-column left"></div>
+            <div class="royal-column right"></div>
             
-            <div class="royal-info-item">
-                <div class="icon"><i class="fas fa-calendar-alt"></i></div>
-                <div class="label">DATE</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
-            
-            <div class="royal-info-item">
-                <div class="icon"><i class="fas fa-clock"></i></div>
-                <div class="label">HEURE</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="royal-info-item" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
-                <div class="label">LIEU DE LA CÉRÉMONIE</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <div style="font-size:14px;color:var(--gold-light);margin-top:8px;font-weight:400;font-style:italic;">
-                            <?php echo htmlspecialchars($adresseDisplay); ?>
-                        </div>
-                    <?php endif; ?>
+            <div class="royal-blason">
+                
+                <div class="royal-ornament">✦ ❦ ✦</div>
+                
+                <div class="royal-crown-small">♛</div>
+                
+                <div class="royal-label">INVITATION PERSONNELLE</div>
+                
+                <div class="royal-guest"><?php echo htmlspecialchars(strtoupper($guestName)); ?></div>
+                
+                <div class="royal-separator">
+                    <div class="line"></div>
+                    <div class="diamond">◆</div>
+                    <div class="line"></div>
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" 
-                   rel="noopener"
-                   class="royal-btn-itinerary">
-                    <i class="fas fa-route"></i> Ouvrir dans Google Maps
-                </a>
+                
+                <div class="royal-hosts-intro">Vous êtes convié(e) à célébrer</div>
+                <div class="royal-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="royal-event-type"><?php echo htmlspecialchars(strtoupper($eventType)); ?></div>
+                
             </div>
-            
-            <div class="royal-info-item" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-user-friends"></i></div>
-                <div class="label">NOMBRE DE PLACES RÉSERVÉES</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
-            </div>
-            
-        </div>
-        
-        <!-- Sceau de cire -->
-        <div class="royal-seal">
-            <div class="royal-seal-inner">
-                <i class="fas fa-crown"></i>
-            </div>
-        </div>
-        
-    </div>
+        </section>
 
-    <!-- ============================================
-         SECTION MESSAGES
-         ============================================ -->
+        <!-- PARCHEMIN CENTRAL (Détails + QR) -->
+        <div class="royal-scroll">
+            
+            <div class="royal-scroll-title">✦ DÉTAILS DE LA CÉRÉMONIE ✦</div>
+            
+            <div class="royal-info-grid">
+                
+                <div class="royal-info-item">
+                    <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="label">DATE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="royal-info-item">
+                    <div class="icon"><i class="fas fa-clock"></i></div>
+                    <div class="label">HEURE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="royal-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="label">LIEU DE LA CÉRÉMONIE</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <div style="font-size:14px;color:var(--gold-light);margin-top:8px;font-weight:400;font-style:italic;">
+                                <?php echo htmlspecialchars($adresseDisplay); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" 
+                       rel="noopener"
+                       class="royal-btn-itinerary">
+                        <i class="fas fa-route"></i> Ouvrir dans Google Maps
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="royal-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-chair"></i></div>
+                    <div class="label">VOTRE TABLE</div>
+                    <div class="value"><?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?></div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="royal-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-user-friends"></i></div>
+                    <div class="label">NOMBRE DE PLACES RÉSERVÉES</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+                
+            </div>
+            
+            <!-- Sceau de cire -->
+            <div class="royal-seal">
+                <div class="royal-seal-inner">
+                    <i class="fas fa-crown"></i>
+                </div>
+            </div>
+            
+            <!-- ✅ QR CODE INTÉGRÉ DANS LE PARCHEMIN -->
+            <div class="royal-qr-inline">
+                <div class="royal-qr-inline-title">✦ CODE D'ACCÈS ROYAL ✦</div>
+                <div class="royal-qr-wrapper">
+                    <div class="royal-qr-box">
+                        <img 
+                            id="qrImage"
+                            src="<?php echo $qrDataUri; ?>"
+                            alt="QR Code"
+                            width="160"
+                            height="160"
+                        >
+                    </div>
+                    <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.4em;color:var(--gold);margin-top:20px;">
+                        <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+    <!-- FIN WRAPPER -->
+
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
+
     <?php if ($message): ?>
-        <div class="royal-form-section apparue" style="max-width:800px;margin:40px auto;padding:30px;">
+        <div class="royal-form-section">
             <div class="royal-alert royal-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -951,9 +912,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         DIAPORAMA PHOTOS
-         ============================================ -->
+    <!-- DIAPORAMA PHOTOS -->
     <?php if (!empty($photosHost)): ?>
         <div class="royal-photos-section">
             <div class="royal-section-title">✦ SOUVENIRS ROYAUX ✦</div>
@@ -967,24 +926,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         QR CODE
-         ============================================ -->
-    <div class="royal-form-section">
-        <div class="royal-scroll-title">✦ CODE D'ACCÈS ROYAL ✦</div>
-        <div class="royal-qr-wrapper">
-            <div class="royal-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:0.4em;color:var(--gold);margin-top:20px;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         CONFIRMATION
-         ============================================ -->
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
         <div class="royal-form-section">
             <div class="royal-scroll-title">✦ CONFIRMATION DE PRÉSENCE ✦</div>
@@ -1027,9 +969,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         BOISSONS
-         ============================================ -->
+    <!-- BOISSONS -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
         <div class="royal-form-section">
             <div class="royal-scroll-title">✦ CARTE DES BOISSONS ✦</div>
@@ -1089,9 +1029,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         FOOTER ROYAL
-         ============================================ -->
+    <!-- FOOTER ROYAL -->
     <footer class="royal-footer">
         <div class="royal-footer-crest">♛</div>
         <div class="royal-footer-name"><?php echo htmlspecialchars($appName); ?></div>
@@ -1113,43 +1051,7 @@
     </button>
 
     <script>
-        // ================================================================
-        // ANIMATIONS AU SCROLL
-        // ================================================================
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.royal-scroll, .royal-form-section');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
-                        observer.unobserve(entry.target);
-                    } 
-                });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
-        });
-
-        // ================================================================
-        // QR CODE
-        // ================================================================
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof QRCode !== 'undefined') {
-                try {
-                    new QRCode(document.getElementById('qrcode'), {
-                        text: '<?php echo addslashes($fullUrl); ?>',
-                        width: 180,
-                        height: 180,
-                        colorDark: '#1a0f0f',
-                        colorLight: '#f5e6c8',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } catch(e) { console.error(e); }
-            }
-        });
-
-        // ================================================================
         // DIAPORAMA
-        // ================================================================
         let diapoIndex = 0;
         const slides = document.querySelectorAll('.royal-diaporama .slide');
         function updateDiapo() {
@@ -1163,36 +1065,98 @@
         }
 
         // ================================================================
-        // DOWNLOAD
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Parchemin + QR)
         // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.royal-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5, useCORS: true,
-                    backgroundColor: '#0a0505', logging: false
+                // Attendre le rendu
+                await new Promise(r => setTimeout(r, 1000));
+                
+                // Attendre les images (QR base64 inclus)
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // Forcer les animations du hero
+                card.querySelectorAll('.royal-blason, .royal-ornament, .royal-crown-small, .royal-label, .royal-guest, .royal-separator, .royal-hosts-intro, .royal-host-name, .royal-event-type').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                // Capture
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#0a0505',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                        }
+                        
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.royal-blason, .royal-ornament, .royal-crown-small, .royal-label, .royal-guest, .royal-separator, .royal-hosts-intro, .royal-host-name, .royal-event-type').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                    }
+                });
+                
                 const link = document.createElement('a');
-                link.download = `royal_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
+                link.download = `royal_${'<?php echo preg_replace('/[^A-Za-z0-9_]/', '_', $host1); ?>'}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ Téléchargé';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             } catch(e) {
+                console.error(e);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             }
+            
             btn.disabled = false;
         }
 
-        // ================================================================
         // BOISSONS
-        // ================================================================
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
         let selectedBoissons = [];
         document.addEventListener('DOMContentLoaded', function() {

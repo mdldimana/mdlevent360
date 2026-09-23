@@ -1,20 +1,17 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : DÉFILÉ DE MODE (Fashion Week) - v2
+ * TEMPLATE : DÉFILÉ DE MODE (Fashion Week) - v3
  * ============================================================
  * 
- * Nouveautés v2 :
- * - Diaporama photos plein écran
- * - Animations de sections en cascade
- * - Nom de la table
+ * Nouveautés v3 :
+ * - Téléchargement capture #downloadCard (Hero + Lookbook + QR)
+ * - Le QR code est inclus dans l'image téléchargée
+ * - Correction de l'image noire
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 $hasTable = !empty($tableNom) || !empty($tableNumero);
@@ -190,7 +187,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           ANIMATIONS DE SECTIONS EN CASCADE
+           ANIMATIONS DE SECTIONS
            ============================================ */
         .fashion-anim {
             opacity: 0;
@@ -234,18 +231,29 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
+           WRAPPER DE TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            background: var(--black);
+            padding-bottom: 20px;
+        }
+        
+        /* ============================================
            HERO FASHION
            ============================================ */
         .fashion-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 100px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 120px 20px 80px;
             z-index: 10;
             overflow: hidden;
+            background: 
+                radial-gradient(ellipse 800px 500px at 50% 40%, rgba(201, 169, 97, 0.06) 0%, transparent 100%),
+                var(--black);
         }
         
         .runway-floor {
@@ -456,7 +464,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           CARTE LOOKBOOK (Détails)
+           LOOKBOOK CARD
            ============================================ */
         .lookbook-card {
             position: relative;
@@ -548,25 +556,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transition: all 0.4s ease;
             position: relative;
         }
-        .lookbook-item::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--gold);
-            transition: width 0.6s ease;
-        }
-        .lookbook-item:hover::after {
-            width: 100%;
-        }
-        .lookbook-item:hover {
-            background: linear-gradient(90deg, 
-                rgba(201, 169, 97, 0.1) 0%, 
-                transparent 100%);
-            transform: translateX(8px);
-        }
         
         .lookbook-item .label {
             font-family: 'Didact Gothic', sans-serif;
@@ -595,19 +584,12 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             letter-spacing: 0.02em;
         }
         
-        /* ⭐ CARTE TABLE */
         .lookbook-table-item {
             grid-column: 1 / -1;
             background: linear-gradient(90deg, 
                 rgba(201, 169, 97, 0.15) 0%, 
                 rgba(212, 0, 0, 0.05) 100%) !important;
             border-left: 4px solid var(--gold) !important;
-            animation: tableCardPulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes tableCardPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 97, 0.3); }
-            50% { box-shadow: 0 0 30px 0 rgba(201, 169, 97, 0.5); }
         }
         
         .lookbook-table-item .value {
@@ -634,27 +616,91 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             text-transform: uppercase;
             text-decoration: none;
             transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .fashion-btn-itinerary::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--gold);
-            transform: translateX(-101%);
-            transition: transform 0.4s ease;
-            z-index: -1;
         }
         .fashion-btn-itinerary:hover {
+            background: var(--gold);
             color: var(--black);
-        }
-        .fashion-btn-itinerary:hover::before {
-            transform: translateX(0);
         }
         
         /* ============================================
-           SECTIONS ÉDITORIALES
+           QR CARD INTÉGRÉE
+           ============================================ */
+        .fashion-qr-card {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 60px 40px;
+            background: var(--near-black);
+            border: 1px solid rgba(201, 169, 97, 0.3);
+            box-shadow: 
+                0 0 80px rgba(201, 169, 97, 0.1),
+                inset 0 0 80px rgba(201, 169, 97, 0.02);
+            z-index: 10;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .fashion-qr-card { padding: 45px 25px; margin: 0 15px 40px; }
+        }
+        
+        .fashion-qr-card::before,
+        .fashion-qr-card::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--gold);
+        }
+        .fashion-qr-card::before {
+            top: -1px; left: -1px;
+            border-right: none; border-bottom: none;
+        }
+        .fashion-qr-card::after {
+            bottom: -1px; right: -1px;
+            border-left: none; border-top: none;
+        }
+        
+        .fashion-qr-card-title {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 0.02em;
+            position: relative;
+            padding-bottom: 24px;
+        }
+        .fashion-qr-card-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 1px;
+            background: var(--gold);
+        }
+        
+        .fashion-qr-wrapper {
+            text-align: center;
+        }
+        .fashion-qr-box {
+            display: inline-block;
+            padding: 30px;
+            background: var(--white);
+            position: relative;
+            box-shadow: 0 0 60px rgba(201, 169, 97, 0.3);
+        }
+        .fashion-qr-box::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border: 1px solid var(--gold);
+        }
+        
+        /* ============================================
+           SECTIONS HORS CAPTURE
            ============================================ */
         .editorial-section {
             position: relative;
@@ -681,20 +727,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             position: relative;
             padding-bottom: 24px;
         }
-        .editorial-section-title::before {
-            content: attr(data-num);
-            font-family: 'Italiana', serif;
-            font-size: 80px;
-            font-weight: 400;
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(201, 169, 97, 0.1);
-            z-index: -1;
-            font-style: normal;
-            letter-spacing: 0;
-        }
         .editorial-section-title::after {
             content: '';
             position: absolute;
@@ -707,7 +739,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           DIAPORAMA PHOTOS
            ============================================ */
         .fashion-diaporama {
             position: relative;
@@ -744,7 +776,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             padding: 10px;
         }
         
-        /* Flèches navigation */
         .fashion-diapo-arrow {
             position: absolute;
             top: 50%;
@@ -778,7 +809,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             .fashion-diapo-arrow.next { right: 8px; }
         }
         
-        /* Compteur */
         .fashion-diapo-counter {
             position: absolute;
             bottom: 16px;
@@ -793,7 +823,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             z-index: 10;
         }
         
-        /* Points */
         .fashion-diapo-dots {
             position: absolute;
             bottom: 16px;
@@ -861,10 +890,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .fashion-form-group textarea::placeholder {
             color: var(--gray);
         }
-        .fashion-form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
         
         .fashion-options-grid {
             display: grid;
@@ -893,10 +918,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             cursor: pointer;
             transition: all 0.4s ease;
         }
-        .fashion-option-label:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-        }
         .fashion-option-radio:checked + .fashion-option-label {
             border-color: var(--gold);
             background: var(--gold);
@@ -922,35 +943,14 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             cursor: pointer;
             transition: all 0.4s ease;
             margin-top: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        .fashion-btn-submit::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.4), 
-                transparent);
-            transition: left 0.6s ease;
-        }
-        .fashion-btn-submit:hover::before {
-            left: 100%;
         }
         .fashion-btn-submit:hover {
             box-shadow: 0 12px 40px rgba(201, 169, 97, 0.5);
             transform: translateY(-2px);
         }
-               /* ============================================
-           BOISSONS
-           ============================================ */
-        .fashion-boisson-category {
-            margin-bottom: 30px;
-        }
+        
+        /* BOISSONS */
+        .fashion-boisson-category { margin-bottom: 30px; }
         .fashion-boisson-category-title {
             font-family: 'Playfair Display', serif;
             font-style: italic;
@@ -990,41 +990,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         .fashion-boisson-item.selected .check { opacity: 1; }
         
-        /* ============================================
-           QR CODE
-           ============================================ */
-        .fashion-qr-wrapper {
-            text-align: center;
-        }
-        .fashion-qr-box {
-            display: inline-block;
-            padding: 30px;
-            background: var(--white);
-            position: relative;
-            box-shadow: 0 0 60px rgba(201, 169, 97, 0.3);
-        }
-        .fashion-qr-box::before {
-            content: '';
-            position: absolute;
-            inset: -10px;
-            border: 1px solid var(--gold);
-        }
-        .fashion-qr-box::after {
-            content: 'MODE · ÉDITION SPÉCIALE';
-            position: absolute;
-            bottom: -50px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Didact Gothic', sans-serif;
-            font-size: 10px;
-            letter-spacing: 0.5em;
-            color: var(--gold);
-            white-space: nowrap;
-        }
-        
-        /* ============================================
-           FOOTER
-           ============================================ */
+        /* FOOTER */
         .fashion-footer {
             padding: 80px 40px 40px;
             text-align: center;
@@ -1076,7 +1042,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             color: var(--black);
         }
         
-        /* Alertes */
         .fashion-alert {
             padding: 20px 28px;
             margin-bottom: 24px;
@@ -1150,9 +1115,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
 </head>
 <body>
 
-    <!-- ============================================
-         INTRO FASHION SHOW
-         ============================================ -->
+    <!-- INTRO -->
     <div class="fashion-intro">
         <div class="spotlight s1"></div>
         <div class="spotlight s2"></div>
@@ -1170,117 +1133,132 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
     <div class="camera-flash f5"></div>
     <div class="camera-flash f6"></div>
 
-    <!-- ============================================
-         HERO FASHION
-         ============================================ -->
-    <section class="fashion-hero">
-        <div class="runway-floor"></div>
-        <div class="gold-stripes left"></div>
-        <div class="gold-stripes right"></div>
-        
-        <div class="fashion-marquee">
-            <div class="fashion-marquee-content">
-                <span>Haute Couture</span>
-                <span>Édition Limitée</span>
-                <span>Invitation Privée</span>
-                <span>Podium Exclusif</span>
-                <span>Haute Couture</span>
-                <span>Édition Limitée</span>
-                <span>Invitation Privée</span>
-                <span>Podium Exclusif</span>
-            </div>
-        </div>
-        
-        <div class="fashion-blason">
-            
-            <div class="fashion-issue">
-                <div class="line"></div>
-                <div class="text">N° 01 · ÉDITION SPÉCIALE</div>
-                <div class="line"></div>
-            </div>
-            
-            <div class="fashion-guest">
-                <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="fashion-subtitle">
-                INVITATION PERSONNELLE
-            </div>
-            
-            <div class="fashion-divider">
-                <div class="line"></div>
-                <div class="icon">✦</div>
-                <div class="line"></div>
-            </div>
-            
-            <div class="fashion-hosts-intro">
-                Présenté par
-            </div>
-            <div class="fashion-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="fashion-event-type">
-                ✦ <?php echo htmlspecialchars(strtoupper($eventType)); ?> ✦
-            </div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (Hero + Lookbook + QR)      -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- ============================================
-         LOOKBOOK CARD (Détails)
-         ============================================ -->
-    <div class="lookbook-card fashion-anim zoom-in">
-        
-        <div class="lookbook-header">
-            <div class="label">FICHE TECHNIQUE</div>
-            <div class="number">N° 01</div>
-        </div>
-        
-        <div class="lookbook-title">Informations sur le défilé</div>
-        
-        <div class="lookbook-grid">
+        <!-- HERO -->
+        <section class="fashion-hero">
+            <div class="runway-floor"></div>
+            <div class="gold-stripes left"></div>
+            <div class="gold-stripes right"></div>
             
-            <div class="lookbook-item fashion-anim delay-1">
-                <div class="label">DATE DU SHOW</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
-            
-            <div class="lookbook-item fashion-anim delay-2">
-                <div class="label">HEURE DE DÉBUT</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="lookbook-item fashion-anim delay-3" style="grid-column: 1 / -1;">
-                <div class="label">LIEU DU PODIUM</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                    <?php endif; ?>
-                </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" 
-                   rel="noopener"
-                   class="fashion-btn-itinerary">
-                    <i class="fas fa-map-marked-alt"></i> VOIR L'ITINÉRAIRE
-                </a>
-            </div>
-            
-            <!-- ⭐ TABLE ASSIGNÉE -->
-            <?php if ($hasTable): ?>
-            <div class="lookbook-item lookbook-table-item fashion-anim delay-4">
-                <div class="label">✦ VOTRE PLACE PRIVILÉGIÉE ✦</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+            <div class="fashion-marquee">
+                <div class="fashion-marquee-content">
+                    <span>Haute Couture</span>
+                    <span>Édition Limitée</span>
+                    <span>Invitation Privée</span>
+                    <span>Podium Exclusif</span>
+                    <span>Haute Couture</span>
+                    <span>Édition Limitée</span>
+                    <span>Invitation Privée</span>
+                    <span>Podium Exclusif</span>
                 </div>
             </div>
-            <?php endif; ?>
             
-            <div class="lookbook-item fashion-anim delay-5" style="grid-column: 1 / -1;">
-                <div class="label">PLACES SUR LE PODIUM</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+            <div class="fashion-blason">
+                <div class="fashion-issue">
+                    <div class="line"></div>
+                    <div class="text">N° 01 · ÉDITION SPÉCIALE</div>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="fashion-guest">
+                    <?php echo htmlspecialchars($guestName); ?>
+                </div>
+                
+                <div class="fashion-subtitle">
+                    INVITATION PERSONNELLE
+                </div>
+                
+                <div class="fashion-divider">
+                    <div class="line"></div>
+                    <div class="icon">✦</div>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="fashion-hosts-intro">
+                    Présenté par
+                </div>
+                <div class="fashion-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="fashion-event-type">
+                    ✦ <?php echo htmlspecialchars(strtoupper($eventType)); ?> ✦
+                </div>
+            </div>
+        </section>
+
+        <!-- LOOKBOOK CARD -->
+        <div class="lookbook-card">
+            <div class="lookbook-header">
+                <div class="label">FICHE TECHNIQUE</div>
+                <div class="number">N° 01</div>
             </div>
             
+            <div class="lookbook-title">Informations sur le défilé</div>
+            
+            <div class="lookbook-grid">
+                <div class="lookbook-item">
+                    <div class="label">DATE DU SHOW</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="lookbook-item">
+                    <div class="label">HEURE DE DÉBUT</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="lookbook-item" style="grid-column: 1 / -1;">
+                    <div class="label">LIEU DU PODIUM</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" 
+                       rel="noopener"
+                       class="fashion-btn-itinerary">
+                        <i class="fas fa-map-marked-alt"></i> VOIR L'ITINÉRAIRE
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="lookbook-item lookbook-table-item">
+                    <div class="label">✦ VOTRE PLACE PRIVILÉGIÉE ✦</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="lookbook-item" style="grid-column: 1 / -1;">
+                    <div class="label">PLACES SUR LE PODIUM</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+            </div>
         </div>
+
+        <!-- ✅ QR CARD INTÉGRÉE DANS LE WRAPPER -->
+        <div class="fashion-qr-card">
+            <div class="fashion-qr-card-title">Accès privé</div>
+            <div class="fashion-qr-wrapper">
+                <div class="fashion-qr-box">
+                    <div id="qrcode"></div>
+                </div>
+                <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--gold);margin-top:30px;letter-spacing:0.1em;">
+                    <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                </div>
+            </div>
+        </div>
+
     </div>
+    <!-- FIN WRAPPER -->
+
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
 
     <?php if ($message): ?>
         <div class="editorial-section apparue">
@@ -1291,12 +1269,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
-         ============================================ -->
+    <!-- DIAPORAMA PHOTOS -->
     <?php if ($hasPhotos): ?>
         <div class="editorial-section fashion-anim from-left">
-            <div class="editorial-section-title" data-num="01">Galerie · Collection</div>
+            <div class="editorial-section-title">Galerie · Collection</div>
             
             <div class="fashion-diaporama" id="fashionDiaporama">
                 <?php 
@@ -1334,27 +1310,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         QR CODE
-         ============================================ -->
-    <div class="editorial-section fashion-anim from-right">
-        <div class="editorial-section-title" data-num="02">Accès privé</div>
-        <div class="fashion-qr-wrapper">
-            <div class="fashion-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--gold);margin-top:70px;letter-spacing:0.1em;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         CONFIRMATION
-         ============================================ -->
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
         <div class="editorial-section fashion-anim from-left">
-            <div class="editorial-section-title" data-num="03">RSVP</div>
+            <div class="editorial-section-title">RSVP</div>
             
             <form method="POST" action="?code=<?php echo urlencode($code); ?>&action=confirmer">
                 <input type="hidden" name="action" value="confirmer">
@@ -1394,12 +1353,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         BOISSONS
-         ============================================ -->
+    <!-- BOISSONS -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
         <div class="editorial-section fashion-anim from-right">
-            <div class="editorial-section-title" data-num="04">Bar à cocktails</div>
+            <div class="editorial-section-title">Bar à cocktails</div>
             
             <?php if ($isLocked): ?>
                 <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--gold);padding:20px 0;">
@@ -1455,9 +1412,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         FOOTER
-         ============================================ -->
+    <!-- FOOTER -->
     <footer class="fashion-footer fashion-anim">
         <div class="fashion-footer-brand">
             <?php echo htmlspecialchars(strtoupper($appName)); ?>
@@ -1528,7 +1483,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         });
 
         // ================================================================
-        // DIAPORAMA PHOTOS
+        // DIAPORAMA
         // ================================================================
         let fashionDiapoIndex = 0;
         const fashionSlides = document.querySelectorAll('#fashionDiaporama .slide');
@@ -1587,31 +1542,132 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }
         });
 
-        // Download
+        // ================================================================
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Lookbook + QR)
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.fashion-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5,
-                    useCORS: true,
-                    backgroundColor: '#000000',
-                    logging: false
+                // 1. Attendre que tout soit rendu
+                await new Promise(r => setTimeout(r, 1500));
+                
+                // 2. Vérifier que le QR est généré
+                for (let i = 0; i < 10; i++) {
+                    const qrCanvas = document.querySelector('#qrcode canvas');
+                    const qrImg = document.querySelector('#qrcode img');
+                    if (qrCanvas || qrImg) break;
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                // 3. Attendre le chargement des images
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // 4. Forcer l'affichage de tous les éléments
+                card.querySelectorAll('.fashion-anim').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                // 5. Forcer les éléments du hero
+                card.querySelectorAll('.fashion-blason, .fashion-issue, .fashion-guest, .fashion-subtitle, .fashion-divider, .fashion-hosts-intro, .fashion-host-name, .fashion-event-type, .fashion-marquee').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
+                });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                // 6. Capturer
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#000000',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                            clonedCard.style.background = '#000000';
+                        }
+                        
+                        // Désactiver les animations
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        // Forcer les animations
+                        clonedDoc.querySelectorAll('.fashion-anim').forEach(el => {
+                            el.classList.add('apparue');
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        // Forcer les éléments du hero
+                        clonedDoc.querySelectorAll('.fashion-blason, .fashion-issue, .fashion-guest, .fashion-subtitle, .fashion-divider, .fashion-hosts-intro, .fashion-host-name, .fashion-event-type, .fashion-marquee').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            // Fixer les gradients
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                        
+                        // S'assurer que le QR est visible
+                        const qrBox = clonedDoc.querySelector('.fashion-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                    }
+                });
+                
+                // 7. Télécharger
                 const link = document.createElement('a');
                 link.download = `fashion_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ TÉLÉCHARGÉ';
                 setTimeout(() => btnText.textContent = 'TÉLÉCHARGER', 3000);
             } catch(e) {
+                console.error('Erreur téléchargement:', e);
                 btnText.textContent = 'ERREUR';
                 setTimeout(() => btnText.textContent = 'TÉLÉCHARGER', 3000);
             }
+            
             btn.disabled = false;
         }
 

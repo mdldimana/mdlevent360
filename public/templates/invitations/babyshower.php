@@ -1,22 +1,17 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : OURSON / BABY SHOWER - v3
+ * TEMPLATE : OURSON / BABY SHOWER - v4
  * ============================================================
  * 
- * Nouveautés v3 :
- * - Suppression du header/navbar
- * - Affichage du nom de la table
- * - Animations d'affichage des sections
- * - Photo de fond comme background (non flou)
- * - Diaporama photos plein écran
+ * Nouveautés v4 :
+ * - Le téléchargement capture #downloadCard (Hero + Détails + QR)
+ * - Le QR code est inclus dans l'image téléchargée
+ * - Correction de l'image noire (html2canvas)
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo']) : '');
@@ -54,9 +49,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
-        /* ============================================
-           PHOTO DE FOND (non floue)
-           ============================================ */
         body {
             font-family: 'Fredoka', system-ui, sans-serif;
             background: linear-gradient(180deg, 
@@ -71,7 +63,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             position: relative;
         }
         
-        /* Overlay photo de fond */
         body::before {
             content: '';
             position: fixed;
@@ -99,7 +90,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         }
         
         /* ============================================
-           INTRO : OURS EN PELUCHE
+           INTRO
            ============================================ */
         .bear-intro {
             position: fixed;
@@ -165,7 +156,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         }
         
         /* ============================================
-           ANIMATIONS D'AFFICHAGE DES SECTIONS
+           ANIMATIONS
            ============================================ */
         .bear-anim {
             opacity: 0;
@@ -215,17 +206,29 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO (SANS NAVBAR)
+           WRAPPER DE TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            background: linear-gradient(180deg, 
+                #fff9f0 0%, 
+                #fce4ec 50%,
+                #d4eaf0 100%);
+            padding-bottom: 20px;
+        }
+        
+        /* ============================================
+           HERO
            ============================================ */
         .bear-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px 60px;
             z-index: 10;
+            overflow: hidden;
         }
         
         .bear-blason {
@@ -357,7 +360,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         }
         
         /* ============================================
-           CARTE ARRONDIE
+           CARTE
            ============================================ */
         .bear-card {
             position: relative;
@@ -404,11 +407,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             transition: all 0.3s ease;
             text-align: center;
         }
-        .bear-info-item:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(139, 111, 71, 0.15);
-            border-color: var(--pink-baby);
-        }
         
         .bear-info-item .icon {
             width: 60px;
@@ -448,20 +446,10 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             font-weight: 500;
         }
         
-        /* ⭐ CARTE TABLE */
         .bear-table-item {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, var(--pink-soft), var(--blue-soft)) !important;
             border-color: var(--pink-baby) !important;
-        }
-        
-        .bear-table-item .icon {
-            animation: tableGlow 3s ease-in-out infinite;
-        }
-        
-        @keyframes tableGlow {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
         }
         
         .bear-btn-itinerary {
@@ -481,10 +469,61 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             box-shadow: 0 8px 24px rgba(168, 213, 226, 0.4);
             transition: all 0.3s ease;
         }
-        .bear-btn-itinerary:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 12px 32px rgba(168, 213, 226, 0.6);
-            color: white;
+        
+        /* ============================================
+           CARTE QR INTÉGRÉE
+           ============================================ */
+        .bear-qr-card {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 50px 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            box-shadow: 
+                0 20px 60px rgba(139, 111, 71, 0.15),
+                0 0 0 8px rgba(255, 249, 240, 0.8);
+            z-index: 10;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .bear-qr-card { padding: 40px 22px; margin: 0 15px 40px; }
+        }
+        
+        .bear-qr-title {
+            font-family: 'Baloo 2', cursive;
+            font-size: 28px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            color: var(--brown);
+            border-bottom: 3px dashed var(--beige-dark);
+        }
+        
+        .bear-qr-wrapper { text-align: center; }
+        .bear-qr-box {
+            display: inline-block;
+            padding: 22px;
+            background: white;
+            border-radius: 24px;
+            border: 4px solid var(--beige);
+            box-shadow: 0 12px 40px rgba(139, 111, 71, 0.2);
+            position: relative;
+        }
+        .bear-qr-box::before {
+            content: '🐻';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            animation: bearBounceSmall 2s ease-in-out infinite;
+        }
+        @keyframes bearBounceSmall {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-6px); }
         }
         
         /* ============================================
@@ -517,7 +556,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           DIAPORAMA PHOTOS
            ============================================ */
         .bear-diaporama {
             position: relative;
@@ -577,20 +616,8 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             box-shadow: 0 6px 20px rgba(139, 111, 71, 0.2);
         }
         
-        .bear-diapo-arrow:hover {
-            background: var(--pink-baby);
-            color: white;
-            transform: translateY(-50%) scale(1.1);
-        }
-        
         .bear-diapo-arrow.prev { left: 16px; }
         .bear-diapo-arrow.next { right: 16px; }
-        
-        @media (max-width: 480px) {
-            .bear-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
-            .bear-diapo-arrow.prev { left: 8px; }
-            .bear-diapo-arrow.next { right: 8px; }
-        }
         
         .bear-diapo-counter {
             position: absolute;
@@ -606,7 +633,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             padding: 6px 14px;
             border-radius: 999px;
             z-index: 10;
-            box-shadow: 0 4px 12px rgba(139, 111, 71, 0.2);
         }
         
         .bear-diapo-dots {
@@ -635,7 +661,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         .bear-diapo-dots span.active {
             background: var(--pink-baby);
             transform: scale(1.4);
-            box-shadow: 0 0 8px rgba(245, 198, 214, 0.8);
         }
         
         /* ============================================
@@ -665,13 +690,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             font-weight: 500;
             transition: all 0.3s ease;
         }
-        .bear-form-group input:focus,
-        .bear-form-group textarea:focus {
-            outline: none;
-            border-color: var(--pink-baby);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(245, 198, 214, 0.2);
-        }
         
         .bear-options-grid {
             display: grid;
@@ -699,16 +717,10 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .bear-option-label:hover {
-            border-color: var(--pink-baby);
-            transform: translateY(-2px);
-            color: var(--brown);
-        }
         .bear-option-radio:checked + .bear-option-label {
             border-color: var(--pink-baby);
             background: linear-gradient(135deg, var(--pink-soft), var(--blue-soft));
             color: var(--brown-dark);
-            box-shadow: 0 0 0 4px rgba(245, 198, 214, 0.2);
         }
         
         .bear-btn-submit {
@@ -732,11 +744,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             transition: all 0.3s ease;
             box-shadow: 0 12px 32px rgba(245, 198, 214, 0.5);
             margin-top: 10px;
-        }
-        .bear-btn-submit:hover {
-            background-position: 100% center;
-            transform: translateY(-3px);
-            box-shadow: 0 16px 40px rgba(245, 198, 214, 0.6);
         }
         
         /* Boissons */
@@ -771,31 +778,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             color: var(--brown);
             font-weight: 700;
             margin-bottom: 12px;
-        }
-        
-        /* QR */
-        .bear-qr-wrapper { text-align: center; }
-        .bear-qr-box {
-            display: inline-block;
-            padding: 22px;
-            background: white;
-            border-radius: 24px;
-            border: 4px solid var(--beige);
-            box-shadow: 0 12px 40px rgba(139, 111, 71, 0.2);
-            position: relative;
-        }
-        .bear-qr-box::before {
-            content: '🐻';
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 40px;
-            animation: bearBounceSmall 2s ease-in-out infinite;
-        }
-        @keyframes bearBounceSmall {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-6px); }
         }
         
         /* Footer */
@@ -840,12 +822,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             box-shadow: 0 12px 32px rgba(37, 211, 102, 0.35);
             transition: all 0.3s ease;
         }
-        .bear-btn-whatsapp:hover {
-            transform: translateY(-3px) scale(1.03);
-            color: white;
-        }
         
-        /* Alertes */
         .bear-alert {
             padding: 18px 26px;
             margin-bottom: 20px;
@@ -861,7 +838,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         .bear-alert-danger { background: var(--pink-soft); color: #a01b3d; }
         .bear-alert-warning { background: #fff4c5; color: #806a00; }
         
-        /* Download */
         #downloadBtn {
             position: fixed;
             bottom: 24px;
@@ -885,10 +861,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             box-shadow: 0 12px 32px rgba(245, 198, 214, 0.5);
             opacity: 0;
             animation: fadeIn 0.8s ease-out 3s forwards;
-        }
-        #downloadBtn:hover {
-            background-position: 100% center;
-            transform: translateY(-3px) scale(1.03);
         }
         @media (max-width: 480px) {
             #downloadBtn { bottom: 12px; right: 12px; padding: 12px 20px; font-size: 11px; }
@@ -917,90 +889,114 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
     <div class="float-decor b4">🧸</div>
     <div class="float-decor b5">☁️</div>
 
-    <!-- HERO (SANS NAVBAR) -->
-    <section class="bear-hero">
-        <div class="bear-blason">
-            
-            <div class="bear-circle">🧸</div>
-            
-            <div class="bear-badge">
-                <i class="fas fa-baby"></i>
-                INVITATION SPÉCIALE
-                <i class="fas fa-baby"></i>
-            </div>
-            
-            <div class="bear-guest">
-                <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="bear-divider">
-                <div class="line"></div>
-                <span class="icon">🎀</span>
-                <div class="line"></div>
-            </div>
-            
-            <div class="bear-hosts-intro">
-                🍼 Vous êtes invité(e) à célébrer 🍼
-            </div>
-            <div class="bear-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="bear-event-type">
-                🧸 <?php echo htmlspecialchars($eventType); ?> 🧸
-            </div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ                              -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- CARTE DÉTAILS -->
-    <div class="bear-card bear-anim zoom-in">
-        <div class="bear-card-title">Les détails tendres</div>
-        <div class="bear-info-grid">
-            
-            <div class="bear-info-item bear-anim delay-1">
-                <div class="icon"><i class="fas fa-calendar-heart"></i></div>
-                <div class="label">DATE</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
-            
-            <div class="bear-info-item bear-anim delay-2">
-                <div class="icon"><i class="fas fa-clock"></i></div>
-                <div class="label">HEURE</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="bear-info-item bear-anim delay-3" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
-                <div class="label">LIEU</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                    <?php endif; ?>
+        <!-- HERO -->
+        <section class="bear-hero">
+            <div class="bear-blason">
+                
+                <div class="bear-circle">🧸</div>
+                
+                <div class="bear-badge">
+                    <i class="fas fa-baby"></i>
+                    INVITATION SPÉCIALE
+                    <i class="fas fa-baby"></i>
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" rel="noopener" class="bear-btn-itinerary">
-                    <i class="fas fa-route"></i> Itinéraire
-                </a>
-            </div>
-            
-            <!-- ⭐ TABLE ASSIGNÉE -->
-            <?php if ($hasTable): ?>
-            <div class="bear-info-item bear-table-item bear-anim delay-4" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-chair"></i></div>
-                <div class="label">VOTRE TABLE</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                
+                <div class="bear-guest">
+                    <?php echo htmlspecialchars($guestName); ?>
                 </div>
+                
+                <div class="bear-divider">
+                    <div class="line"></div>
+                    <span class="icon">🎀</span>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="bear-hosts-intro">
+                    🍼 Vous êtes invité(e) à célébrer 🍼
+                </div>
+                <div class="bear-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="bear-event-type">
+                    🧸 <?php echo htmlspecialchars($eventType); ?> 🧸
+                </div>
+                
             </div>
-            <?php endif; ?>
-            
-            <div class="bear-info-item bear-anim delay-5" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-users"></i></div>
-                <div class="label">PLACES</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+        </section>
+
+        <!-- CARTE DÉTAILS -->
+        <div class="bear-card">
+            <div class="bear-card-title">Les détails tendres</div>
+            <div class="bear-info-grid">
+                
+                <div class="bear-info-item">
+                    <div class="icon"><i class="fas fa-calendar-heart"></i></div>
+                    <div class="label">DATE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="bear-info-item">
+                    <div class="icon"><i class="fas fa-clock"></i></div>
+                    <div class="label">HEURE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="bear-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="label">LIEU</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" rel="noopener" class="bear-btn-itinerary">
+                        <i class="fas fa-route"></i> Itinéraire
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="bear-info-item bear-table-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-chair"></i></div>
+                    <div class="label">VOTRE TABLE</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="bear-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-users"></i></div>
+                    <div class="label">PLACES</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+                
             </div>
-            
         </div>
+
+        <!-- ✅ QR CODE INTÉGRÉ -->
+        <div class="bear-qr-card">
+            <div class="bear-qr-title">🎫 Code d'accès</div>
+            <div class="bear-qr-wrapper">
+                <div class="bear-qr-box">
+                    <div id="qrcode"></div>
+                </div>
+                <div style="font-family:'Baloo 2',cursive;font-size:16px;color:var(--brown);margin-top:24px;font-weight:700;letter-spacing:0.1em;">
+                    <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                </div>
+            </div>
+        </div>
+
     </div>
+    <!-- FIN WRAPPER -->
+
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
 
     <?php if ($message): ?>
         <div class="bear-section bear-anim apparue">
@@ -1011,7 +1007,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         </div>
     <?php endif; ?>
 
-    <!-- ⭐ DIAPORAMA PHOTOS -->
+    <!-- DIAPORAMA PHOTOS -->
     <?php if ($hasPhotos): ?>
         <div class="bear-section bear-anim from-left">
             <div class="bear-section-title">📸 Souvenirs</div>
@@ -1051,19 +1047,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             </div>
         </div>
     <?php endif; ?>
-
-    <!-- QR CODE -->
-    <div class="bear-section bear-anim from-right">
-        <div class="bear-section-title">🎫 Code d'accès</div>
-        <div class="bear-qr-wrapper">
-            <div class="bear-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Baloo 2',cursive;font-size:16px;color:var(--brown);margin-top:24px;font-weight:700;letter-spacing:0.1em;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
 
     <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
@@ -1203,7 +1186,6 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
             
             animElements.forEach(el => observer.observe(el));
             
-            // Fallback
             setTimeout(() => {
                 animElements.forEach(el => {
                     const rect = el.getBoundingClientRect();
@@ -1231,7 +1213,7 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         });
 
         // ================================================================
-        // DIAPORAMA PHOTOS
+        // DIAPORAMA
         // ================================================================
         let bearDiapoIndex = 0;
         const bearSlides = document.querySelectorAll('#bearDiaporama .slide');
@@ -1291,30 +1273,135 @@ $mainPhoto = $pageBackground ?: ($hasPhotos ? getPhotoUrl($photosHost[0]['photo'
         });
 
         // ================================================================
-        // TÉLÉCHARGEMENT
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Détails + QR)
         // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.bear-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5, useCORS: true,
-                    backgroundColor: '#fff9f0', logging: false
+                // 1. Attendre le rendu complet
+                await new Promise(r => setTimeout(r, 1500));
+                
+                // 2. Vérifier que le QR est généré
+                let qrReady = false;
+                for (let i = 0; i < 10; i++) {
+                    const qrCanvas = document.querySelector('#qrcode canvas');
+                    const qrImg = document.querySelector('#qrcode img');
+                    if (qrCanvas || qrImg) {
+                        qrReady = true;
+                        break;
+                    }
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                // 3. Attendre les images
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // 4. Forcer l'affichage de tous les éléments
+                card.querySelectorAll('.bear-anim').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                // 5. Forcer le blason hero
+                card.querySelectorAll('.bear-blason, .bear-circle, .bear-badge, .bear-guest, .bear-divider, .bear-hosts-intro, .bear-host-name, .bear-event-type').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
+                });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                // 6. Capturer
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#fff9f0',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                            clonedCard.style.background = 'linear-gradient(180deg, #fff9f0 0%, #fce4ec 50%, #d4eaf0 100%)';
+                        }
+                        
+                        // Désactiver les animations
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        // Forcer les éléments cachés
+                        clonedDoc.querySelectorAll('.bear-anim').forEach(el => {
+                            el.classList.add('apparue');
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        // Forcer le blason hero
+                        clonedDoc.querySelectorAll('.bear-blason, .bear-circle, .bear-badge, .bear-guest, .bear-divider, .bear-hosts-intro, .bear-host-name, .bear-event-type').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            // Fixer les gradients de texte
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                        
+                        // S'assurer que le QR est visible
+                        const qrBox = clonedDoc.querySelector('.bear-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                    }
+                });
+                
+                // 7. Télécharger
                 const link = document.createElement('a');
                 link.download = `baby_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ Téléchargé';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             } catch(e) {
+                console.error('Erreur téléchargement:', e);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             }
+            
             btn.disabled = false;
         }
 

@@ -1,23 +1,18 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : DIPLÔME / GRADUATION - v3
+ * TEMPLATE : DIPLÔME / GRADUATION - v4
  * ============================================================
  * 
- * Améliorations v3 :
- * - Photo de fond en background (non floue)
- * - Nom de la table
- * - Diaporama photos plein écran
- * - Animations de sections en cascade
- * - Palette de couleurs raffinée (navy/or/crème)
- * - Suppression du header
+ * Nouveautés v4 :
+ * - Téléchargement capture #downloadCard (Hero + Certificat + QR)
+ * - Le QR code est inclus dans l'image téléchargée
+ * - Correction de l'image noire (html2canvas)
+ * - Photo de fond en background de la carte
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 $hasTable = !empty($tableNom) || !empty($tableNumero);
@@ -36,7 +31,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
     
     <style>
         :root {
-            /* Palette raffinée */
             --navy: #0a1633;
             --navy-dark: #050b1f;
             --navy-mid: #132148;
@@ -51,15 +45,11 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             --text: #2a2420;
             --text-muted: #6a5a4a;
             --text-light: #9a8a7a;
-            --border-gold: rgba(212, 175, 55, 0.35);
         }
         
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
-        /* ============================================
-           PHOTO DE FOND (BACKGROUND PRINCIPAL - NON FLOUE)
-           ============================================ */
         html {
             background: var(--navy-dark);
         }
@@ -83,7 +73,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             position: relative;
         }
         
-        /* Overlay dégradé subtil par-dessus la photo */
         body::before {
             content: '';
             position: fixed;
@@ -92,24 +81,15 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background: 
                 radial-gradient(ellipse at top, rgba(30, 45, 92, 0.55) 0%, transparent 70%),
                 linear-gradient(180deg, 
-                    rgba(5, 11, 31, 0.7) 0%, 
-                    rgba(10, 22, 51, 0.6) 30%,
-                    rgba(5, 11, 31, 0.75) 70%,
-                    rgba(5, 11, 31, 0.9) 100%);
+                    rgba(5, 11, 31, 0.75) 0%, 
+                    rgba(10, 22, 51, 0.65) 30%,
+                    rgba(5, 11, 31, 0.8) 70%,
+                    rgba(5, 11, 31, 0.95) 100%);
             pointer-events: none;
         }
         
-        /* Contenu au-dessus de l'overlay */
-        .graduation-hero,
-        .certificate-card,
-        .graduation-section,
-        .graduation-footer {
-            position: relative;
-            z-index: 2;
-        }
-        
         /* ============================================
-           INTRO : CHAPEAU QUI TOMBE
+           INTRO
            ============================================ */
         .graduation-intro {
             position: fixed;
@@ -139,7 +119,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           ANIMATIONS DE SECTIONS EN CASCADE
+           ANIMATIONS
            ============================================ */
         .grad-anim {
             opacity: 0;
@@ -155,29 +135,15 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transform: translateY(0) scale(1);
         }
         
-        /* Variantes */
-        .grad-anim.from-left {
-            transform: translateX(-80px);
-        }
-        .grad-anim.from-left.apparue {
-            transform: translateX(0);
-        }
+        .grad-anim.from-left { transform: translateX(-80px); }
+        .grad-anim.from-left.apparue { transform: translateX(0); }
         
-        .grad-anim.from-right {
-            transform: translateX(80px);
-        }
-        .grad-anim.from-right.apparue {
-            transform: translateX(0);
-        }
+        .grad-anim.from-right { transform: translateX(80px); }
+        .grad-anim.from-right.apparue { transform: translateX(0); }
         
-        .grad-anim.zoom-in {
-            transform: scale(0.85);
-        }
-        .grad-anim.zoom-in.apparue {
-            transform: scale(1);
-        }
+        .grad-anim.zoom-in { transform: scale(0.85); }
+        .grad-anim.zoom-in.apparue { transform: scale(1); }
         
-        /* Délais en cascade */
         .delay-1 { transition-delay: 0.1s; }
         .delay-2 { transition-delay: 0.2s; }
         .delay-3 { transition-delay: 0.3s; }
@@ -185,21 +151,56 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO (SANS NAVBAR)
+           WRAPPER DE TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            <?php else: ?>
+            background: var(--navy-dark);
+            <?php endif; ?>
+            padding-bottom: 20px;
+        }
+        
+        /* Overlay local dans le wrapper (pour la capture) */
+        #downloadCard::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(30, 45, 92, 0.55) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(5, 11, 31, 0.75) 0%, 
+                    rgba(10, 22, 51, 0.65) 30%,
+                    rgba(5, 11, 31, 0.8) 70%,
+                    rgba(5, 11, 31, 0.95) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        #downloadCard > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* ============================================
+           HERO
            ============================================ */
         .graduation-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
-        /* Rayons de lumière dorée */
         .light-rays {
             position: absolute;
             top: 0;
@@ -249,7 +250,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Grand chapeau doré */
         .graduation-hat-big {
             font-size: 100px;
             color: var(--gold);
@@ -351,7 +351,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           CARTE CERTIFICAT (Détails)
+           CARTE CERTIFICAT
            ============================================ */
         .certificate-card {
             position: relative;
@@ -375,7 +375,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             .certificate-card { padding: 40px 22px; margin: 40px 15px; }
         }
         
-        /* Ornements aux coins */
         .certificate-card::before,
         .certificate-card::after {
             content: '❦';
@@ -432,12 +431,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             border: 2px solid var(--gold);
             background: white;
             text-align: center;
-            transition: all 0.3s ease;
-        }
-        .certificate-info-item:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(212, 175, 55, 0.3);
-            background: var(--cream);
         }
         
         .certificate-info-item .label {
@@ -466,17 +459,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-weight: 400;
         }
         
-        /* ⭐ CARTE TABLE */
         .certificate-table-item {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05)) !important;
             border: 2px solid var(--gold) !important;
-            animation: tableCardPulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes tableCardPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
-            50% { box-shadow: 0 0 30px 0 rgba(212, 175, 55, 0.6); }
         }
         
         .certificate-table-item .value {
@@ -502,15 +488,66 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        .certificate-btn-itinerary:hover {
-            background: var(--gold);
-            color: var(--navy);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
-        }
         
         /* ============================================
-           SECTIONS
+           QR CARD INTÉGRÉE (dans le wrapper)
+           ============================================ */
+        .graduation-qr-card {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 50px 40px;
+            background: rgba(5, 11, 31, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 3px solid var(--gold);
+            box-shadow: 
+                0 0 0 6px var(--navy),
+                0 0 60px rgba(212, 175, 55, 0.25);
+            z-index: 10;
+            color: var(--cream);
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .graduation-qr-card { padding: 40px 22px; margin: 0 15px 40px; }
+        }
+        
+        .graduation-qr-card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            color: var(--gold);
+            border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+        
+        .graduation-qr-wrapper { text-align: center; }
+        .graduation-qr-box {
+            display: inline-block;
+            padding: 22px;
+            background: var(--cream);
+            border: 3px solid var(--gold);
+            box-shadow: 
+                0 0 0 6px var(--navy-dark),
+                0 0 0 8px var(--gold-dark),
+                0 0 40px rgba(212, 175, 55, 0.4);
+            position: relative;
+        }
+        .graduation-qr-box::before,
+        .graduation-qr-box::after {
+            content: '✦';
+            position: absolute;
+            font-size: 24px;
+            color: var(--gold);
+        }
+        .graduation-qr-box::before { top: -12px; left: -12px; }
+        .graduation-qr-box::after { bottom: -12px; right: -12px; }
+        
+        /* ============================================
+           SECTIONS HORS CAPTURE
            ============================================ */
         .graduation-section {
             position: relative;
@@ -544,7 +581,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           DIAPORAMA PHOTOS
            ============================================ */
         .graduation-diaporama {
             position: relative;
@@ -583,7 +620,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             padding: 8px;
         }
         
-        /* Flèches */
         .graduation-diapo-arrow {
             position: absolute;
             top: 50%;
@@ -604,22 +640,9 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
         }
         
-        .graduation-diapo-arrow:hover {
-            background: var(--gold-light);
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
-        }
-        
         .graduation-diapo-arrow.prev { left: 16px; }
         .graduation-diapo-arrow.next { right: 16px; }
         
-        @media (max-width: 480px) {
-            .graduation-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
-            .graduation-diapo-arrow.prev { left: 8px; }
-            .graduation-diapo-arrow.next { right: 8px; }
-        }
-        
-        /* Compteur */
         .graduation-diapo-counter {
             position: absolute;
             bottom: 16px;
@@ -635,7 +658,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             z-index: 10;
         }
         
-        /* Points */
         .graduation-diapo-dots {
             position: absolute;
             bottom: 16px;
@@ -724,15 +746,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .graduation-option-label:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-        }
         .graduation-option-radio:checked + .graduation-option-label {
             border-color: var(--gold);
             background: var(--gold);
             color: var(--navy-dark);
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
         }
         
         .graduation-btn-submit {
@@ -757,13 +774,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
                 0 0 0 5px var(--gold-dark),
                 0 12px 30px rgba(212, 175, 55, 0.4);
             margin-top: 10px;
-        }
-        .graduation-btn-submit:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 0 0 3px var(--navy-dark),
-                0 0 0 5px var(--gold),
-                0 16px 40px rgba(212, 175, 55, 0.6);
         }
         
         /* Boissons */
@@ -800,29 +810,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             letter-spacing: 0.2em;
             text-transform: uppercase;
         }
-        
-        /* QR */
-        .graduation-qr-wrapper { text-align: center; }
-        .graduation-qr-box {
-            display: inline-block;
-            padding: 22px;
-            background: var(--cream);
-            border: 3px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px var(--navy-dark),
-                0 0 0 8px var(--gold-dark),
-                0 0 40px rgba(212, 175, 55, 0.4);
-            position: relative;
-        }
-        .graduation-qr-box::before,
-        .graduation-qr-box::after {
-            content: '✦';
-            position: absolute;
-            font-size: 24px;
-            color: var(--gold);
-        }
-        .graduation-qr-box::before { top: -12px; left: -12px; }
-        .graduation-qr-box::after { bottom: -12px; right: -12px; }
         
         /* Footer */
         .graduation-footer {
@@ -865,11 +852,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             box-shadow: 0 12px 32px rgba(37, 211, 102, 0.35);
             transition: all 0.3s ease;
             border: 2px solid var(--gold);
-        }
-        .graduation-btn-whatsapp:hover {
-            transform: translateY(-3px) scale(1.03);
-            color: white;
-            box-shadow: 0 16px 40px rgba(37, 211, 102, 0.5);
         }
         
         /* Alerts */
@@ -917,10 +899,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         #downloadBtn:hover {
             transform: translateY(-3px) scale(1.03);
-            box-shadow: 
-                0 0 0 3px var(--navy-dark),
-                0 0 0 5px var(--gold),
-                0 16px 40px rgba(212, 175, 55, 0.7);
         }
         @media (max-width: 480px) {
             #downloadBtn { bottom: 12px; right: 12px; padding: 12px 20px; font-size: 10px; }
@@ -938,93 +916,116 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         <div class="graduation-hat-intro">🎓</div>
     </div>
 
-    <!-- HERO (SANS NAVBAR) -->
-    <section class="graduation-hero">
-        <div class="light-rays"></div>
-        
-        <div class="graduation-blason">
-            
-            <div class="graduation-hat-big">🎓</div>
-            
-            <div class="graduation-badge">
-                ✦ CÉRÉMONIE OFFICIELLE ✦
-            </div>
-            
-            <div class="graduation-guest">
-                À l'attention de <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="graduation-divider">
-                <div class="line"></div>
-                <span class="icon">✦</span>
-                <div class="line"></div>
-            </div>
-            
-            <div class="graduation-hosts-intro">
-                ✦ Vous êtes convié(e) à la cérémonie de ✦
-            </div>
-            <div class="graduation-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="graduation-event-type">
-                🎓 <?php echo htmlspecialchars(strtoupper($eventType)); ?> 🎓
-            </div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (Hero + Certificat + QR)   -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- CERTIFICAT (Animé) -->
-    <div class="certificate-card grad-anim zoom-in">
-        
-        <div class="certificate-title">Université de la Réussite</div>
-        <div class="certificate-main-title">Certificat de Célébration</div>
-        
-        <p class="certificate-text">
-            Ceci certifie que la cérémonie de remise des diplômes aura lieu en l'honneur de 
-            <strong style="color:var(--gold-dark);font-style:normal;"><?php echo htmlspecialchars($host1); ?></strong>
-        </p>
-        
-        <div class="certificate-info-grid">
+        <!-- HERO -->
+        <section class="graduation-hero">
+            <div class="light-rays"></div>
             
-            <div class="certificate-info-item grad-anim delay-1">
-                <div class="label">Date</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
-            
-            <div class="certificate-info-item grad-anim delay-2">
-                <div class="label">Heure</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="certificate-info-item grad-anim delay-3" style="grid-column: 1 / -1;">
-                <div class="label">Lieu de la cérémonie</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                    <?php endif; ?>
+            <div class="graduation-blason">
+                
+                <div class="graduation-hat-big">🎓</div>
+                
+                <div class="graduation-badge">
+                    ✦ CÉRÉMONIE OFFICIELLE ✦
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" rel="noopener" class="certificate-btn-itinerary">
-                    <i class="fas fa-route"></i> Itinéraire
-                </a>
-            </div>
-            
-            <!-- ⭐ TABLE ASSIGNÉE -->
-            <?php if ($hasTable): ?>
-            <div class="certificate-info-item certificate-table-item grad-anim delay-4">
-                <div class="label">🎓 Votre table</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                
+                <div class="graduation-guest">
+                    À l'attention de <?php echo htmlspecialchars($guestName); ?>
                 </div>
+                
+                <div class="graduation-divider">
+                    <div class="line"></div>
+                    <span class="icon">✦</span>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="graduation-hosts-intro">
+                    ✦ Vous êtes convié(e) à la cérémonie de ✦
+                </div>
+                <div class="graduation-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="graduation-event-type">
+                    🎓 <?php echo htmlspecialchars(strtoupper($eventType)); ?> 🎓
+                </div>
+                
             </div>
-            <?php endif; ?>
+        </section>
+
+        <!-- CERTIFICAT -->
+        <div class="certificate-card">
+            <div class="certificate-title">Université de la Réussite</div>
+            <div class="certificate-main-title">Certificat de Célébration</div>
             
-            <div class="certificate-info-item grad-anim delay-5" style="grid-column: 1 / -1;">
-                <div class="label">Places réservées</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+            <p class="certificate-text">
+                Ceci certifie que la cérémonie de remise des diplômes aura lieu en l'honneur de 
+                <strong style="color:var(--gold-dark);font-style:normal;"><?php echo htmlspecialchars($host1); ?></strong>
+            </p>
+            
+            <div class="certificate-info-grid">
+                
+                <div class="certificate-info-item">
+                    <div class="label">Date</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="certificate-info-item">
+                    <div class="label">Heure</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="certificate-info-item" style="grid-column: 1 / -1;">
+                    <div class="label">Lieu de la cérémonie</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" rel="noopener" class="certificate-btn-itinerary">
+                        <i class="fas fa-route"></i> Itinéraire
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="certificate-info-item certificate-table-item">
+                    <div class="label">🎓 Votre table</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="certificate-info-item" style="grid-column: 1 / -1;">
+                    <div class="label">Places réservées</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+                
             </div>
-            
         </div>
+
+        <!-- ✅ QR CARD INTÉGRÉE -->
+        <div class="graduation-qr-card">
+            <div class="graduation-qr-card-title">✦ Code d'Accès ✦</div>
+            <div class="graduation-qr-wrapper">
+                <div class="graduation-qr-box">
+                    <div id="qrcode"></div>
+                </div>
+                <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-top:24px;font-weight:700;letter-spacing:0.2em;">
+                    <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                </div>
+            </div>
+        </div>
+
     </div>
+    <!-- FIN WRAPPER -->
+
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
 
     <?php if ($message): ?>
         <div class="graduation-section grad-anim apparue">
@@ -1035,7 +1036,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ⭐ DIAPORAMA PHOTOS -->
+    <!-- DIAPORAMA PHOTOS -->
     <?php if ($hasPhotos): ?>
         <div class="graduation-section grad-anim from-left">
             <div class="graduation-section-title">✦ Souvenirs de Promotion ✦</div>
@@ -1075,19 +1076,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             </div>
         </div>
     <?php endif; ?>
-
-    <!-- QR CODE -->
-    <div class="graduation-section grad-anim from-right">
-        <div class="graduation-section-title">✦ Code d'Accès ✦</div>
-        <div class="graduation-qr-wrapper">
-            <div class="graduation-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-top:24px;font-weight:700;letter-spacing:0.2em;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
 
     <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
@@ -1252,7 +1240,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         });
 
         // ================================================================
-        // DIAPORAMA PHOTOS
+        // DIAPORAMA
         // ================================================================
         let graduationDiapoIndex = 0;
         const graduationSlides = document.querySelectorAll('#graduationDiaporama .slide');
@@ -1311,29 +1299,125 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }
         });
 
-        // Download
+        // ================================================================
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Certificat + QR)
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.graduation-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5, useCORS: true,
-                    backgroundColor: '#050b1f', logging: false
+                // 1. Attendre le rendu
+                await new Promise(r => setTimeout(r, 1500));
+                
+                // 2. Vérifier que le QR est généré
+                for (let i = 0; i < 10; i++) {
+                    const qrCanvas = document.querySelector('#qrcode canvas');
+                    const qrImg = document.querySelector('#qrcode img');
+                    if (qrCanvas || qrImg) break;
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                // 3. Attendre les images
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // 4. Forcer l'affichage
+                card.querySelectorAll('.grad-anim').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                card.querySelectorAll('.graduation-blason, .graduation-hat-big, .graduation-badge, .graduation-guest, .graduation-divider, .graduation-hosts-intro, .graduation-host-name, .graduation-event-type').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
+                });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                // 5. Capturer
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#050b1f',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                        }
+                        
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.grad-anim').forEach(el => {
+                            el.classList.add('apparue');
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.graduation-blason, .graduation-hat-big, .graduation-badge, .graduation-guest, .graduation-divider, .graduation-hosts-intro, .graduation-host-name, .graduation-event-type').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                        
+                        const qrBox = clonedDoc.querySelector('.graduation-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                    }
+                });
+                
+                // 6. Télécharger
                 const link = document.createElement('a');
                 link.download = `graduation_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ Téléchargé';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             } catch(e) {
+                console.error('Erreur téléchargement:', e);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             }
+            
             btn.disabled = false;
         }
 

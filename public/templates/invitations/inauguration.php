@@ -1,22 +1,17 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : INAUGURATION - v2
+ * TEMPLATE : INAUGURATION - v3
  * ============================================================
  * 
- * Nouveautés v2 :
- * - Photo de fond en background (non floue)
- * - Nom de la table
- * - Diaporama photos plein écran
- * - Animations de sections en cascade
- * - Suppression du header
+ * Nouveautés v3 :
+ * - Téléchargement = 1 seule carte (Hero + Détails + QR)
+ * - QR code intégré dans la carte
+ * - Correction de l'image noire
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 $hasTable = !empty($tableNom) || !empty($tableNumero);
@@ -54,12 +49,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
-        /* ============================================
-           PHOTO DE FOND (BACKGROUND PRINCIPAL)
-           ============================================ */
-        html {
-            background: var(--black);
-        }
+        html { background: var(--black); }
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -83,7 +73,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             position: relative;
         }
         
-        /* Overlay dégradé subtil sur la photo */
         body::before {
             content: '';
             position: fixed;
@@ -92,24 +81,15 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background: 
                 radial-gradient(ellipse at top, rgba(26, 10, 10, 0.6) 0%, transparent 70%),
                 linear-gradient(180deg, 
-                    rgba(10, 10, 10, 0.7) 0%, 
-                    rgba(26, 10, 10, 0.55) 30%,
-                    rgba(10, 10, 10, 0.75) 70%,
-                    rgba(10, 10, 10, 0.92) 100%);
+                    rgba(10, 10, 10, 0.75) 0%, 
+                    rgba(26, 10, 10, 0.6) 30%,
+                    rgba(10, 10, 10, 0.8) 70%,
+                    rgba(10, 10, 10, 0.95) 100%);
             pointer-events: none;
         }
         
-        /* Contenu au-dessus de l'overlay */
-        .inauguration-hero,
-        .inauguration-card,
-        .inauguration-section,
-        .inauguration-footer {
-            position: relative;
-            z-index: 2;
-        }
-        
         /* ============================================
-           INTRO : CISEAUX QUI COUPENT LE RUBAN
+           INTRO
            ============================================ */
         .inauguration-intro {
             position: fixed;
@@ -132,18 +112,11 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             position: relative;
             width: 100%;
             height: 40px;
-            background: linear-gradient(180deg, 
-                var(--red) 0%, 
-                var(--red-dark) 50%, 
-                var(--red) 100%);
-            box-shadow: 
-                0 0 40px rgba(200, 16, 46, 0.6),
-                inset 0 4px 8px rgba(255, 255, 255, 0.2),
-                inset 0 -4px 8px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 50%, var(--red) 100%);
+            box-shadow: 0 0 40px rgba(200, 16, 46, 0.6), inset 0 4px 8px rgba(255, 255, 255, 0.2), inset 0 -4px 8px rgba(0, 0, 0, 0.3);
             transform: scaleX(0);
             transform-origin: center;
             animation: ribbonExpand 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
-            position: relative;
         }
         @keyframes ribbonExpand {
             0% { transform: scaleX(0); }
@@ -160,9 +133,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background: var(--black);
             transform: translateX(-50%) scaleY(0);
             animation: ribbonCut 0.4s ease-out 1.5s forwards;
-            box-shadow: 
-                0 0 20px var(--black),
-                0 0 40px var(--black);
+            box-shadow: 0 0 20px var(--black), 0 0 40px var(--black);
         }
         @keyframes ribbonCut {
             0% { transform: translateX(-50%) scaleY(0); }
@@ -228,9 +199,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-weight: 900;
             letter-spacing: 0.3em;
             color: var(--gold);
-            text-shadow: 
-                0 0 30px rgba(212, 175, 55, 0.6),
-                0 4px 10px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.6), 0 4px 10px rgba(0, 0, 0, 0.5);
             text-transform: uppercase;
             padding-left: 0.3em;
         }
@@ -270,7 +239,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           ANIMATIONS DE SECTIONS EN CASCADE
+           ANIMATIONS
            ============================================ */
         .inaug-anim {
             opacity: 0;
@@ -286,28 +255,15 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transform: translateY(0) scale(1);
         }
         
-        .inaug-anim.from-left {
-            transform: translateX(-80px);
-        }
-        .inaug-anim.from-left.apparue {
-            transform: translateX(0);
-        }
+        .inaug-anim.from-left { transform: translateX(-80px); }
+        .inaug-anim.from-left.apparue { transform: translateX(0); }
         
-        .inaug-anim.from-right {
-            transform: translateX(80px);
-        }
-        .inaug-anim.from-right.apparue {
-            transform: translateX(0);
-        }
+        .inaug-anim.from-right { transform: translateX(80px); }
+        .inaug-anim.from-right.apparue { transform: translateX(0); }
         
-        .inaug-anim.zoom-in {
-            transform: scale(0.85);
-        }
-        .inaug-anim.zoom-in.apparue {
-            transform: scale(1);
-        }
+        .inaug-anim.zoom-in { transform: scale(0.85); }
+        .inaug-anim.zoom-in.apparue { transform: scale(1); }
         
-        /* Délais en cascade */
         .delay-1 { transition-delay: 0.1s; }
         .delay-2 { transition-delay: 0.2s; }
         .delay-3 { transition-delay: 0.3s; }
@@ -315,16 +271,51 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO INAUGURATION (SANS NAVBAR)
+           WRAPPER DE TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            <?php else: ?>
+            background: var(--black);
+            <?php endif; ?>
+            padding-bottom: 20px;
+        }
+        
+        #downloadCard::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(26, 10, 10, 0.6) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(10, 10, 10, 0.75) 0%, 
+                    rgba(26, 10, 10, 0.6) 30%,
+                    rgba(10, 10, 10, 0.8) 70%,
+                    rgba(10, 10, 10, 0.95) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        #downloadCard > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* ============================================
+           HERO
            ============================================ */
         .inauguration-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
@@ -336,9 +327,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transform: translate(-50%, -50%);
             width: 800px;
             height: 800px;
-            background: radial-gradient(circle, 
-                rgba(212, 175, 55, 0.08) 0%, 
-                transparent 60%);
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
             pointer-events: none;
             z-index: 0;
             animation: haloPulse 6s ease-in-out infinite;
@@ -354,15 +343,9 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             left: -100px;
             right: -100px;
             height: 30px;
-            background: linear-gradient(180deg, 
-                var(--red) 0%, 
-                var(--red-dark) 50%, 
-                var(--red) 100%);
+            background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 50%, var(--red) 100%);
             transform: translateY(-50%) rotate(-3deg);
-            box-shadow: 
-                0 0 30px rgba(200, 16, 46, 0.4),
-                inset 0 2px 4px rgba(255, 255, 255, 0.2),
-                inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 30px rgba(200, 16, 46, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
             opacity: 0.15;
             z-index: 0;
             pointer-events: none;
@@ -389,8 +372,8 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             animation: starRotate 4s ease-in-out infinite;
         }
         @keyframes starRotate {
-            0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.7)); }
-            50% { transform: scale(1.15) rotate(180deg); filter: drop-shadow(0 0 50px rgba(212, 175, 55, 1)); }
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(180deg); }
         }
         
         .inauguration-badge {
@@ -406,9 +389,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             letter-spacing: 0.25em;
             border-radius: 4px;
             margin-bottom: 30px;
-            box-shadow: 
-                6px 6px 0 var(--gold-dark),
-                0 0 40px rgba(200, 16, 46, 0.5);
+            box-shadow: 6px 6px 0 var(--gold-dark), 0 0 40px rgba(200, 16, 46, 0.5);
             text-transform: uppercase;
             transform: rotate(-2deg);
         }
@@ -465,10 +446,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             line-height: 0.95;
             letter-spacing: 0.02em;
             text-transform: uppercase;
-            background: linear-gradient(180deg, 
-                var(--gold-light) 0%, 
-                var(--gold) 40%,
-                var(--gold-dark) 100%);
+            background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 40%, var(--gold-dark) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -498,22 +476,17 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           CARTE INAUGURATION (Détails)
+           CARTE INAUGURATION (avec QR intégré)
            ============================================ */
         .inauguration-card {
             position: relative;
             max-width: 900px;
             margin: 80px auto;
             padding: 60px 55px;
-            background: linear-gradient(180deg, 
-                rgba(26, 26, 26, 0.95) 0%, 
-                rgba(18, 18, 18, 0.95) 100%);
+            background: linear-gradient(180deg, rgba(26, 26, 26, 0.95) 0%, rgba(18, 18, 18, 0.95) 100%);
             backdrop-filter: blur(10px);
             border: 2px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px var(--black),
-                0 0 0 7px var(--red),
-                0 30px 80px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 0 6px var(--black), 0 0 0 7px var(--red), 0 30px 80px rgba(0, 0, 0, 0.7);
             z-index: 10;
         }
         @media (max-width: 640px) {
@@ -574,11 +547,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             text-align: left;
             position: relative;
         }
-        .inauguration-info-item:hover {
-            background: rgba(212, 175, 55, 0.06);
-            border-left-color: var(--red);
-            transform: translateX(6px);
-        }
         
         .inauguration-info-item .icon {
             font-size: 26px;
@@ -614,17 +582,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-weight: 400;
         }
         
-        /* ⭐ CARTE TABLE */
         .inauguration-table-item {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(200, 16, 46, 0.08)) !important;
             border-left: 4px solid var(--gold) !important;
-            animation: tableCardPulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes tableCardPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.3); }
-            50% { box-shadow: 0 0 30px 0 rgba(212, 175, 55, 0.5); }
         }
         
         .inauguration-table-item .value {
@@ -632,7 +593,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             color: var(--gold) !important;
             font-weight: 700 !important;
             letter-spacing: 0.05em;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
         }
         
         .inauguration-btn-itinerary {
@@ -650,36 +610,66 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             text-transform: uppercase;
             text-decoration: none;
             border: 2px solid var(--gold);
-            box-shadow: 
-                4px 4px 0 var(--gold-dark),
-                0 0 30px rgba(200, 16, 46, 0.4);
+            box-shadow: 4px 4px 0 var(--gold-dark), 0 0 30px rgba(200, 16, 46, 0.4);
             transition: all 0.3s ease;
-        }
-        .inauguration-btn-itinerary:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                6px 6px 0 var(--gold),
-                0 0 40px rgba(200, 16, 46, 0.6);
-            color: var(--white);
         }
         
         /* ============================================
-           SECTIONS INAUGURATION
+           SECTION QR INTÉGRÉE (dans la même carte)
+           ============================================ */
+        .inauguration-qr-inline {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px dashed rgba(212, 175, 55, 0.3);
+            text-align: center;
+        }
+        
+        .inauguration-qr-inline-title {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .inauguration-qr-wrapper { text-align: center; }
+        .inauguration-qr-box {
+            display: inline-block;
+            padding: 28px;
+            background: var(--white);
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 0 6px var(--black), 0 0 0 8px var(--red), 0 20px 60px rgba(212, 175, 55, 0.3);
+            position: relative;
+        }
+        .inauguration-qr-box::before,
+        .inauguration-qr-box::after {
+            content: '✂';
+            position: absolute;
+            color: var(--gold);
+            font-size: 24px;
+            background: var(--black);
+            padding: 4px;
+            line-height: 1;
+        }
+        .inauguration-qr-box::before { top: -18px; left: -18px; }
+        .inauguration-qr-box::after { bottom: -18px; right: -18px; }
+        
+        /* ============================================
+           SECTIONS HORS CAPTURE
            ============================================ */
         .inauguration-section {
             position: relative;
             max-width: 900px;
             margin: 80px auto;
             padding: 60px 55px;
-            background: linear-gradient(180deg, 
-                rgba(26, 26, 26, 0.9) 0%, 
-                rgba(18, 18, 18, 0.9) 100%);
+            background: linear-gradient(180deg, rgba(26, 26, 26, 0.9) 0%, rgba(18, 18, 18, 0.9) 100%);
             backdrop-filter: blur(10px);
             border: 2px solid var(--gold);
-            box-shadow: 
-                0 0 0 4px var(--black),
-                0 0 0 5px var(--red),
-                0 20px 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 4px var(--black), 0 0 0 5px var(--red), 0 20px 60px rgba(0, 0, 0, 0.6);
             z-index: 10;
         }
         @media (max-width: 640px) {
@@ -700,7 +690,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           DIAPORAMA PHOTOS
            ============================================ */
         .inauguration-diaporama {
             position: relative;
@@ -709,10 +699,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             overflow: hidden;
             background: var(--black);
             border: 3px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px var(--black),
-                0 0 0 8px var(--red),
-                0 0 40px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 0 0 6px var(--black), 0 0 0 8px var(--red), 0 0 40px rgba(212, 175, 55, 0.3);
         }
         
         .inauguration-diaporama .slide {
@@ -740,7 +727,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             padding: 8px;
         }
         
-        /* Flèches navigation */
         .inauguration-diapo-arrow {
             position: absolute;
             top: 50%;
@@ -761,23 +747,9 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             box-shadow: 0 8px 24px rgba(200, 16, 46, 0.5);
         }
         
-        .inauguration-diapo-arrow:hover {
-            background: var(--gold);
-            color: var(--black);
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 12px 32px rgba(212, 175, 55, 0.6);
-        }
-        
         .inauguration-diapo-arrow.prev { left: 16px; }
         .inauguration-diapo-arrow.next { right: 16px; }
         
-        @media (max-width: 480px) {
-            .inauguration-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
-            .inauguration-diapo-arrow.prev { left: 8px; }
-            .inauguration-diapo-arrow.next { right: 8px; }
-        }
-        
-        /* Compteur */
         .inauguration-diapo-counter {
             position: absolute;
             bottom: 16px;
@@ -793,7 +765,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             z-index: 10;
         }
         
-        /* Points */
         .inauguration-diapo-dots {
             position: absolute;
             bottom: 16px;
@@ -855,10 +826,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background: rgba(212, 175, 55, 0.05);
             box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
         }
-        .inauguration-form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
         
         .inauguration-options-grid {
             display: grid;
@@ -887,10 +854,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .inauguration-option-label:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-        }
         .inauguration-option-radio:checked + .inauguration-option-label {
             border-color: var(--gold);
             background: rgba(212, 175, 55, 0.15);
@@ -916,33 +879,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 20px;
-            box-shadow: 
-                6px 6px 0 var(--gold-dark),
-                0 0 40px rgba(200, 16, 46, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-        .inauguration-btn-submit::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.3), 
-                transparent);
-            transition: left 0.6s ease;
-        }
-        .inauguration-btn-submit:hover::before {
-            left: 100%;
-        }
-        .inauguration-btn-submit:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                8px 8px 0 var(--gold),
-                0 0 50px rgba(200, 16, 46, 0.6);
+            box-shadow: 6px 6px 0 var(--gold-dark), 0 0 40px rgba(200, 16, 46, 0.4);
         }
         
         /* ============================================
@@ -980,7 +917,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             border-color: var(--gold);
             background: rgba(212, 175, 55, 0.12);
             color: var(--gold-light);
-            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
         }
         .inauguration-boisson-item .check {
             opacity: 0;
@@ -990,35 +926,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .inauguration-boisson-item.selected .check { opacity: 1; }
         
         /* ============================================
-           QR CODE
-           ============================================ */
-        .inauguration-qr-wrapper { text-align: center; }
-        .inauguration-qr-box {
-            display: inline-block;
-            padding: 28px;
-            background: var(--white);
-            border: 3px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px var(--black),
-                0 0 0 8px var(--red),
-                0 20px 60px rgba(212, 175, 55, 0.3);
-            position: relative;
-        }
-        .inauguration-qr-box::before,
-        .inauguration-qr-box::after {
-            content: '✂';
-            position: absolute;
-            color: var(--gold);
-            font-size: 24px;
-            background: var(--black);
-            padding: 4px;
-            line-height: 1;
-        }
-        .inauguration-qr-box::before { top: -18px; left: -18px; }
-        .inauguration-qr-box::after { bottom: -18px; right: -18px; }
-        
-        /* ============================================
-           FOOTER INAUGURATION
+           FOOTER
            ============================================ */
         .inauguration-footer {
             padding: 80px 40px 40px;
@@ -1032,7 +940,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-size: 36px;
             color: var(--gold);
             margin-bottom: 16px;
-            filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.5));
         }
         .inauguration-footer-brand {
             font-family: 'Cinzel', serif;
@@ -1067,11 +974,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             text-decoration: none;
             transition: all 0.3s ease;
         }
-        .inauguration-btn-whatsapp:hover {
-            background: var(--gold);
-            color: var(--black);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
-        }
         
         /* Alerts */
         .inauguration-alert {
@@ -1085,25 +987,11 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-weight: 500;
             border-left: 3px solid;
         }
-        .inauguration-alert-success { 
-            border-color: var(--gold); 
-            background: rgba(212, 175, 55, 0.08); 
-            color: var(--gold-light); 
-        }
-        .inauguration-alert-danger { 
-            border-color: var(--red); 
-            background: rgba(200, 16, 46, 0.08); 
-            color: #ff8080; 
-        }
-        .inauguration-alert-warning { 
-            border-color: #f59e0b; 
-            background: rgba(245, 158, 11, 0.08); 
-            color: #fcd34d; 
-        }
+        .inauguration-alert-success { border-color: var(--gold); background: rgba(212, 175, 55, 0.08); color: var(--gold-light); }
+        .inauguration-alert-danger { border-color: var(--red); background: rgba(200, 16, 46, 0.08); color: #ff8080; }
+        .inauguration-alert-warning { border-color: #f59e0b; background: rgba(245, 158, 11, 0.08); color: #fcd34d; }
         
-        /* ============================================
-           DOWNLOAD
-           ============================================ */
+        /* Download */
         #downloadBtn {
             position: fixed;
             bottom: 30px;
@@ -1123,26 +1011,12 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 
-                6px 6px 0 var(--gold-dark),
-                0 0 40px rgba(200, 16, 46, 0.4);
+            box-shadow: 6px 6px 0 var(--gold-dark), 0 0 40px rgba(200, 16, 46, 0.4);
             opacity: 0;
             animation: fadeIn 0.8s ease-out 3.5s forwards;
         }
-        #downloadBtn:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                8px 8px 0 var(--gold),
-                0 0 50px rgba(200, 16, 46, 0.6);
-        }
         @media (max-width: 480px) {
-            #downloadBtn { 
-                bottom: 16px; 
-                right: 16px; 
-                padding: 14px 22px; 
-                font-size: 10px;
-                letter-spacing: 0.1em;
-            }
+            #downloadBtn { bottom: 16px; right: 16px; padding: 14px 22px; font-size: 10px; }
         }
         
         @keyframes fadeIn {
@@ -1152,9 +1026,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
 </head>
 <body>
 
-    <!-- ============================================
-         INTRO : CISEAUX QUI COUPENT LE RUBAN
-         ============================================ -->
     <div class="inauguration-intro">
         <div class="ribbon-flash"></div>
         <div class="ribbon"></div>
@@ -1165,106 +1036,123 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     </div>
 
-    <!-- Confettis -->
     <div class="fireworks-container" id="confettiContainer"></div>
 
-    <!-- ============================================
-         HERO INAUGURATION (SANS NAVBAR)
-         ============================================ -->
-    <section class="inauguration-hero">
-        <div class="halo"></div>
-        <div class="hero-ribbon"></div>
-        
-        <div class="inauguration-blason">
-            
-            <div class="inauguration-star">✦</div>
-            
-            <div class="inauguration-badge">
-                GRAND OPENING
-            </div>
-            
-            <div class="inauguration-guest">
-                <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="inauguration-divider">
-                <div class="line"></div>
-                <span class="icon">✂</span>
-                <div class="line"></div>
-            </div>
-            
-            <div class="inauguration-hosts-intro">
-                Vous êtes convié(e) à l'inauguration de
-            </div>
-            <div class="inauguration-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="inauguration-event-type">
-                <?php echo htmlspecialchars(strtoupper($eventType)); ?>
-            </div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (Hero + Carte + QR)        -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- ============================================
-         CARTE INAUGURATION (Détails)
-         ============================================ -->
-    <div class="inauguration-card inaug-anim zoom-in">
-        
-        <div class="inauguration-card-title">Détails de la cérémonie</div>
-        
-        <div class="inauguration-info-grid">
+        <!-- HERO -->
+        <section class="inauguration-hero">
+            <div class="halo"></div>
+            <div class="hero-ribbon"></div>
             
-            <div class="inauguration-info-item inaug-anim delay-1">
-                <i class="fas fa-calendar-alt icon"></i>
-                <div class="label">DATE</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
-            
-            <div class="inauguration-info-item inaug-anim delay-2">
-                <i class="fas fa-clock icon"></i>
-                <div class="label">HEURE</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="inauguration-info-item inaug-anim delay-3" style="grid-column: 1 / -1;">
-                <i class="fas fa-map-marker-alt icon"></i>
-                <div class="label">LIEU DE L'INAUGURATION</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                    <?php endif; ?>
+            <div class="inauguration-blason">
+                
+                <div class="inauguration-star">✦</div>
+                
+                <div class="inauguration-badge">
+                    GRAND OPENING
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" 
-                   rel="noopener"
-                   class="inauguration-btn-itinerary">
-                    <i class="fas fa-route"></i> VOIR L'ITINÉRAIRE
-                </a>
-            </div>
-            
-            <!-- ⭐ TABLE ASSIGNÉE -->
-            <?php if ($hasTable): ?>
-            <div class="inauguration-info-item inauguration-table-item inaug-anim delay-4">
-                <i class="fas fa-chair icon"></i>
-                <div class="label">VOTRE TABLE</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                
+                <div class="inauguration-guest">
+                    <?php echo htmlspecialchars($guestName); ?>
                 </div>
+                
+                <div class="inauguration-divider">
+                    <div class="line"></div>
+                    <span class="icon">✂</span>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="inauguration-hosts-intro">
+                    Vous êtes convié(e) à l'inauguration de
+                </div>
+                <div class="inauguration-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="inauguration-event-type">
+                    <?php echo htmlspecialchars(strtoupper($eventType)); ?>
+                </div>
+                
             </div>
-            <?php endif; ?>
+        </section>
+
+        <!-- CARTE (Détails + QR intégré) -->
+        <div class="inauguration-card">
             
-            <div class="inauguration-info-item inaug-anim delay-5" style="grid-column: 1 / -1;">
-                <i class="fas fa-users icon"></i>
-                <div class="label">PLACES RÉSERVÉES</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+            <div class="inauguration-card-title">Détails de la cérémonie</div>
+            
+            <div class="inauguration-info-grid">
+                
+                <div class="inauguration-info-item">
+                    <i class="fas fa-calendar-alt icon"></i>
+                    <div class="label">DATE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="inauguration-info-item">
+                    <i class="fas fa-clock icon"></i>
+                    <div class="label">HEURE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="inauguration-info-item" style="grid-column: 1 / -1;">
+                    <i class="fas fa-map-marker-alt icon"></i>
+                    <div class="label">LIEU DE L'INAUGURATION</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" 
+                       rel="noopener"
+                       class="inauguration-btn-itinerary">
+                        <i class="fas fa-route"></i> VOIR L'ITINÉRAIRE
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="inauguration-info-item inauguration-table-item">
+                    <i class="fas fa-chair icon"></i>
+                    <div class="label">VOTRE TABLE</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="inauguration-info-item" style="grid-column: 1 / -1;">
+                    <i class="fas fa-users icon"></i>
+                    <div class="label">PLACES RÉSERVÉES</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+                
+            </div>
+            
+            <!-- ✅ QR CODE INTÉGRÉ DANS LA MÊME CARTE -->
+            <div class="inauguration-qr-inline">
+                <div class="inauguration-qr-inline-title">Badge d'accès</div>
+                <div class="inauguration-qr-wrapper">
+                    <div class="inauguration-qr-box">
+                        <div id="qrcode"></div>
+                    </div>
+                    <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:0.2em;margin-top:24px;font-weight:700;text-transform:uppercase;">
+                        <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                    </div>
+                </div>
             </div>
             
         </div>
+
     </div>
+    <!-- FIN WRAPPER -->
 
-    <!-- ============================================
-         MESSAGES
-         ============================================ -->
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
+
     <?php if ($message): ?>
         <div class="inauguration-section inaug-anim apparue">
             <div class="inauguration-alert inauguration-alert-<?php echo htmlspecialchars($messageType); ?>">
@@ -1274,9 +1162,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
-         ============================================ -->
+    <!-- DIAPORAMA PHOTOS -->
     <?php if ($hasPhotos): ?>
         <div class="inauguration-section inaug-anim from-left">
             <div class="inauguration-section-title">Galerie de l'événement</div>
@@ -1317,24 +1203,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         QR CODE
-         ============================================ -->
-    <div class="inauguration-section inaug-anim from-right">
-        <div class="inauguration-section-title">Badge d'accès</div>
-        <div class="inauguration-qr-wrapper">
-            <div class="inauguration-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:0.2em;margin-top:24px;font-weight:700;text-transform:uppercase;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         CONFIRMATION
-         ============================================ -->
+    <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
         <div class="inauguration-section inaug-anim from-left">
             <div class="inauguration-section-title">Confirmation de présence</div>
@@ -1377,9 +1246,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         BOISSONS
-         ============================================ -->
+    <!-- BOISSONS -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
         <div class="inauguration-section inaug-anim from-right">
             <div class="inauguration-section-title">Cocktail de réception</div>
@@ -1439,9 +1306,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         FOOTER INAUGURATION
-         ============================================ -->
     <footer class="inauguration-footer inaug-anim">
         <div class="inauguration-footer-star">✦</div>
         <div class="inauguration-footer-brand"><?php echo htmlspecialchars($appName); ?></div>
@@ -1456,16 +1320,12 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </div>
     </footer>
 
-    <!-- Download -->
     <button id="downloadBtn" onclick="telechargerJPEG()">
         <i class="fas fa-download"></i>
         <span id="btnText">TÉLÉCHARGER</span>
     </button>
 
     <script>
-        // ================================================================
-        // CONFETTIS
-        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('confettiContainer');
             const colors = ['#c8102e', '#d4af37', '#ffffff', '#e84a5f', '#f4e5a1'];
@@ -1493,9 +1353,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             setInterval(createConfetti, 12000);
         });
 
-        // ================================================================
-        // ANIMATIONS AU SCROLL
-        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             const animElements = document.querySelectorAll('.inaug-anim');
             
@@ -1506,10 +1363,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
                         observer.unobserve(entry.target);
                     }
                 });
-            }, { 
-                threshold: 0.15,
-                rootMargin: '0px 0px -60px 0px'
-            });
+            }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
             
             animElements.forEach(el => observer.observe(el));
             
@@ -1523,7 +1377,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }, 500);
         });
 
-        // QR
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
@@ -1539,9 +1392,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }
         });
 
-        // ================================================================
-        // DIAPORAMA PHOTOS
-        // ================================================================
         let inaugurationDiapoIndex = 0;
         const inaugurationSlides = document.querySelectorAll('#inaugurationDiaporama .slide');
         const inaugurationDots = document.querySelectorAll('#inaugurationDiapoDots span');
@@ -1599,35 +1449,122 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }
         });
 
-        // Download
+        // ================================================================
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Carte + QR)
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.inauguration-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5,
-                    useCORS: true,
-                    backgroundColor: '#0a0a0a',
-                    logging: false
+                await new Promise(r => setTimeout(r, 1500));
+                
+                for (let i = 0; i < 10; i++) {
+                    const qrCanvas = document.querySelector('#qrcode canvas');
+                    const qrImg = document.querySelector('#qrcode img');
+                    if (qrCanvas || qrImg) break;
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                card.querySelectorAll('.inaug-anim').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                card.querySelectorAll('.inauguration-blason, .inauguration-star, .inauguration-badge, .inauguration-guest, .inauguration-divider, .inauguration-hosts-intro, .inauguration-host-name, .inauguration-event-type').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
+                });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#0a0a0a',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                        }
+                        
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.inaug-anim').forEach(el => {
+                            el.classList.add('apparue');
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.inauguration-blason, .inauguration-star, .inauguration-badge, .inauguration-guest, .inauguration-divider, .inauguration-hosts-intro, .inauguration-host-name, .inauguration-event-type').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                        
+                        const qrBox = clonedDoc.querySelector('.inauguration-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                    }
+                });
+                
                 const link = document.createElement('a');
                 link.download = `inauguration_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ TÉLÉCHARGÉ';
                 setTimeout(() => btnText.textContent = 'TÉLÉCHARGER', 3000);
             } catch(e) {
+                console.error('Erreur téléchargement:', e);
                 btnText.textContent = 'ERREUR';
                 setTimeout(() => btnText.textContent = 'TÉLÉCHARGER', 3000);
             }
+            
             btn.disabled = false;
         }
 
-        // Boissons
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
         let selectedBoissons = [];
         document.addEventListener('DOMContentLoaded', function() {

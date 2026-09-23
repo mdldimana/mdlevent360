@@ -1,24 +1,30 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : PRINCESSE - v3 (Polices Defile)
+ * TEMPLATE : PRINCESSE - v4
  * ============================================================
  * 
- * Polices identiques à defile.php :
- * - Playfair Display (titres)
- * - Didact Gothic (textes)
- * - Inter (détails)
- * - Italiana (grands noms)
+ * Nouveautés v4 :
+ * - Téléchargement = 1 seule carte (Hero + Détails + QR)
+ * - QR en base64 côté PHP (capture garantie)
+ * - Correction affichage
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
 $hasTable = !empty($tableNom) || !empty($tableNumero);
+
+// ============================================================
+// QR CODE EN BASE64 (pour éviter les problèmes CORS avec html2canvas)
+// ============================================================
+$qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=330x330&data=" . urlencode($fullUrl) . "&color=4a1a6e&bgcolor=ffffff&margin=1&qzone=1";
+$qrDataUri = $qrApiUrl;
+$qrContent = @file_get_contents($qrApiUrl);
+if ($qrContent !== false && strlen($qrContent) > 100) {
+    $qrDataUri = "data:image/png;base64," . base64_encode($qrContent);
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -29,7 +35,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
     
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Didact+Gothic&family=Inter:wght@300;400;500;600;700&family=Italiana&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -50,12 +55,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
         
-        /* ============================================
-           PHOTO DE FOND EN BACKGROUND
-           ============================================ */
-        html {
-            background: #1a0a2e;
-        }
+        html { background: #1a0a2e; }
         
         body {
             font-family: 'Didact Gothic', sans-serif;
@@ -67,11 +67,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background-repeat: no-repeat;
             background-color: #1a0a2e;
             <?php else: ?>
-            background: linear-gradient(180deg, 
-                #1a0a2e 0%,
-                #2d1054 30%,
-                #4a1a6e 60%,
-                #7a3a9e 100%);
+            background: linear-gradient(180deg, #1a0a2e 0%, #2d1054 30%, #4a1a6e 60%, #7a3a9e 100%);
             background-attachment: fixed;
             <?php endif; ?>
             color: var(--text);
@@ -96,16 +92,8 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             pointer-events: none;
         }
         
-        .princess-hero,
-        .princess-card,
-        .princess-section,
-        .princess-footer {
-            position: relative;
-            z-index: 2;
-        }
-        
         /* ============================================
-           ANIMATIONS DE SECTIONS
+           ANIMATIONS
            ============================================ */
         .princess-anim {
             opacity: 0;
@@ -134,9 +122,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .delay-4 { transition-delay: 0.4s; }
         .delay-5 { transition-delay: 0.5s; }
         
-        /* ============================================
-           ÉTOILES
-           ============================================ */
+        /* ÉTOILES */
         .stars-container {
             position: fixed;
             inset: 0;
@@ -155,9 +141,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             50% { opacity: 1; transform: scale(1.3); }
         }
         
-        /* ============================================
-           INTRO : CHÂTEAU
-           ============================================ */
+        /* INTRO */
         .castle-intro {
             position: fixed;
             inset: 0;
@@ -187,31 +171,64 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
+           WRAPPER TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            <?php else: ?>
+            background: linear-gradient(180deg, #1a0a2e 0%, #2d1054 30%, #4a1a6e 60%, #7a3a9e 100%);
+            <?php endif; ?>
+            padding: 40px 0;
+        }
+        
+        #downloadCard::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(26, 10, 46, 0.7) 0%, transparent 70%),
+                linear-gradient(180deg, 
+                    rgba(26, 10, 46, 0.75) 0%, 
+                    rgba(45, 16, 84, 0.6) 30%,
+                    rgba(26, 10, 46, 0.8) 70%,
+                    rgba(26, 10, 46, 0.95) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        #downloadCard > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* ============================================
            HERO
            ============================================ */
         .princess-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
         .princess-moon {
             position: absolute;
-            top: 12%;
-            right: 12%;
+            top: 8%;
+            right: 10%;
             width: 100px;
             height: 100px;
             border-radius: 50%;
             background: radial-gradient(circle at 35% 35%, var(--gold), var(--gold-dark));
-            box-shadow: 
-                0 0 60px rgba(255, 215, 0, 0.6),
-                0 0 120px rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.6), 0 0 120px rgba(255, 215, 0, 0.3);
             z-index: 0;
         }
         .princess-moon::before {
@@ -306,7 +323,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-style: italic;
             font-size: 18px;
             letter-spacing: 0.05em;
-            color: var(--silver);
+            color: #d4d4d4;
             margin-bottom: 20px;
         }
         
@@ -316,10 +333,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             line-height: 0.9;
             letter-spacing: 0.05em;
             text-transform: uppercase;
-            background: linear-gradient(180deg, 
-                var(--white) 0%, 
-                var(--silver) 50%,
-                var(--gold) 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #d4d4d4 50%, var(--gold) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -337,7 +351,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         
         /* ============================================
-           CARTE ENCHANTÉE
+           CARTE (avec QR intégré)
            ============================================ */
         .princess-card {
             position: relative;
@@ -398,10 +412,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transition: all 0.3s ease;
             box-shadow: 0 4px 16px rgba(255, 215, 0, 0.15);
         }
-        .princess-info-item:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 12px 40px rgba(255, 215, 0, 0.3);
-        }
         
         .princess-info-item .icon {
             width: 56px;
@@ -446,12 +456,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
                 rgba(255, 214, 231, 0.8) 0%, 
                 rgba(255, 215, 0, 0.3) 100%) !important;
             border: 3px solid var(--gold) !important;
-            animation: tableCardPulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes tableCardPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
-            50% { box-shadow: 0 0 35px 0 rgba(255, 215, 0, 0.7); }
         }
         
         .princess-table-item .value {
@@ -478,13 +482,47 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        .princess-btn-itinerary:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.6);
-            color: #4a1a6e;
+        
+        /* ============================================
+           SECTION QR INTÉGRÉE
+           ============================================ */
+        .princess-qr-inline {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px dashed var(--rose-medium);
+            text-align: center;
         }
         
-        /* Sections */
+        .princess-qr-inline-title {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--rose-deep);
+            margin-bottom: 20px;
+        }
+        
+        .princess-qr-wrapper { text-align: center; }
+        .princess-qr-box {
+            display: inline-block;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 3px solid var(--gold);
+            box-shadow: 0 12px 40px rgba(255, 215, 0, 0.4), 0 0 0 6px rgba(74, 26, 110, 0.6);
+            position: relative;
+        }
+        
+        .princess-qr-box img {
+            display: block;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto;
+        }
+        
+        /* ============================================
+           SECTIONS HORS CAPTURE
+           ============================================ */
         .princess-section {
             position: relative;
             max-width: 900px;
@@ -516,9 +554,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             border-bottom: 2px dashed var(--rose-medium);
         }
         
-        /* ============================================
-           DIAPORAMA PHOTOS
-           ============================================ */
+        /* DIAPORAMA */
         .princess-diaporama {
             position: relative;
             width: 100%;
@@ -527,9 +563,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background: #1a0a2e;
             border-radius: 16px;
             border: 3px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px rgba(74, 26, 110, 0.6),
-                0 0 40px rgba(255, 215, 0, 0.4);
+            box-shadow: 0 0 0 6px rgba(74, 26, 110, 0.6), 0 0 40px rgba(255, 215, 0, 0.4);
         }
         
         .princess-diaporama .slide {
@@ -576,19 +610,8 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             box-shadow: 0 8px 24px rgba(255, 215, 0, 0.5);
         }
         
-        .princess-diapo-arrow:hover {
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.8);
-        }
-        
         .princess-diapo-arrow.prev { left: 16px; }
         .princess-diapo-arrow.next { right: 16px; }
-        
-        @media (max-width: 480px) {
-            .princess-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
-            .princess-diapo-arrow.prev { left: 8px; }
-            .princess-diapo-arrow.next { right: 8px; }
-        }
         
         .princess-diapo-counter {
             position: absolute;
@@ -617,7 +640,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             padding: 10px 20px;
             border-radius: 999px;
             border: 1px solid rgba(255, 215, 0, 0.5);
-            backdrop-filter: blur(10px);
         }
         
         .princess-diapo-dots span {
@@ -632,10 +654,9 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .princess-diapo-dots span.active {
             background: var(--gold);
             transform: scale(1.4);
-            box-shadow: 0 0 12px var(--gold);
         }
         
-        /* Formulaires */
+        /* FORMULAIRES */
         .princess-form-group { margin-bottom: 24px; }
         .princess-form-group label {
             display: block;
@@ -657,13 +678,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-family: 'Playfair Display', serif;
             font-size: 17px;
             font-style: italic;
-            transition: all 0.3s ease;
-        }
-        .princess-form-group input:focus,
-        .princess-form-group textarea:focus {
-            outline: none;
-            border-color: var(--rose-deep);
-            box-shadow: 0 0 0 4px rgba(255, 155, 196, 0.2);
         }
         
         .princess-options-grid {
@@ -690,18 +704,11 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             font-style: italic;
             color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .princess-option-label:hover {
-            border-color: var(--rose-medium);
-            color: var(--rose-deep);
-            transform: translateY(-2px);
         }
         .princess-option-radio:checked + .princess-option-label {
             border-color: var(--rose-deep);
             background: linear-gradient(135deg, var(--rose-light), var(--gold));
             color: var(--text);
-            box-shadow: 0 0 0 4px rgba(255, 155, 196, 0.2);
         }
         
         .princess-btn-submit {
@@ -720,16 +727,11 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             letter-spacing: 0.4em;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
             box-shadow: 0 12px 32px rgba(255, 215, 0, 0.5);
             margin-top: 10px;
         }
-        .princess-btn-submit:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 16px 40px rgba(255, 215, 0, 0.7);
-        }
         
-        /* Boissons */
+        /* BOISSONS */
         .princess-boisson-grid { display: flex; flex-wrap: wrap; gap: 10px; }
         .princess-boisson-item {
             display: inline-flex;
@@ -740,7 +742,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             border-radius: 999px;
             background: white;
             cursor: pointer;
-            transition: all 0.3s ease;
             font-family: 'Playfair Display', serif;
             font-size: 15px;
             font-style: italic;
@@ -751,7 +752,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             background: linear-gradient(135deg, var(--rose-light), var(--gold));
             color: var(--text);
         }
-        .princess-boisson-item .check { opacity: 0; transition: opacity 0.3s ease; }
+        .princess-boisson-item .check { opacity: 0; }
         .princess-boisson-item.selected .check { opacity: 1; }
         
         .princess-boisson-category { margin-bottom: 20px; }
@@ -763,35 +764,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             margin-bottom: 12px;
         }
         
-        /* QR */
-        .princess-qr-wrapper { text-align: center; }
-        .princess-qr-box {
-            display: inline-block;
-            padding: 22px;
-            background: white;
-            border-radius: 16px;
-            border: 3px solid var(--gold);
-            box-shadow: 
-                0 12px 40px rgba(255, 215, 0, 0.4),
-                0 0 0 6px rgba(74, 26, 110, 0.6);
-            position: relative;
-        }
-        .princess-qr-box::before {
-            content: '👑';
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 40px;
-            animation: crownFloat 3s ease-in-out infinite;
-            filter: drop-shadow(0 0 15px var(--gold));
-        }
-        @keyframes crownFloat {
-            0%, 100% { transform: translateX(-50%) translateY(0) rotate(-5deg); }
-            50% { transform: translateX(-50%) translateY(-8px) rotate(5deg); }
-        }
-        
-        /* Footer */
+        /* FOOTER */
         .princess-footer {
             padding: 60px 40px 40px;
             text-align: center;
@@ -807,7 +780,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: goldShimmer 4s ease-in-out infinite;
             margin-bottom: 10px;
             text-transform: uppercase;
         }
@@ -832,15 +804,10 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             text-decoration: none;
             border-radius: 4px;
             box-shadow: 0 12px 32px rgba(37, 211, 102, 0.35);
-            transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        .princess-btn-whatsapp:hover {
-            transform: translateY(-3px) scale(1.03);
-            color: white;
-        }
         
-        /* Alerts */
+        /* ALERTS */
         .princess-alert {
             padding: 18px 26px;
             margin-bottom: 20px;
@@ -856,7 +823,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         .princess-alert-danger { background: var(--rose-light); color: #a01b3d; }
         .princess-alert-warning { background: #fff8e1; color: #806a00; }
         
-        /* Download */
+        /* DOWNLOAD */
         #downloadBtn {
             position: fixed;
             bottom: 24px;
@@ -872,7 +839,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             letter-spacing: 0.4em;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -882,7 +848,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         }
         #downloadBtn:hover {
             transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 16px 40px rgba(255, 215, 0, 0.7);
         }
         @media (max-width: 480px) {
             #downloadBtn { bottom: 12px; right: 12px; padding: 12px 20px; font-size: 10px; }
@@ -895,7 +860,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
 </head>
 <body>
 
-    <!-- ÉTOILES -->
     <div class="stars-container" id="starsContainer"></div>
 
     <!-- INTRO -->
@@ -928,87 +892,119 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
         </svg>
     </div>
 
-    <!-- HERO -->
-    <section class="princess-hero">
-        <div class="princess-moon"></div>
-        
-        <div class="princess-blason">
-            
-            <div class="princess-badge">
-                👑 INVITATION ROYALE 👑
-            </div>
-            
-            <div class="princess-guest">
-                <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="princess-divider">
-                <div class="line"></div>
-                <span class="icon">✦</span>
-                <div class="line"></div>
-            </div>
-            
-            <div class="princess-hosts-intro">
-                ✨ Vous êtes convié(e) au bal de ✨
-            </div>
-            <div class="princess-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="princess-event-type">
-                👸 <?php echo htmlspecialchars(strtoupper($eventType)); ?> 👸
-            </div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (Hero + Carte)              -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- CARTE -->
-    <div class="princess-card princess-anim zoom-in">
-        <div class="princess-card-title">✦ DÉTAILS DU BAL ✦</div>
-        <div class="princess-info-grid">
+        <!-- HERO -->
+        <section class="princess-hero">
+            <div class="princess-moon"></div>
             
-            <div class="princess-info-item princess-anim delay-1">
-                <div class="icon"><i class="fas fa-calendar-alt"></i></div>
-                <div class="label">DATE</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
-            
-            <div class="princess-info-item princess-anim delay-2">
-                <div class="icon"><i class="fas fa-clock"></i></div>
-                <div class="label">HEURE</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="princess-info-item princess-anim delay-3" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-crown"></i></div>
-                <div class="label">CHÂTEAU</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                    <?php endif; ?>
+            <div class="princess-blason">
+                
+                <div class="princess-badge">
+                    👑 INVITATION ROYALE 👑
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" rel="noopener" class="princess-btn-itinerary">
-                    <i class="fas fa-route"></i> ITINÉRAIRE
-                </a>
-            </div>
-            
-            <?php if ($hasTable): ?>
-            <div class="princess-info-item princess-table-item princess-anim delay-4">
-                <div class="icon"><i class="fas fa-chair"></i></div>
-                <div class="label">👑 VOTRE TABLE ROYALE 👑</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                
+                <div class="princess-guest">
+                    <?php echo htmlspecialchars($guestName); ?>
                 </div>
+                
+                <div class="princess-divider">
+                    <div class="line"></div>
+                    <span class="icon">✦</span>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="princess-hosts-intro">
+                    ✨ Vous êtes convié(e) au bal de ✨
+                </div>
+                <div class="princess-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="princess-event-type">
+                    👸 <?php echo htmlspecialchars(strtoupper($eventType)); ?> 👸
+                </div>
+                
             </div>
-            <?php endif; ?>
+        </section>
+
+        <!-- CARTE DÉTAILS + QR INTÉGRÉ -->
+        <div class="princess-card">
+            <div class="princess-card-title">✦ DÉTAILS DU BAL ✦</div>
+            <div class="princess-info-grid">
+                
+                <div class="princess-info-item">
+                    <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="label">DATE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="princess-info-item">
+                    <div class="icon"><i class="fas fa-clock"></i></div>
+                    <div class="label">HEURE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="princess-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-crown"></i></div>
+                    <div class="label">CHÂTEAU</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" rel="noopener" class="princess-btn-itinerary">
+                        <i class="fas fa-route"></i> ITINÉRAIRE
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="princess-info-item princess-table-item">
+                    <div class="icon"><i class="fas fa-chair"></i></div>
+                    <div class="label">👑 VOTRE TABLE ROYALE 👑</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="princess-info-item" style="grid-column: 1 / -1;">
+                    <div class="icon"><i class="fas fa-users"></i></div>
+                    <div class="label">PLACES ROYALES</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+                
+            </div>
             
-            <div class="princess-info-item princess-anim delay-5" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fas fa-users"></i></div>
-                <div class="label">PLACES ROYALES</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+            <!-- ✅ QR CODE INTÉGRÉ DANS LA MÊME CARTE -->
+            <div class="princess-qr-inline">
+                <div class="princess-qr-inline-title">✦ CODE ROYAL ✦</div>
+                <div class="princess-qr-wrapper">
+                    <div class="princess-qr-box">
+                        <img 
+                            id="qrImage"
+                            src="<?php echo $qrDataUri; ?>"
+                            alt="QR Code"
+                            width="160"
+                            height="160"
+                        >
+                    </div>
+                    <div style="font-family:'Didact Gothic',sans-serif;font-size:13px;color:var(--rose-deep);margin-top:20px;letter-spacing:0.3em;text-transform:uppercase;">
+                        <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                    </div>
+                </div>
             </div>
             
         </div>
+
     </div>
+    <!-- FIN WRAPPER -->
+
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
 
     <?php if ($message): ?>
         <div class="princess-section princess-anim apparue">
@@ -1058,18 +1054,6 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             </div>
         </div>
     <?php endif; ?>
-
-    <div class="princess-section princess-anim from-right">
-        <div class="princess-section-title">✦ CODE ROYAL ✦</div>
-        <div class="princess-qr-wrapper">
-            <div class="princess-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Didact Gothic',sans-serif;font-size:13px;color:var(--rose-deep);margin-top:24px;letter-spacing:0.3em;text-transform:uppercase;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
 
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
         <div class="princess-section princess-anim from-left">
@@ -1187,6 +1171,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
     </button>
 
     <script>
+        // ÉTOILES
         document.addEventListener('DOMContentLoaded', function() {
             const container = document.getElementById('starsContainer');
             for (let i = 0; i < 40; i++) {
@@ -1201,6 +1186,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }
         });
 
+        // ANIMATIONS SCROLL
         document.addEventListener('DOMContentLoaded', function() {
             const animElements = document.querySelectorAll('.princess-anim');
             
@@ -1225,19 +1211,7 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }, 500);
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof QRCode !== 'undefined') {
-                try {
-                    new QRCode(document.getElementById('qrcode'), {
-                        text: '<?php echo addslashes($fullUrl); ?>',
-                        width: 180, height: 180,
-                        colorDark: '#4a1a6e', colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } catch(e) { console.error(e); }
-            }
-        });
-
+        // DIAPORAMA
         let princessDiapoIndex = 0;
         const princessSlides = document.querySelectorAll('#princessDiaporama .slide');
         const princessDots = document.querySelectorAll('#princessDiapoDots span');
@@ -1295,31 +1269,113 @@ $hasTable = !empty($tableNom) || !empty($tableNumero);
             }
         });
 
+        // ================================================================
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Carte + QR)
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.princess-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5, useCORS: true,
-                    backgroundColor: '#1a0a2e', logging: false
+                // Attendre le rendu
+                await new Promise(r => setTimeout(r, 1000));
+                
+                // Attendre les images (QR base64 inclus)
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // Forcer l'affichage
+                card.querySelectorAll('.princess-anim').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                card.querySelectorAll('.princess-blason, .princess-badge, .princess-guest, .princess-divider, .princess-hosts-intro, .princess-host-name, .princess-event-type, .princess-moon').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
+                });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                // Capture
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#1a0a2e',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                        }
+                        
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.princess-anim').forEach(el => {
+                            el.classList.add('apparue');
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.princess-blason, .princess-badge, .princess-guest, .princess-divider, .princess-hosts-intro, .princess-host-name, .princess-event-type, .princess-moon').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                    }
+                });
+                
                 const link = document.createElement('a');
-                link.download = `princesse_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
+                link.download = `princesse_${'<?php echo preg_replace('/[^A-Za-z0-9_]/', '_', $host1); ?>'}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ Téléchargé';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             } catch(e) {
+                console.error(e);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             }
+            
             btn.disabled = false;
         }
 
+        // BOISSONS
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
         let selectedBoissons = [];
         document.addEventListener('DOMContentLoaded', function() {

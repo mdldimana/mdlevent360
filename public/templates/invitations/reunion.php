@@ -1,23 +1,30 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : CONFÉRENCE / RÉUNION / SÉMINAIRE - v2
+ * TEMPLATE : CONFÉRENCE / RÉUNION / SÉMINAIRE - v3
  * ============================================================
  * 
- * Nouveautés v2 :
- * - Suppression du header/navbar
- * - Diaporama photos plein écran (image entière)
- * - Affichage du nom de la table
- * - Définition des variables $hasFond et $hasPhotos
+ * Nouveautés v3 :
+ * - Téléchargement = 1 seule carte (Hero + Détails + QR)
+ * - QR en base64 côté PHP (capture garantie)
+ * - Correction affichage
  * 
  * ============================================================
  */
 
-// ============================================================
-// PRÉPARATION DES VARIABLES
-// ============================================================
 $hasFond = !empty($pageBackground);
 $hasPhotos = !empty($photosHost) && is_array($photosHost);
+$hasTable = !empty($tableNom) || !empty($tableNumero);
+
+// ============================================================
+// QR CODE EN BASE64 (pour éviter les problèmes CORS avec html2canvas)
+// ============================================================
+$qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=330x330&data=" . urlencode($fullUrl) . "&color=0a2540&bgcolor=ffffff&margin=1&qzone=1";
+$qrDataUri = $qrApiUrl;
+$qrContent = @file_get_contents($qrApiUrl);
+if ($qrContent !== false && strlen($qrContent) > 100) {
+    $qrDataUri = "data:image/png;base64," . base64_encode($qrContent);
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -28,12 +35,10 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         :root {
-            /* Palette corporate */
             --navy: #0a2540;
             --navy-dark: #061626;
             --navy-light: #1a3a5c;
@@ -69,9 +74,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             position: relative;
         }
         
-        /* ============================================
-           INTRO : LIGNES DE CODE / TITRES
-           ============================================ */
+        /* INTRO */
         .pro-intro {
             position: fixed;
             inset: 0;
@@ -88,7 +91,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             100% { opacity: 0; visibility: hidden; pointer-events: none; }
         }
         
-        /* Lignes horizontales animées */
         .pro-lines {
             position: absolute;
             inset: 0;
@@ -99,12 +101,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             left: -100%;
             height: 1px;
             width: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(201, 169, 97, 0.4),
-                rgba(37, 99, 235, 0.6),
-                rgba(201, 169, 97, 0.4),
-                transparent);
+            background: linear-gradient(90deg, transparent, rgba(201, 169, 97, 0.4), rgba(37, 99, 235, 0.6), rgba(201, 169, 97, 0.4), transparent);
             animation: lineSweep 2s ease-out forwards;
         }
         .pro-lines span:nth-child(1) { top: 20%; animation-delay: 0s; }
@@ -112,7 +109,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         .pro-lines span:nth-child(3) { top: 50%; animation-delay: 0.3s; }
         .pro-lines span:nth-child(4) { top: 65%; animation-delay: 0.45s; }
         .pro-lines span:nth-child(5) { top: 80%; animation-delay: 0.6s; }
-        
         @keyframes lineSweep {
             0% { left: -100%; }
             100% { left: 100%; }
@@ -166,21 +162,50 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         }
         
         /* ============================================
-           HERO CORPORATE (SANS NAVBAR)
+           WRAPPER TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            <?php if ($hasFond): ?>
+            background-image: url('<?php echo htmlspecialchars($pageBackground); ?>');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            <?php else: ?>
+            background: var(--bg);
+            <?php endif; ?>
+            padding-bottom: 20px;
+        }
+        
+        /* Overlay léger pour garder la lisibilité */
+        #downloadCard::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(248, 250, 252, 0.85) 0%, rgba(248, 250, 252, 0.7) 50%, rgba(248, 250, 252, 0.9) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        #downloadCard > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* ============================================
+           HERO
            ============================================ */
         .corporate-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
         }
         
-        /* Formes géométriques décoratives */
         .geo-shape {
             position: absolute;
             pointer-events: none;
@@ -210,18 +235,13 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             transform: rotate(45deg);
         }
         
-        /* Bande dorée verticale */
         .gold-bar {
             position: absolute;
             top: 15%;
             bottom: 15%;
             left: 60px;
             width: 3px;
-            background: linear-gradient(180deg, 
-                transparent,
-                var(--gold) 30%,
-                var(--gold) 70%,
-                transparent);
+            background: linear-gradient(180deg, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
             opacity: 0.6;
             z-index: 1;
         }
@@ -243,7 +263,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Badge professionnel */
         .corporate-badge {
             display: inline-flex;
             align-items: center;
@@ -260,11 +279,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             text-transform: uppercase;
             margin-bottom: 30px;
         }
-        .corporate-badge i {
-            font-size: 12px;
-        }
         
-        /* Numéro d'événement */
         .event-number {
             font-family: 'Playfair Display', serif;
             font-size: 14px;
@@ -285,7 +300,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             background: var(--gold);
         }
         
-        /* Nom de l'invité */
         .corporate-guest {
             font-family: 'Playfair Display', serif;
             font-size: clamp(32px, 5.5vw, 52px);
@@ -297,7 +311,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             margin-bottom: 30px;
         }
         
-        /* Séparateur corporate */
         .corporate-divider {
             display: flex;
             align-items: center;
@@ -318,7 +331,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             transform: rotate(45deg);
         }
         
-        /* Hôte / événement */
         .corporate-hosts-intro {
             font-family: 'Inter', sans-serif;
             font-size: 12px;
@@ -337,9 +349,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             letter-spacing: -0.02em;
             color: var(--navy);
             margin-bottom: 20px;
-            background: linear-gradient(180deg, 
-                var(--navy) 0%, 
-                var(--navy-light) 100%);
+            background: linear-gradient(180deg, var(--navy) 0%, var(--navy-light) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -367,7 +377,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         }
         
         /* ============================================
-           CARTE CORPORATE (Détails)
+           CARTE (avec QR intégré)
            ============================================ */
         .corporate-card {
             position: relative;
@@ -380,9 +390,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
                 0 1px 3px rgba(15, 23, 42, 0.04),
                 0 20px 60px rgba(15, 23, 42, 0.08);
             border: 1px solid var(--border);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
             overflow: hidden;
         }
@@ -393,20 +400,12 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, 
-                var(--navy) 0%,
-                var(--blue) 50%,
-                var(--gold) 100%);
-        }
-        .corporate-card.apparue {
-            opacity: 1;
-            transform: translateY(0);
+            background: linear-gradient(90deg, var(--navy) 0%, var(--blue) 50%, var(--gold) 100%);
         }
         @media (max-width: 640px) {
             .corporate-card { padding: 40px 25px; margin: 60px 15px; }
         }
         
-        /* Header avec numéro */
         .corporate-card-header {
             display: flex;
             justify-content: space-between;
@@ -427,9 +426,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-        .corporate-card-header .label i {
-            font-size: 14px;
         }
         .corporate-card-header .ref {
             font-family: 'Playfair Display', serif;
@@ -452,7 +448,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             color: var(--blue);
         }
         
-        /* Grille d'infos */
         .corporate-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -471,12 +466,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             border: 1px solid transparent;
             transition: all 0.3s ease;
         }
-        .corporate-info-item:hover {
-            background: var(--blue-soft);
-            border-color: rgba(37, 99, 235, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08);
-        }
         .corporate-info-item.full {
             grid-column: 1 / -1;
         }
@@ -493,11 +482,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             font-size: 20px;
             flex-shrink: 0;
             border: 1px solid var(--border);
-        }
-        .corporate-info-item:hover .icon {
-            background: var(--blue);
-            color: var(--white);
-            border-color: var(--blue);
         }
         
         .corporate-info-item .content {
@@ -528,7 +512,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             margin-top: 4px;
         }
         
-        /* ⭐ CARTE TABLE */
+        /* TABLE */
         .corporate-table-item {
             background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(201, 169, 97, 0.08)) !important;
             border: 1.5px solid rgba(37, 99, 235, 0.3) !important;
@@ -537,14 +521,8 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             background: linear-gradient(135deg, var(--blue), var(--blue-light)) !important;
             color: var(--white) !important;
             border-color: var(--blue) !important;
-            animation: tableIconPulse 3s ease-in-out infinite;
-        }
-        @keyframes tableIconPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
         }
         
-        /* Bouton itinéraire corporate */
         .corporate-btn-itinerary {
             display: inline-flex;
             align-items: center;
@@ -562,15 +540,75 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        .corporate-btn-itinerary:hover {
-            background: var(--blue);
-            color: var(--white);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        
+        /* ============================================
+           SECTION QR INTÉGRÉE
+           ============================================ */
+        .corporate-qr-inline {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .corporate-qr-inline-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--navy);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        .corporate-qr-inline-title::before,
+        .corporate-qr-inline-title::after {
+            content: '';
+            width: 40px;
+            height: 1px;
+            background: var(--gold);
+        }
+        
+        .corporate-qr-wrapper { text-align: center; }
+        .corporate-qr-box {
+            display: inline-block;
+            padding: 20px;
+            background: var(--white);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.1);
+            position: relative;
+        }
+        .corporate-qr-box::before {
+            content: '';
+            position: absolute;
+            top: -1.5px;
+            left: 30px;
+            right: 30px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--blue), var(--gold), var(--blue), transparent);
+            border-radius: 3px;
+        }
+        .corporate-qr-box img {
+            display: block;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+        }
+        
+        .corporate-qr-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 20px;
         }
         
         /* ============================================
-           SECTIONS CORPORATE
+           SECTIONS HORS CAPTURE
            ============================================ */
         .corporate-section {
             position: relative;
@@ -579,37 +617,10 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             padding: 60px 50px;
             background: var(--white);
             border-radius: 24px;
-            box-shadow: 
-                0 1px 3px rgba(15, 23, 42, 0.04),
-                0 20px 60px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 20px 60px rgba(15, 23, 42, 0.06);
             border: 1px solid var(--border);
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 1s ease;
             z-index: 10;
             overflow: hidden;
-        }
-        .corporate-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, 
-                var(--navy) 0%,
-                var(--blue) 50%,
-                var(--gold) 100%);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 1s ease 0.3s;
-        }
-        .corporate-section.apparue::before {
-            transform: scaleX(1);
-        }
-        .corporate-section.apparue {
-            opacity: 1;
-            transform: translateY(0);
         }
         @media (max-width: 640px) {
             .corporate-section { padding: 40px 25px; margin: 45px 15px; }
@@ -644,9 +655,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             padding: 0 8px;
         }
         
-        /* ============================================
-           DIAPORAMA PHOTOS PLEIN ÉCRAN
-           ============================================ */
+        /* DIAPORAMA */
         .corporate-diaporama {
             position: relative;
             width: 100%;
@@ -683,7 +692,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             padding: 10px;
         }
         
-        /* Flèches navigation */
         .corporate-diapo-arrow {
             position: absolute;
             top: 50%;
@@ -704,23 +712,9 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
         }
         
-        .corporate-diapo-arrow:hover {
-            background: var(--blue);
-            color: white;
-            border-color: var(--blue);
-            transform: translateY(-50%) scale(1.1);
-        }
-        
         .corporate-diapo-arrow.prev { left: 16px; }
         .corporate-diapo-arrow.next { right: 16px; }
         
-        @media (max-width: 480px) {
-            .corporate-diapo-arrow { width: 38px; height: 38px; font-size: 14px; }
-            .corporate-diapo-arrow.prev { left: 8px; }
-            .corporate-diapo-arrow.next { right: 8px; }
-        }
-        
-        /* Compteur */
         .corporate-diapo-counter {
             position: absolute;
             bottom: 16px;
@@ -735,10 +729,8 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             padding: 8px 16px;
             border-radius: 100px;
             z-index: 10;
-            backdrop-filter: blur(10px);
         }
         
-        /* Points de pagination */
         .corporate-diapo-dots {
             position: absolute;
             bottom: 16px;
@@ -751,7 +743,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             padding: 10px 20px;
             border-radius: 100px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
         }
         
         .corporate-diapo-dots span {
@@ -766,12 +757,9 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         .corporate-diapo-dots span.active {
             background: var(--gold);
             transform: scale(1.4);
-            box-shadow: 0 0 12px rgba(201, 169, 97, 0.8);
         }
         
-        /* ============================================
-           FORMULAIRES CORPORATE
-           ============================================ */
+        /* FORMULAIRES */
         .corporate-form-group { margin-bottom: 26px; }
         .corporate-form-group label {
             display: block;
@@ -798,18 +786,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             font-family: 'Inter', sans-serif;
             font-size: 15px;
             font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        .corporate-form-group input:focus,
-        .corporate-form-group textarea:focus {
-            outline: none;
-            border-color: var(--blue);
-            background: var(--white);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-        .corporate-form-group textarea {
-            resize: vertical;
-            min-height: 100px;
         }
         
         .corporate-options-grid {
@@ -836,18 +812,11 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             font-weight: 600;
             color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .corporate-option-label:hover {
-            border-color: var(--blue);
-            color: var(--blue);
-            background: var(--blue-soft);
         }
         .corporate-option-radio:checked + .corporate-option-label {
             border-color: var(--blue);
             background: var(--blue-soft);
             color: var(--blue);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
         
         .corporate-btn-submit {
@@ -867,19 +836,11 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             letter-spacing: 0.1em;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
             margin-top: 10px;
             box-shadow: 0 8px 24px rgba(10, 37, 64, 0.25);
         }
-        .corporate-btn-submit:hover {
-            background: linear-gradient(135deg, var(--blue), var(--blue-light));
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4);
-        }
         
-        /* ============================================
-           BOISSONS
-           ============================================ */
+        /* BOISSONS */
         .corporate-boisson-category { margin-bottom: 28px; }
         .corporate-boisson-category-title {
             font-family: 'Inter', sans-serif;
@@ -895,9 +856,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             align-items: center;
             gap: 10px;
         }
-        .corporate-boisson-category-title i {
-            color: var(--blue);
-        }
+        .corporate-boisson-category-title i { color: var(--blue); }
         
         .corporate-boisson-grid { display: flex; flex-wrap: wrap; gap: 10px; }
         .corporate-boisson-item {
@@ -909,7 +868,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             border-radius: 100px;
             background: var(--white);
             cursor: pointer;
-            transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 600;
@@ -920,53 +878,10 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             background: var(--blue-soft);
             color: var(--blue);
         }
-        .corporate-boisson-item .check {
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
+        .corporate-boisson-item .check { opacity: 0; }
         .corporate-boisson-item.selected .check { opacity: 1; }
         
-        /* ============================================
-           QR CODE
-           ============================================ */
-        .corporate-qr-wrapper { text-align: center; }
-        .corporate-qr-box {
-            display: inline-block;
-            padding: 24px;
-            background: var(--white);
-            border: 1.5px solid var(--border);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.1);
-            position: relative;
-        }
-        .corporate-qr-box::before {
-            content: '';
-            position: absolute;
-            top: -1.5px;
-            left: 30px;
-            right: 30px;
-            height: 3px;
-            background: linear-gradient(90deg, 
-                transparent,
-                var(--blue),
-                var(--gold),
-                var(--blue),
-                transparent);
-            border-radius: 3px;
-        }
-        .corporate-qr-label {
-            font-family: 'Inter', sans-serif;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-top: 20px;
-        }
-        
-        /* ============================================
-           FOOTER CORPORATE
-           ============================================ */
+        /* FOOTER */
         .corporate-footer {
             padding: 80px 40px 40px;
             text-align: center;
@@ -1023,19 +938,9 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             letter-spacing: 0.1em;
             text-decoration: none;
             border-radius: 100px;
-            transition: all 0.3s ease;
             text-transform: uppercase;
         }
-        .corporate-btn-whatsapp:hover {
-            background: linear-gradient(135deg, var(--blue), var(--blue-light));
-            color: var(--white);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4);
-        }
         
-        /* ============================================
-           ALERTES
-           ============================================ */
         .corporate-alert {
             padding: 18px 24px;
             margin-bottom: 20px;
@@ -1048,25 +953,11 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             border-radius: 12px;
             border-left: 4px solid;
         }
-        .corporate-alert-success { 
-            border-color: var(--success); 
-            background: rgba(16, 185, 129, 0.08); 
-            color: #065f46; 
-        }
-        .corporate-alert-danger { 
-            border-color: #ef4444; 
-            background: rgba(239, 68, 68, 0.08); 
-            color: #991b1b; 
-        }
-        .corporate-alert-warning { 
-            border-color: #f59e0b; 
-            background: rgba(245, 158, 11, 0.08); 
-            color: #78350f; 
-        }
+        .corporate-alert-success { border-color: var(--success); background: rgba(16, 185, 129, 0.08); color: #065f46; }
+        .corporate-alert-danger { border-color: #ef4444; background: rgba(239, 68, 68, 0.08); color: #991b1b; }
+        .corporate-alert-warning { border-color: #f59e0b; background: rgba(245, 158, 11, 0.08); color: #78350f; }
         
-        /* ============================================
-           DOWNLOAD
-           ============================================ */
+        /* DOWNLOAD */
         #downloadBtn {
             position: fixed;
             bottom: 30px;
@@ -1083,7 +974,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             letter-spacing: 0.1em;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -1091,18 +981,8 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             opacity: 0;
             animation: fadeIn 0.8s ease-out 3s forwards;
         }
-        #downloadBtn:hover {
-            background: var(--blue);
-            transform: translateY(-3px);
-            box-shadow: 0 16px 40px rgba(37, 99, 235, 0.4);
-        }
         @media (max-width: 480px) {
-            #downloadBtn { 
-                bottom: 16px; 
-                right: 16px; 
-                padding: 12px 22px; 
-                font-size: 11px;
-            }
+            #downloadBtn { bottom: 16px; right: 16px; padding: 12px 22px; font-size: 11px; }
         }
         
         @keyframes fadeIn {
@@ -1112,9 +992,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
 </head>
 <body>
 
-    <!-- ============================================
-         INTRO CORPORATE
-         ============================================ -->
+    <!-- INTRO -->
     <div class="pro-intro">
         <div class="pro-lines">
             <span></span><span></span><span></span><span></span><span></span>
@@ -1128,131 +1006,155 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         </div>
     </div>
 
-    <!-- ============================================
-         HERO CORPORATE (SANS NAVBAR)
-         ============================================ -->
-    <section class="corporate-hero">
-        <div class="geo-shape circle"></div>
-        <div class="geo-shape circle small"></div>
-        <div class="geo-shape square"></div>
-        <div class="gold-bar"></div>
-        <div class="gold-bar right"></div>
-        
-        <div class="corporate-blason">
-            
-            <div class="corporate-badge">
-                <i class="fas fa-certificate"></i>
-                ÉVÉNEMENT PROFESSIONNEL
-            </div>
-            
-            <div class="event-number">Invitation personnelle</div>
-            
-            <div class="corporate-guest">
-                <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="corporate-divider">
-                <div class="line"></div>
-                <div class="diamond"></div>
-                <div class="line"></div>
-            </div>
-            
-            <div class="corporate-hosts-intro">
-                Vous êtes cordialement invité(e) à
-            </div>
-            <div class="corporate-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="corporate-event-type">
-                <?php echo htmlspecialchars(strtoupper($eventType)); ?>
-            </div>
-            
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ (Hero + Carte + QR)        -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- ============================================
-         CARTE CORPORATE (Détails)
-         ============================================ -->
-    <div class="corporate-card">
-        
-        <div class="corporate-card-header">
-            <div class="label">
-                <i class="fas fa-clipboard-list"></i>
-                Informations pratiques
-            </div>
-            <div class="ref">Réf. <?php echo htmlspecialchars($invitation['code_unique']); ?></div>
-        </div>
-        
-        <div class="corporate-card-title">
-            Détails de <strong>l'événement</strong>
-        </div>
-        
-        <div class="corporate-info-grid">
+        <!-- HERO -->
+        <section class="corporate-hero">
+            <div class="geo-shape circle"></div>
+            <div class="geo-shape circle small"></div>
+            <div class="geo-shape square"></div>
+            <div class="gold-bar"></div>
+            <div class="gold-bar right"></div>
             
-            <div class="corporate-info-item">
-                <div class="icon"><i class="fas fa-calendar-alt"></i></div>
-                <div class="content">
-                    <div class="label">Date</div>
-                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+            <div class="corporate-blason">
+                
+                <div class="corporate-badge">
+                    <i class="fas fa-certificate"></i>
+                    ÉVÉNEMENT PROFESSIONNEL
                 </div>
-            </div>
-            
-            <div class="corporate-info-item">
-                <div class="icon"><i class="fas fa-clock"></i></div>
-                <div class="content">
-                    <div class="label">Heure</div>
-                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                
+                <div class="event-number">Invitation personnelle</div>
+                
+                <div class="corporate-guest">
+                    <?php echo htmlspecialchars($guestName); ?>
                 </div>
-            </div>
-            
-            <div class="corporate-info-item full">
-                <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
-                <div class="content">
-                    <div class="label">Lieu</div>
-                    <div class="value">
-                        <?php echo htmlspecialchars($lieuDisplay); ?>
-                        <?php if ($adresseDisplay): ?>
-                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                        <?php endif; ?>
-                    </div>
-                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                       target="_blank" 
-                       rel="noopener"
-                       class="corporate-btn-itinerary">
-                        <i class="fas fa-route"></i> Voir l'itinéraire
-                    </a>
+                
+                <div class="corporate-divider">
+                    <div class="line"></div>
+                    <div class="diamond"></div>
+                    <div class="line"></div>
                 </div>
+                
+                <div class="corporate-hosts-intro">
+                    Vous êtes cordialement invité(e) à
+                </div>
+                <div class="corporate-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="corporate-event-type">
+                    <?php echo htmlspecialchars(strtoupper($eventType)); ?>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- CARTE DÉTAILS + QR INTÉGRÉ -->
+        <div class="corporate-card">
+            
+            <div class="corporate-card-header">
+                <div class="label">
+                    <i class="fas fa-clipboard-list"></i>
+                    Informations pratiques
+                </div>
+                <div class="ref">Réf. <?php echo htmlspecialchars($invitation['code_unique']); ?></div>
             </div>
             
-            <!-- ⭐ TABLE ASSIGNÉE -->
-            <?php if ($hasTable): ?>
-            <div class="corporate-info-item full corporate-table-item">
-                <div class="icon"><i class="fas fa-chair"></i></div>
-                <div class="content">
-                    <div class="label">Votre table</div>
-                    <div class="value">
-                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+            <div class="corporate-card-title">
+                Détails de <strong>l'événement</strong>
+            </div>
+            
+            <div class="corporate-info-grid">
+                
+                <div class="corporate-info-item">
+                    <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="content">
+                        <div class="label">Date</div>
+                        <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
                     </div>
                 </div>
+                
+                <div class="corporate-info-item">
+                    <div class="icon"><i class="fas fa-clock"></i></div>
+                    <div class="content">
+                        <div class="label">Heure</div>
+                        <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                    </div>
+                </div>
+                
+                <div class="corporate-info-item full">
+                    <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="content">
+                        <div class="label">Lieu</div>
+                        <div class="value">
+                            <?php echo htmlspecialchars($lieuDisplay); ?>
+                            <?php if ($adresseDisplay): ?>
+                                <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                           target="_blank" 
+                           rel="noopener"
+                           class="corporate-btn-itinerary">
+                            <i class="fas fa-route"></i> Voir l'itinéraire
+                        </a>
+                    </div>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="corporate-info-item full corporate-table-item">
+                    <div class="icon"><i class="fas fa-chair"></i></div>
+                    <div class="content">
+                        <div class="label">Votre table</div>
+                        <div class="value">
+                            <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="corporate-info-item full">
+                    <div class="icon"><i class="fas fa-user-tie"></i></div>
+                    <div class="content">
+                        <div class="label">Accréditations</div>
+                        <div class="value">
+                            <?php echo (int)($invitation['nb_places_max'] ?? 1); ?> place<?php echo ($invitation['nb_places_max'] ?? 1) > 1 ? 's' : ''; ?> réservée<?php echo ($invitation['nb_places_max'] ?? 1) > 1 ? 's' : ''; ?>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
-            <?php endif; ?>
             
-            <div class="corporate-info-item full">
-                <div class="icon"><i class="fas fa-user-tie"></i></div>
-                <div class="content">
-                    <div class="label">Accréditations</div>
-                    <div class="value">
-                        <?php echo (int)($invitation['nb_places_max'] ?? 1); ?> place<?php echo ($invitation['nb_places_max'] ?? 1) > 1 ? 's' : ''; ?> réservée<?php echo ($invitation['nb_places_max'] ?? 1) > 1 ? 's' : ''; ?>
+            <!-- ✅ QR CODE INTÉGRÉ DANS LA MÊME CARTE -->
+            <div class="corporate-qr-inline">
+                <div class="corporate-qr-inline-title">Votre badge d'accès</div>
+                <div class="corporate-qr-wrapper">
+                    <div class="corporate-qr-box">
+                        <img 
+                            id="qrImage"
+                            src="<?php echo $qrDataUri; ?>"
+                            alt="QR Code"
+                            width="180"
+                            height="180"
+                        >
+                    </div>
+                    <div class="corporate-qr-label">
+                        <?php echo htmlspecialchars($invitation['code_unique']); ?>
                     </div>
                 </div>
             </div>
             
         </div>
+
     </div>
+    <!-- FIN WRAPPER -->
 
-    <!-- ============================================
-         MESSAGES
-         ============================================ -->
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
+
     <?php if ($message): ?>
-        <div class="corporate-section apparue">
+        <div class="corporate-section">
             <div class="corporate-alert corporate-alert-<?php echo htmlspecialchars($messageType); ?>">
                 <i class="fas <?php echo $messageType == 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'; ?>"></i>
                 <span><?php echo htmlspecialchars($message); ?></span>
@@ -1260,9 +1162,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         ⭐ DIAPORAMA PHOTOS PLEIN ÉCRAN
-         ============================================ -->
     <?php if ($hasPhotos): ?>
         <div class="corporate-section">
             <div class="corporate-section-title">
@@ -1307,28 +1206,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         QR CODE
-         ============================================ -->
-    <div class="corporate-section">
-        <div class="corporate-section-title">
-            <span class="icon"><i class="fas fa-qrcode"></i></span>
-            Votre badge d'accès
-            <span class="icon"><i class="fas fa-qrcode"></i></span>
-        </div>
-        <div class="corporate-qr-wrapper">
-            <div class="corporate-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div class="corporate-qr-label">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================
-         CONFIRMATION
-         ============================================ -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
         <div class="corporate-section">
             <div class="corporate-section-title">
@@ -1375,9 +1252,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         BOISSONS
-         ============================================ -->
     <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons)): ?>
         <div class="corporate-section">
             <div class="corporate-section-title">
@@ -1441,9 +1315,6 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
         </div>
     <?php endif; ?>
 
-    <!-- ============================================
-         FOOTER CORPORATE
-         ============================================ -->
     <footer class="corporate-footer">
         <div class="corporate-footer-brand">
             <div class="brand-mark">M</div>
@@ -1469,39 +1340,7 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
     </button>
 
     <script>
-        // Scroll animations
-        document.addEventListener('DOMContentLoaded', function() {
-            const sections = document.querySelectorAll('.corporate-card, .corporate-section');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => { 
-                    if (entry.isIntersecting) { 
-                        entry.target.classList.add('apparue'); 
-                        observer.unobserve(entry.target);
-                    } 
-                });
-            }, { threshold: 0.15 });
-            sections.forEach(s => observer.observe(s));
-        });
-
-        // QR
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof QRCode !== 'undefined') {
-                try {
-                    new QRCode(document.getElementById('qrcode'), {
-                        text: '<?php echo addslashes($fullUrl); ?>',
-                        width: 180,
-                        height: 180,
-                        colorDark: '#0a2540',
-                        colorLight: '#ffffff',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } catch(e) { console.error(e); }
-            }
-        });
-
-        // ================================================================
-        // DIAPORAMA PHOTOS
-        // ================================================================
+        // DIAPORAMA
         let corporateDiapoIndex = 0;
         const corporateSlides = document.querySelectorAll('#corporateDiaporama .slide');
         const corporateDots = document.querySelectorAll('#corporateDiapoDots span');
@@ -1559,31 +1398,95 @@ $hasPhotos = !empty($photosHost) && is_array($photosHost);
             }
         });
 
-        // Download
+        // ================================================================
+        // TÉLÉCHARGEMENT — CAPTURE #downloadCard (Hero + Carte + QR)
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.corporate-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5,
-                    useCORS: true,
-                    backgroundColor: '#f8fafc',
-                    logging: false
+                // Attendre le rendu
+                await new Promise(r => setTimeout(r, 1000));
+                
+                // Attendre les images (QR base64 inclus)
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // Forcer les animations
+                card.querySelectorAll('.corporate-blason, .corporate-badge, .event-number, .corporate-guest, .corporate-divider, .corporate-hosts-intro, .corporate-host-name, .corporate-event-type').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                await new Promise(r => setTimeout(r, 300));
+                
+                // Capture
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f8fafc',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                        }
+                        
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        clonedDoc.querySelectorAll('.corporate-blason, .corporate-badge, .event-number, .corporate-guest, .corporate-divider, .corporate-hosts-intro, .corporate-host-name, .corporate-event-type').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                            el.style.webkitTextFillColor = 'initial';
+                        });
+                    }
+                });
+                
                 const link = document.createElement('a');
-                link.download = `conference_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
+                link.download = `conference_${'<?php echo preg_replace('/[^A-Za-z0-9_]/', '_', $host1); ?>'}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ Téléchargé';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             } catch(e) {
+                console.error(e);
                 btnText.textContent = 'Erreur';
                 setTimeout(() => btnText.textContent = 'Télécharger', 3000);
             }
+            
             btn.disabled = false;
         }
 

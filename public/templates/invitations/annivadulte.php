@@ -1,12 +1,14 @@
 <?php
 /**
  * ============================================================
- * TEMPLATE : ANNIVERSAIRE ADULTE (Chic & Lounge) - v3
+ * TEMPLATE : ANNIVERSAIRE ADULTE (Chic & Lounge) - v5
  * ============================================================
  * 
- * Nouveautés v3 :
- * - Animations d'affichage des sections (fade + slide + scale)
- * - Affichage du nom de la table
+ * Correction v5 :
+ * - Téléchargement fonctionnel (image non noire)
+ * - QR code visible dans l'image téléchargée
+ * - Suppression du min-height: 100vh qui cassait html2canvas
+ * - Forçage des animations dans le clone
  * 
  * ============================================================
  */
@@ -60,7 +62,7 @@
         }
         
         /* ============================================
-           INTRO : COUPE DE CHAMPAGNE
+           INTRO
            ============================================ */
         .champagne-intro {
             position: fixed;
@@ -123,7 +125,7 @@
         }
         
         /* ============================================
-           BULLES FLOTTANTES (persistantes)
+           BULLES FLOTTANTES
            ============================================ */
         .champagne-bubbles {
             position: fixed;
@@ -148,7 +150,7 @@
         }
         
         /* ============================================
-           ANIMATIONS D'AFFICHAGE DES SECTIONS
+           ANIMATIONS
            ============================================ */
         .lounge-anim {
             opacity: 0;
@@ -164,7 +166,6 @@
             transform: translateY(0) scale(1);
         }
         
-        /* Variantes */
         .lounge-anim.from-left {
             opacity: 0;
             transform: translateX(-100px);
@@ -192,7 +193,6 @@
             transform: scale(1);
         }
         
-        /* Délais en cascade */
         .delay-1 { transition-delay: 0.1s; }
         .delay-2 { transition-delay: 0.2s; }
         .delay-3 { transition-delay: 0.3s; }
@@ -200,18 +200,31 @@
         .delay-5 { transition-delay: 0.5s; }
         
         /* ============================================
-           HERO LOUNGE
+           WRAPPER DE TÉLÉCHARGEMENT
+           ============================================ */
+        #downloadCard {
+            position: relative;
+            background: var(--black);
+            padding-bottom: 20px;
+        }
+        
+        /* ============================================
+           HERO
            ============================================ */
         .lounge-hero {
             position: relative;
-            min-height: 100vh;
+            padding: 80px 20px 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 20px 80px;
             z-index: 10;
             overflow: hidden;
+            background: 
+                radial-gradient(ellipse 600px 400px at 50% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 100%),
+                radial-gradient(ellipse at top, #1a1a1a 0%, transparent 60%),
+                radial-gradient(ellipse at bottom, #2a1a0a 0%, transparent 60%),
+                var(--black);
         }
         
         .ambient-light {
@@ -362,7 +375,7 @@
         }
         
         /* ============================================
-           CARTE LOUNGE
+           CARTE
            ============================================ */
         .lounge-card {
             position: relative;
@@ -450,15 +463,6 @@
             background: var(--gold);
             transition: width 0.4s ease;
         }
-        .lounge-info-item:hover::before {
-            width: 60px;
-        }
-        .lounge-info-item:hover {
-            background: rgba(212, 175, 55, 0.05);
-            border-color: rgba(212, 175, 55, 0.4);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.15);
-        }
         
         .lounge-info-item .icon {
             font-size: 30px;
@@ -494,22 +498,12 @@
             font-weight: 400;
         }
         
-        /* ⭐ CARTE TABLE */
         .lounge-table-item {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, 
                 rgba(212, 175, 55, 0.08) 0%, 
                 rgba(212, 175, 55, 0.03) 100%);
             border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .lounge-table-item .icon {
-            animation: tableGlow 3s ease-in-out infinite;
-        }
-        
-        @keyframes tableGlow {
-            0%, 100% { filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4)); }
-            50% { filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.9)); }
         }
         
         .lounge-btn-itinerary {
@@ -531,24 +525,99 @@
             position: relative;
             overflow: hidden;
         }
-        .lounge-btn-itinerary::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, var(--gold), var(--gold-light));
-            transform: translateX(-101%);
-            transition: transform 0.4s ease;
-            z-index: -1;
-        }
         .lounge-btn-itinerary:hover {
+            background: var(--gold);
             color: var(--black);
-        }
-        .lounge-btn-itinerary:hover::before {
-            transform: translateX(0);
         }
         
         /* ============================================
-           SECTIONS LOUNGE
+           CARTE QR INTÉGRÉE
+           ============================================ */
+        .lounge-qr-card {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto 40px;
+            padding: 50px 40px;
+            background: linear-gradient(180deg, 
+                rgba(26, 26, 26, 0.95) 0%, 
+                rgba(18, 18, 18, 0.95) 100%);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.7),
+                inset 0 0 60px rgba(212, 175, 55, 0.02);
+            z-index: 10;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .lounge-qr-card { padding: 40px 25px; margin: 0 15px 40px; }
+        }
+        
+        .lounge-qr-card::before,
+        .lounge-qr-card::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--gold);
+        }
+        .lounge-qr-card::before {
+            top: -1px; left: -1px;
+            border-right: none; border-bottom: none;
+        }
+        .lounge-qr-card::after {
+            bottom: -1px; right: -1px;
+            border-left: none; border-top: none;
+        }
+        
+        .lounge-qr-title {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 26px;
+            font-weight: 400;
+            color: var(--white);
+            margin-bottom: 30px;
+            letter-spacing: 0.02em;
+            position: relative;
+            padding-bottom: 20px;
+        }
+        .lounge-qr-title::after {
+            content: '✦';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--near-black);
+            padding: 0 16px;
+            color: var(--gold);
+            font-size: 14px;
+        }
+        
+        .lounge-qr-wrapper { text-align: center; }
+        .lounge-qr-box {
+            display: inline-block;
+            padding: 28px;
+            background: var(--cream);
+            border: 2px solid var(--gold);
+            box-shadow: 
+                0 0 0 6px var(--black),
+                0 0 0 7px var(--gold),
+                0 20px 60px rgba(212, 175, 55, 0.3);
+            position: relative;
+        }
+        .lounge-qr-box::before,
+        .lounge-qr-box::after {
+            content: '✦';
+            position: absolute;
+            color: var(--gold);
+            font-size: 20px;
+            background: var(--black);
+            padding: 4px;
+        }
+        .lounge-qr-box::before { top: -18px; left: -18px; }
+        .lounge-qr-box::after { bottom: -18px; right: -18px; }
+        
+        /* ============================================
+           SECTIONS
            ============================================ */
         .lounge-section {
             position: relative;
@@ -590,7 +659,7 @@
         }
         
         /* ============================================
-           DIAPORAMA PHOTOS PLEIN ÉCRAN
+           DIAPORAMA
            ============================================ */
         .lounge-diaporama {
             position: relative;
@@ -599,10 +668,6 @@
             overflow: hidden;
             background: #000;
             border: 1px solid rgba(212, 175, 55, 0.3);
-            box-shadow: 
-                0 0 0 6px var(--black),
-                0 0 0 7px var(--gold),
-                0 20px 60px rgba(212, 175, 55, 0.2);
         }
         
         .lounge-diaporama .slide {
@@ -617,10 +682,7 @@
             background: #000;
         }
         
-        .lounge-diaporama .slide.active {
-            opacity: 1;
-            z-index: 1;
-        }
+        .lounge-diaporama .slide.active { opacity: 1; z-index: 1; }
         
         .lounge-diaporama .slide img {
             width: 100%;
@@ -654,7 +716,6 @@
             background: var(--gold);
             color: var(--black);
             transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.5);
         }
         
         .lounge-diapo-arrow.prev { left: 16px; }
@@ -678,7 +739,6 @@
             letter-spacing: 0.15em;
             padding: 8px 16px;
             z-index: 10;
-            backdrop-filter: blur(10px);
         }
         
         .lounge-diapo-dots {
@@ -692,7 +752,6 @@
             background: rgba(0, 0, 0, 0.5);
             padding: 8px 16px;
             border-radius: 999px;
-            backdrop-filter: blur(10px);
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
         
@@ -708,11 +767,10 @@
         .lounge-diapo-dots span.active {
             background: var(--gold);
             transform: scale(1.4);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
         }
         
         /* ============================================
-           FORMULAIRES LOUNGE
+           FORMULAIRES
            ============================================ */
         .lounge-form-group { margin-bottom: 30px; }
         .lounge-form-group label {
@@ -741,16 +799,11 @@
             outline: none;
             border-color: var(--gold);
             background: rgba(212, 175, 55, 0.05);
-            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
         }
         .lounge-form-group input::placeholder,
         .lounge-form-group textarea::placeholder {
             color: var(--gray);
             font-style: italic;
-        }
-        .lounge-form-group textarea {
-            resize: vertical;
-            min-height: 100px;
         }
         
         .lounge-options-grid {
@@ -774,7 +827,6 @@
             font-family: 'Playfair Display', serif;
             font-size: 15px;
             font-style: italic;
-            letter-spacing: 0.02em;
             color: var(--silver);
             cursor: pointer;
             transition: all 0.4s ease;
@@ -787,7 +839,6 @@
             border-color: var(--gold);
             background: rgba(212, 175, 55, 0.12);
             color: var(--gold-light);
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
         }
         
         .lounge-btn-submit {
@@ -808,29 +859,10 @@
             cursor: pointer;
             transition: all 0.4s ease;
             margin-top: 20px;
-            position: relative;
-            overflow: hidden;
             box-shadow: 0 12px 40px rgba(212, 175, 55, 0.25);
-        }
-        .lounge-btn-submit::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.3), 
-                transparent);
-            transition: left 0.6s ease;
-        }
-        .lounge-btn-submit:hover::before {
-            left: 100%;
         }
         .lounge-btn-submit:hover {
             transform: translateY(-3px);
-            box-shadow: 0 16px 50px rgba(212, 175, 55, 0.4);
         }
         
         /* ============================================
@@ -859,15 +891,12 @@
             transition: all 0.4s ease;
             font-family: 'Cormorant Garamond', serif;
             font-size: 16px;
-            font-weight: 500;
             color: var(--silver);
-            letter-spacing: 0.02em;
         }
         .lounge-boisson-item.selected {
             border-color: var(--gold);
             background: rgba(212, 175, 55, 0.12);
             color: var(--gold-light);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
         }
         .lounge-boisson-item .check {
             opacity: 0;
@@ -877,34 +906,7 @@
         .lounge-boisson-item.selected .check { opacity: 1; }
         
         /* ============================================
-           QR CODE
-           ============================================ */
-        .lounge-qr-wrapper { text-align: center; }
-        .lounge-qr-box {
-            display: inline-block;
-            padding: 28px;
-            background: var(--cream);
-            border: 2px solid var(--gold);
-            box-shadow: 
-                0 0 0 6px var(--black),
-                0 0 0 7px var(--gold),
-                0 20px 60px rgba(212, 175, 55, 0.3);
-            position: relative;
-        }
-        .lounge-qr-box::before,
-        .lounge-qr-box::after {
-            content: '✦';
-            position: absolute;
-            color: var(--gold);
-            font-size: 20px;
-            background: var(--black);
-            padding: 4px;
-        }
-        .lounge-qr-box::before { top: -18px; left: -18px; }
-        .lounge-qr-box::after { bottom: -18px; right: -18px; }
-        
-        /* ============================================
-           FOOTER LOUNGE
+           FOOTER
            ============================================ */
         .lounge-footer {
             padding: 80px 40px 40px;
@@ -918,7 +920,6 @@
             font-size: 32px;
             color: var(--gold);
             margin-bottom: 16px;
-            filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.5));
         }
         .lounge-footer-brand {
             font-family: 'Italiana', serif;
@@ -955,10 +956,11 @@
         .lounge-btn-whatsapp:hover {
             background: var(--gold);
             color: var(--black);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
         }
         
-        /* Alerts */
+        /* ============================================
+           ALERTES
+           ============================================ */
         .lounge-alert {
             padding: 20px 28px;
             margin-bottom: 24px;
@@ -986,7 +988,9 @@
             color: #ffcc80; 
         }
         
-        /* Download */
+        /* ============================================
+           BOUTON DOWNLOAD
+           ============================================ */
         #downloadBtn {
             position: fixed;
             bottom: 30px;
@@ -1015,10 +1019,6 @@
         }
         #downloadBtn:hover {
             transform: translateY(-3px);
-            box-shadow: 
-                0 0 0 3px var(--black),
-                0 0 0 4px var(--gold-light),
-                0 16px 50px rgba(212, 175, 55, 0.6);
         }
         @media (max-width: 480px) {
             #downloadBtn { 
@@ -1073,120 +1073,143 @@
     <!-- Bulles persistantes -->
     <div class="champagne-bubbles" id="bubblesContainer"></div>
 
-    <!-- HERO -->
-    <section class="lounge-hero">
-        <div class="ambient-light"></div>
-        
-        <svg class="gold-ornament tl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#d4af37" stroke-width="1.5" fill="none">
-                <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
-                <circle cx="15" cy="15" r="3" fill="#d4af37"/>
-                <circle cx="40" cy="40" r="2" fill="#d4af37"/>
-            </g>
-        </svg>
-        <svg class="gold-ornament tr" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#d4af37" stroke-width="1.5" fill="none">
-                <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
-                <circle cx="15" cy="15" r="3" fill="#d4af37"/>
-                <circle cx="40" cy="40" r="2" fill="#d4af37"/>
-            </g>
-        </svg>
-        <svg class="gold-ornament bl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#d4af37" stroke-width="1.5" fill="none">
-                <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
-                <circle cx="15" cy="15" r="3" fill="#d4af37"/>
-            </g>
-        </svg>
-        <svg class="gold-ornament br" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#d4af37" stroke-width="1.5" fill="none">
-                <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
-                <circle cx="15" cy="15" r="3" fill="#d4af37"/>
-            </g>
-        </svg>
-        
-        <div class="lounge-blason">
-            <div class="lounge-star">✦</div>
-            
-            <div class="lounge-badge">
-                ANNIVERSAIRE EXCLUSIF
-            </div>
-            
-            <div class="lounge-guest">
-                <?php echo htmlspecialchars($guestName); ?>
-            </div>
-            
-            <div class="lounge-divider">
-                <div class="line"></div>
-                <span class="icon">🍾</span>
-                <div class="line"></div>
-            </div>
-            
-            <div class="lounge-hosts-intro">
-                Vous êtes convié(e) à célébrer l'anniversaire de
-            </div>
-            <div class="lounge-host-name"><?php echo htmlspecialchars($host1); ?></div>
-            <div class="lounge-event-type">
-                ✦ <?php echo htmlspecialchars(strtoupper($eventType)); ?> ✦
-            </div>
-        </div>
-    </section>
+    <!-- ============================================ -->
+    <!-- WRAPPER CAPTURÉ                              -->
+    <!-- ============================================ -->
+    <div id="downloadCard">
 
-    <!-- CARTE DÉTAILS (avec animation) -->
-    <div class="lounge-card lounge-anim zoom-in">
-        <div class="lounge-card-title">Détails de la soirée</div>
-        
-        <div class="lounge-info-grid">
+        <!-- HERO -->
+        <section class="lounge-hero">
+            <div class="ambient-light"></div>
             
-            <div class="lounge-info-item lounge-anim delay-1">
-                <i class="fas fa-calendar-alt icon"></i>
-                <div class="label">DATE</div>
-                <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
-            </div>
+            <svg class="gold-ornament tl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="#d4af37" stroke-width="1.5" fill="none">
+                    <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
+                    <circle cx="15" cy="15" r="3" fill="#d4af37"/>
+                    <circle cx="40" cy="40" r="2" fill="#d4af37"/>
+                </g>
+            </svg>
+            <svg class="gold-ornament tr" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="#d4af37" stroke-width="1.5" fill="none">
+                    <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
+                    <circle cx="15" cy="15" r="3" fill="#d4af37"/>
+                    <circle cx="40" cy="40" r="2" fill="#d4af37"/>
+                </g>
+            </svg>
+            <svg class="gold-ornament bl" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="#d4af37" stroke-width="1.5" fill="none">
+                    <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
+                    <circle cx="15" cy="15" r="3" fill="#d4af37"/>
+                </g>
+            </svg>
+            <svg class="gold-ornament br" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="#d4af37" stroke-width="1.5" fill="none">
+                    <path d="M 0 0 L 100 100 M 0 0 L 80 30 M 0 0 L 30 80"/>
+                    <circle cx="15" cy="15" r="3" fill="#d4af37"/>
+                </g>
+            </svg>
             
-            <div class="lounge-info-item lounge-anim delay-2">
-                <i class="fas fa-clock icon"></i>
-                <div class="label">HEURE</div>
-                <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
-            </div>
-            
-            <div class="lounge-info-item lounge-anim delay-3" style="grid-column: 1 / -1;">
-                <i class="fas fa-map-marker-alt icon"></i>
-                <div class="label">LIEU</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($lieuDisplay); ?>
-                    <?php if ($adresseDisplay): ?>
-                        <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
-                    <?php endif; ?>
+            <div class="lounge-blason">
+                <div class="lounge-star">✦</div>
+                
+                <div class="lounge-badge">
+                    ANNIVERSAIRE EXCLUSIF
                 </div>
-                <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
-                   target="_blank" 
-                   rel="noopener"
-                   class="lounge-btn-itinerary">
-                    <i class="fas fa-map-marked-alt"></i> VOIR L'ITINÉRAIRE
-                </a>
-            </div>
-            
-            <!-- ⭐ TABLE ASSIGNÉE (sans zone) -->
-            <?php if ($hasTable): ?>
-            <div class="lounge-info-item lounge-table-item lounge-anim delay-4" style="grid-column: 1 / -1;">
-                <i class="fas fa-chair icon"></i>
-                <div class="label">VOTRE TABLE</div>
-                <div class="value">
-                    <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                
+                <div class="lounge-guest">
+                    <?php echo htmlspecialchars($guestName); ?>
+                </div>
+                
+                <div class="lounge-divider">
+                    <div class="line"></div>
+                    <span class="icon">🍾</span>
+                    <div class="line"></div>
+                </div>
+                
+                <div class="lounge-hosts-intro">
+                    Vous êtes convié(e) à célébrer l'anniversaire de
+                </div>
+                <div class="lounge-host-name"><?php echo htmlspecialchars($host1); ?></div>
+                <div class="lounge-event-type">
+                    ✦ <?php echo htmlspecialchars(strtoupper($eventType)); ?> ✦
                 </div>
             </div>
-            <?php endif; ?>
+        </section>
+
+        <!-- CARTE DÉTAILS -->
+        <div class="lounge-card">
+            <div class="lounge-card-title">Détails de la soirée</div>
             
-            <div class="lounge-info-item lounge-anim delay-5" style="grid-column: 1 / -1;">
-                <i class="fas fa-users icon"></i>
-                <div class="label">PLACES RÉSERVÉES</div>
-                <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+            <div class="lounge-info-grid">
+                
+                <div class="lounge-info-item">
+                    <i class="fas fa-calendar-alt icon"></i>
+                    <div class="label">DATE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventDate); ?></div>
+                </div>
+                
+                <div class="lounge-info-item">
+                    <i class="fas fa-clock icon"></i>
+                    <div class="label">HEURE</div>
+                    <div class="value"><?php echo htmlspecialchars($eventTime ?: '--:--'); ?></div>
+                </div>
+                
+                <div class="lounge-info-item" style="grid-column: 1 / -1;">
+                    <i class="fas fa-map-marker-alt icon"></i>
+                    <div class="label">LIEU</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($lieuDisplay); ?>
+                        <?php if ($adresseDisplay): ?>
+                            <span class="sub"><?php echo htmlspecialchars($adresseDisplay); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=<?php echo urlencode($lieuDisplay . ' ' . $adresseDisplay); ?>" 
+                       target="_blank" 
+                       rel="noopener"
+                       class="lounge-btn-itinerary">
+                        <i class="fas fa-map-marked-alt"></i> VOIR L'ITINÉRAIRE
+                    </a>
+                </div>
+                
+                <?php if ($hasTable): ?>
+                <div class="lounge-info-item lounge-table-item" style="grid-column: 1 / -1;">
+                    <i class="fas fa-chair icon"></i>
+                    <div class="label">VOTRE TABLE</div>
+                    <div class="value">
+                        <?php echo htmlspecialchars($tableNom ?: 'Table ' . $tableNumero); ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
+                <div class="lounge-info-item" style="grid-column: 1 / -1;">
+                    <i class="fas fa-users icon"></i>
+                    <div class="label">PLACES RÉSERVÉES</div>
+                    <div class="value"><?php echo (int)($invitation['nb_places_max'] ?? 1); ?> personne(s)</div>
+                </div>
+                
             </div>
-            
         </div>
+
+        <!-- QR CODE -->
+        <div class="lounge-qr-card">
+            <div class="lounge-qr-title">Votre accès privé</div>
+            <div class="lounge-qr-wrapper">
+                <div class="lounge-qr-box">
+                    <div id="qrcode"></div>
+                </div>
+                <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:var(--gold);letter-spacing:0.1em;margin-top:24px;">
+                    <?php echo htmlspecialchars($invitation['code_unique']); ?>
+                </div>
+            </div>
+        </div>
+
     </div>
+    <!-- FIN WRAPPER -->
 
-    <!-- MESSAGES -->
+    <!-- ============================================ -->
+    <!-- SECTIONS HORS CAPTURE                       -->
+    <!-- ============================================ -->
+
     <?php if ($message): ?>
         <div class="lounge-section lounge-anim apparue">
             <div class="lounge-alert lounge-alert-<?php echo htmlspecialchars($messageType); ?>">
@@ -1236,19 +1259,6 @@
             </div>
         </div>
     <?php endif; ?>
-
-    <!-- QR CODE -->
-    <div class="lounge-section lounge-anim from-right">
-        <div class="lounge-section-title">Votre accès privé</div>
-        <div class="lounge-qr-wrapper">
-            <div class="lounge-qr-box">
-                <div id="qrcode"></div>
-            </div>
-            <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:var(--gold);letter-spacing:0.1em;margin-top:24px;">
-                <?php echo htmlspecialchars($invitation['code_unique']); ?>
-            </div>
-        </div>
-    </div>
 
     <!-- CONFIRMATION -->
     <?php if ($invitation['statut'] == 'EN_ATTENTE'): ?>
@@ -1393,7 +1403,7 @@
         });
 
         // ================================================================
-        // ANIMATIONS AU SCROLL (REVEAL)
+        // ANIMATIONS AU SCROLL
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             const animElements = document.querySelectorAll('.lounge-anim');
@@ -1412,7 +1422,6 @@
             
             animElements.forEach(el => observer.observe(el));
             
-            // Fallback : rendre visibles les éléments déjà dans le viewport
             setTimeout(() => {
                 animElements.forEach(el => {
                     const rect = el.getBoundingClientRect();
@@ -1423,7 +1432,9 @@
             }, 500);
         });
 
-        // QR
+        // ================================================================
+        // QR CODE
+        // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof QRCode !== 'undefined') {
                 try {
@@ -1440,7 +1451,7 @@
         });
 
         // ================================================================
-        // DIAPORAMA PHOTOS
+        // DIAPORAMA
         // ================================================================
         let loungeDiapoIndex = 0;
         const loungeSlides = document.querySelectorAll('#loungeDiaporama .slide');
@@ -1499,35 +1510,152 @@
             }
         });
 
-        // Download
+        // ================================================================
+        // TÉLÉCHARGEMENT — CORRIGÉ
+        // ================================================================
         async function telechargerJPEG() {
             const btn = document.getElementById('downloadBtn');
             const btnText = document.getElementById('btnText');
-            const hero = document.querySelector('.lounge-hero');
+            const card = document.getElementById('downloadCard');
+            
+            if (!card) {
+                alert('Carte introuvable');
+                return;
+            }
+            
             btn.disabled = true;
             btnText.textContent = 'Génération...';
+            
             try {
-                await new Promise(r => setTimeout(r, 300));
-                const canvas = await html2canvas(hero, {
-                    scale: 2.5,
-                    useCORS: true,
-                    backgroundColor: '#0a0a0a',
-                    logging: false
+                // 1. Attendre que tout soit rendu
+                await new Promise(r => setTimeout(r, 1500));
+                
+                // 2. Vérifier que le QR code est généré
+                let qrReady = false;
+                for (let i = 0; i < 10; i++) {
+                    const qrCanvas = document.querySelector('#qrcode canvas');
+                    const qrImg = document.querySelector('#qrcode img');
+                    if (qrCanvas || qrImg) {
+                        qrReady = true;
+                        break;
+                    }
+                    await new Promise(r => setTimeout(r, 300));
+                }
+                
+                if (!qrReady) {
+                    console.warn('QR code non prêt, on continue quand même...');
+                }
+                
+                // 3. Attendre le chargement des images
+                const images = card.querySelectorAll('img');
+                await Promise.all(Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        setTimeout(resolve, 2000);
+                    });
+                }));
+                
+                // 4. Forcer l'affichage de TOUS les éléments visibles
+                card.querySelectorAll('.lounge-anim').forEach(el => {
+                    el.classList.add('apparue');
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.visibility = 'visible';
                 });
+                
+                // 5. Forcer le blason hero
+                card.querySelectorAll('.lounge-blason, .lounge-star, .lounge-badge, .lounge-guest, .lounge-divider, .lounge-hosts-intro, .lounge-host-name, .lounge-event-type').forEach(el => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'none';
+                    el.style.animation = 'none';
+                    el.style.visibility = 'visible';
+                });
+                
+                // 6. Attendre un peu
+                await new Promise(r => setTimeout(r, 300));
+                
+                // 7. Capturer
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#0a0a0a',
+                    logging: false,
+                    width: card.scrollWidth,
+                    height: card.scrollHeight,
+                    windowWidth: card.scrollWidth,
+                    windowHeight: card.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: function(clonedDoc) {
+                        // Forcer le wrapper
+                        const clonedCard = clonedDoc.getElementById('downloadCard');
+                        if (clonedCard) {
+                            clonedCard.style.animation = 'none';
+                            clonedCard.style.opacity = '1';
+                            clonedCard.style.transform = 'none';
+                            clonedCard.style.background = '#0a0a0a';
+                        }
+                        
+                        // Désactiver toutes les animations
+                        clonedDoc.querySelectorAll('*').forEach(el => {
+                            el.style.animation = 'none';
+                        });
+                        
+                        // Forcer l'affichage de tous les éléments cachés
+                        clonedDoc.querySelectorAll('.lounge-anim').forEach(el => {
+                            el.classList.add('apparue');
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        // Forcer le blason hero
+                        clonedDoc.querySelectorAll('.lounge-blason, .lounge-star, .lounge-badge, .lounge-guest, .lounge-divider, .lounge-hosts-intro, .lounge-host-name, .lounge-event-type').forEach(el => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'none';
+                            el.style.animation = 'none';
+                            el.style.visibility = 'visible';
+                        });
+                        
+                        // S'assurer que le QR code est visible
+                        const qrBox = clonedDoc.querySelector('.lounge-qr-box');
+                        if (qrBox) {
+                            qrBox.style.display = 'inline-block';
+                            qrBox.style.visibility = 'visible';
+                            qrBox.style.opacity = '1';
+                        }
+                        
+                        // S'assurer que le hero a un fond
+                        const clonedHero = clonedDoc.querySelector('.lounge-hero');
+                        if (clonedHero) {
+                            clonedHero.style.background = 'radial-gradient(ellipse 600px 400px at 50% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 100%), radial-gradient(ellipse at top, #1a1a1a 0%, transparent 60%), radial-gradient(ellipse at bottom, #2a1a0a 0%, transparent 60%), #0a0a0a';
+                        }
+                    }
+                });
+                
+                // 8. Télécharger
                 const link = document.createElement('a');
                 link.download = `anniversaire_${'<?php echo htmlspecialchars($host1); ?>'.replace(/\s/g, '_')}.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
+                
                 btnText.textContent = '✓ TÉLÉCHARGÉ';
                 setTimeout(() => btnText.textContent = 'TÉLÉCHARGER', 3000);
             } catch(e) {
+                console.error('Erreur téléchargement:', e);
                 btnText.textContent = 'ERREUR';
                 setTimeout(() => btnText.textContent = 'TÉLÉCHARGER', 3000);
             }
+            
             btn.disabled = false;
         }
 
-        // Boissons
+        // ================================================================
+        // BOISSONS
+        // ================================================================
         <?php if ($invitation['reponse'] == 'CONFIRMEE' && !empty($boissons) && !$isLocked): ?>
         let selectedBoissons = [];
         document.addEventListener('DOMContentLoaded', function() {
